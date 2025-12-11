@@ -26,12 +26,12 @@ def get_config_path() -> Path:
     project_root = scripts_dir.parent
 
     # Priority 1: Parent directory (submodule usage)
-    parent_config = project_root.parent / "aws.yml"
+    parent_config = project_root.parent / ".data" / "aws.yml"
     if parent_config.exists():
         return parent_config
 
     # Priority 2: Project root (standalone usage)
-    local_config = project_root / "aws.yml"
+    local_config = project_root / ".data" / "aws.yml"
     if local_config.exists():
         return local_config
 
