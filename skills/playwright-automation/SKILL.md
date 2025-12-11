@@ -20,7 +20,7 @@ Python-based browser automation for complex workflows requiring video recording,
 ## Output Directories
 
 ```
-/workspace/.data/playwright/
+/workspace/.claude/.data/playwright/
 ├── screencaps/    # Screenshots (.png, .jpg)
 ├── videos/        # Recordings (.webm)
 ├── pdfs/          # Generated PDFs
@@ -28,16 +28,36 @@ Python-based browser automation for complex workflows requiring video recording,
 └── data/          # Extracted data (.json, .csv)
 ```
 
+## Wait Strategy Guide
+
+| Strategy | Use Case | Speed | Reliability |
+|----------|----------|-------|-------------|
+| `domcontentloaded` | General web pages (default) | Fast (1-3s) | High |
+| `load` | Media-heavy sites, SPAs | Medium (2-5s) | High |
+| `networkidle` | Static sites that fully settle | Slow (5-30s+) | Variable |
+
+**Recommendation:** Use `domcontentloaded` (default) for most sites. Only use `networkidle` for static pages where you need all resources loaded.
+
 ## Utility Scripts
 
 ### Screenshot Utility
 ```bash
-uv run python /workspace/.claude/skills/playwright-automation/scripts/screenshot.py <url> [--full-page] [--output filename.png]
+cd /workspace/.claude/skills/playwright-automation && \
+uv run python scripts/screenshot.py <url> \
+  [--full-page] \
+  [--wait-until domcontentloaded|load|networkidle] \
+  [--timeout 30000] \
+  [--output filename.png]
 ```
 
 ### Video Recorder
 ```bash
-uv run python /workspace/.claude/skills/playwright-automation/scripts/video_recorder.py <url> [--duration 10] [--output filename.webm]
+cd /workspace/.claude/skills/playwright-automation && \
+uv run python scripts/video_recorder.py <url> \
+  [--duration 10] \
+  [--wait-until domcontentloaded|load|networkidle] \
+  [--timeout 30000] \
+  [--output filename.webm]
 ```
 
 ## Script Template
@@ -48,15 +68,16 @@ Use this template for custom automation scripts:
 #!/usr/bin/env python3
 """
 Browser automation script: [DESCRIPTION]
-Output: /workspace/.data/playwright/[TYPE]/[FILENAME]
+Output: /workspace/.claude/.data/playwright/[TYPE]/[FILENAME]
 """
 import os
 from datetime import datetime
-from playwright.sync_api import sync_playwright
+from loguru import logger
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
-SCREENCAP_DIR = "/workspace/.data/playwright/screencaps"
-VIDEO_DIR = "/workspace/.data/playwright/videos"
-DATA_DIR = "/workspace/.data/playwright/data"
+SCREENCAP_DIR = "/workspace/.claude/.data/playwright/screencaps"
+VIDEO_DIR = "/workspace/.claude/.data/playwright/videos"
+DATA_DIR = "/workspace/.claude/.data/playwright/data"
 
 os.makedirs(SCREENCAP_DIR, exist_ok=True)
 os.makedirs(VIDEO_DIR, exist_ok=True)
@@ -75,13 +96,24 @@ def main():
         page = context.new_page()
 
         try:
+            # Navigate with fallback
+            page.goto("https://example.com", wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(2000)  # Allow dynamic content to load
+
             # Your automation code here
-            page.goto("https://example.com")
             page.screenshot(path=f"{SCREENCAP_DIR}/example_{timestamp}.png", full_page=True)
+
+        except PlaywrightTimeoutError:
+            logger.error("Navigation timeout")
+            raise
         finally:
+            # Get video path BEFORE closing page
+            video = page.video
+            video_path = video.path() if video else None
+
             page.close()
-            if page.video:
-                print(f"Video saved: {page.video.path()}")
+            if video_path:
+                print(f"Video saved: {video_path}")
             context.close()
             browser.close()
 
@@ -93,6 +125,8 @@ if __name__ == "__main__":
 
 ### Screenshot Capture
 ```python
+SCREENCAP_DIR = "/workspace/.claude/.data/playwright/screencaps"
+
 # Full page
 page.screenshot(path=f"{SCREENCAP_DIR}/full.png", full_page=True)
 
@@ -113,6 +147,8 @@ page.screenshot(
 
 ### Video Recording
 ```python
+VIDEO_DIR = "/workspace/.claude/.data/playwright/videos"
+
 # Enable in context creation
 context = browser.new_context(
     record_video_dir=VIDEO_DIR,
@@ -120,8 +156,11 @@ context = browser.new_context(
 )
 page = context.new_page()
 # ... perform actions ...
-page.close()  # Video saved when page closes
-video_path = page.video.path()
+
+# CRITICAL: Get path BEFORE closing
+video = page.video
+video_path = video.path() if video else None
+page.close()  # Video finalized here
 ```
 
 ### Form Interaction
@@ -138,6 +177,8 @@ page.set_input_files("#file-upload", "/path/to/file.pdf")
 ```python
 import json
 
+DATA_DIR = "/workspace/.claude/.data/playwright/data"
+
 title = page.locator("h1").text_content()
 items = page.locator(".item").all()
 data = [item.text_content() for item in items]
@@ -148,25 +189,37 @@ with open(f"{DATA_DIR}/extracted.json", "w") as f:
 
 ### Wait Strategies
 ```python
+# Wait for specific element
 page.wait_for_selector("#dynamic-content")
+
+# Wait for URL change
 page.wait_for_url("**/success")
+
+# Wait for load state (use sparingly)
 page.wait_for_load_state("networkidle")
+
+# Custom timeout
 page.wait_for_selector("#slow-element", timeout=60000)
+
+# Fixed delay for dynamic content
+page.wait_for_timeout(2000)
 ```
 
-### Error Handling
+### Error Handling with Fallback
 ```python
-from playwright.sync_api import TimeoutError
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 try:
-    page.click("#button", timeout=5000)
-except TimeoutError:
-    print("Button not found, trying alternative...")
-    page.click(".fallback-button")
+    page.goto(url, wait_until="networkidle", timeout=30000)
+except PlaywrightTimeoutError:
+    # Fallback to faster strategy
+    page.goto(url, wait_until="domcontentloaded", timeout=30000)
 ```
 
 ### Tracing for Debug
 ```python
+DATA_DIR = "/workspace/.claude/.data/playwright/data"
+
 context.tracing.start(screenshots=True, snapshots=True, sources=True)
 # ... perform actions ...
 context.tracing.stop(path=f"{DATA_DIR}/trace.zip")
@@ -175,9 +228,14 @@ context.tracing.stop(path=f"{DATA_DIR}/trace.zip")
 
 ## Execution
 
-Run scripts with uv:
+Run scripts using uv from the skill directory:
 ```bash
-uv run python /path/to/script.py
+cd /workspace/.claude/skills/playwright-automation && uv run python scripts/<script>.py
+```
+
+Or for custom scripts in other locations:
+```bash
+cd /workspace/.claude/skills/playwright-automation && uv run python /path/to/custom_script.py
 ```
 
 ## Troubleshooting
@@ -186,6 +244,7 @@ uv run python /path/to/script.py
 |-------|----------|
 | Browser launch fails | Ensure `headless=True` in container |
 | Element not found | Use `wait_for_selector()` before interaction |
-| Video not saved | Ensure `page.close()` is called |
+| Video not saved | Get `page.video.path()` BEFORE `page.close()` |
 | Permission denied | Check output directory permissions |
-| Timeout errors | Increase timeout or check network |
+| Timeout errors | Use `domcontentloaded` instead of `networkidle` |
+| Streaming sites timeout | Add `page.wait_for_timeout(3000)` after navigation |

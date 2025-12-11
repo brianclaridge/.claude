@@ -14,7 +14,15 @@ mkdir -p \
     ${HOME}/.config/htop \
     /etc/ansible \
     /workspace/.claude \
-    /workspace/.claude/.data/logs
+    /workspace/.claude/.data/logs \
+    /workspace/.claude/.data/playwright/screencaps \
+    /workspace/.claude/.data/playwright/videos \
+    /workspace/.claude/.data/playwright/data \
+    /workspace/.claude/.data/logs/playwright
+
+# Clean stale Playwright browser locks (older than 30 minutes)
+find /usr/local/share/playwright -name "mcp-*" -type d -mmin +30 -exec rm -rf {} + 2>/dev/null || true
+find /tmp -name "*playwright*" -type d -cmin +30 -exec rm -rf {} + 2>/dev/null || true
 
 touch /workspace/.claude/.data/logs/confd.log
 confd \
