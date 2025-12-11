@@ -21,8 +21,8 @@ Interactive git commit workflow with safety checks and user confirmation.
 Before any git operations, ensure git identity is configured:
 
 ```bash
-# Load git credentials from /workspace/.env
-source /workspace/.env 2>/dev/null || true
+# Load git credentials from /workspace/.claude/.env
+source /workspace/.claude/.env 2>/dev/null || true
 
 # Configure git if credentials are available
 if [ -n "$GIT_USER_EMAIL" ]; then
