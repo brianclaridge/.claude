@@ -24,11 +24,15 @@ mkdir -p \
 find /usr/local/share/playwright -name "mcp-*" -type d -mmin +30 -exec rm -rf {} + 2>/dev/null || true
 find /tmp -name "*playwright*" -type d -cmin +30 -exec rm -rf {} + 2>/dev/null || true
 
+# run confd
 touch /workspace/.claude/.data/logs/confd.log
 confd \
   -backend env \
   -confdir /etc/confd \
   -onetime &> /workspace/.claude/.data/logs/confd.log
+
+# copy .mcp.json
+cp -f /workspace/.mcp.json /workspace${CLAUDE_PROJECT_SLUG}
 
 # defaults
 echo "tree_view=1" > ${HOME}/.config/htop/htoprc

@@ -54,22 +54,39 @@ git commit -m "Remove .claude submodule"
 /workspace
 ├── README.md
 ├── Taskfile.yml
-└── .claude/              # Git submodule
-    ├── settings.json
-    ├── docker-compose.yml
-    ├── directives/       # Behavioral rules (000-080)
-    ├── agents/           # Specialized analysis agents
-    ├── skills/           # Model-invoked capabilities (git-manager)
-    ├── hooks/            # Python event handlers (directive_loader, logger)
-    ├── docker/           # Container build files
-    ├── config/           # confd templates
-    └── aws/              # AWS SSO utilities
+└── .claude/                        # Git submodule
+    ├── .data/                      # Runtime data (gitignored)
+    │   ├── logs/                   # Hook and service logs
+    │   └── playwright/             # Screenshots, videos, traces
+    ├── .vscode/                    # VS Code workspace settings
+    ├── agents/                     # Specialized sub-agents
+    ├── aws/                        # AWS SSO utilities
+    ├── config/                     # confd templates and conf.d
+    ├── directives/                 # Behavioral rules (000-080)
+    ├── docker/                     # Dockerfile, entrypoints, assets
+    ├── hooks/                      # Python event handlers
+    │   ├── directive_loader/       # Injects directives into sessions
+    │   └── logger/                 # Logs all hook events
+    ├── includes/                   # Shared Taskfile includes
+    ├── prompts/                    # Prompt templates
+    ├── scripts/                    # PowerShell host utilities
+    ├── skills/                     # Model-invoked capabilities
+    │   ├── git-manager/            # Git commit workflow
+    │   └── playwright-automation/  # Browser automation
+    ├── settings.json               # Claude Code settings
+    ├── docker-compose.yml          # Container configuration
+    └── Taskfile.yml                # Task runner commands
 ```
 
 ## Technologies
 
-- Container: Ubuntu 24.04, Docker-in-Docker
-- Languages: Python (uv), Node.js 24, Go 1.25.4, Rust 1.91.1, JDK 21, PowerShell 7.5.4
-- Model: Claude Opus 4.5 with extended thinking (29999 tokens)
-- Automation: Task (Taskfile), confd
-- Integration: Context7 MCP, AWS SSO, Git
+- Container: Ubuntu 24.04, Docker-in-Docker, NVIDIA Container Toolkit
+- Languages: Python 3 (uv, Black), Node.js 24, Go 1.25.4, Rust 1.91.1, JDK 21/Maven, PowerShell 7.5.4
+- Cloud: AWS CLI v2/SAM/CDK, Google Cloud CLI/SQL Proxy, Pulumi, OpenTofu
+- Kubernetes: kubectl 1.34.2, minikube, Helm
+- Browser: Playwright, Chrome/Chromium, Headless Shell
+- Security: Vault (Hashicorp)
+- Config: Ansible, confd 0.16.0
+- AI: Claude Code CLI, Google MCP GenMedia (Imagen, Veo, Chirp3, Lyria)
+- Automation: Task (Taskfile), oh-my-posh
+- Integration: Context7 MCP, Playwright MCP
