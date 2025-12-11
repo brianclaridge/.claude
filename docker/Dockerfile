@@ -181,8 +181,10 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright
 RUN \
   npm install -g playwright && \
   npx playwright install chromium --with-deps && \
-  npx playwright install-deps chromium && \
-  uv pip install --system playwright && \
+  npx playwright install-deps chromium
+
+RUN \
+  pip install playwright --break-system-packages && \
   python -m playwright install chromium && \
   chmod -R 755 ${PLAYWRIGHT_BROWSERS_PATH}
 
