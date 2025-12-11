@@ -1,0 +1,5 @@
+settings.local.json
+.data
+__pycache__
+.mcp.json
+.env

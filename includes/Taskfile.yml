@@ -1,0 +1,85 @@
+version: '3'
+
+tasks:
+
+  claude:trivial:
+    desc: creates a commit with a '{{.MSG}}' message and pushes it
+    vars:
+      MSG: '{{.MSG | default "(chore) trivial update"}}'
+    preconditions:
+      - sh: '[ -n "$(git status --porcelain)" ]'
+        msg: "No changes to commit"
+    cmds:
+      - git status
+      - git add --all
+      - git commit -m '{{.MSG}}'
+      - git push
+      - git status
+    silent: true
+
+  claude:fetch:
+    cmds:
+      - git config --global fetch.recurseSubmodules true
+      - git config --global submodule.recurse true
+      - git submodule sync --recursive
+      - git -C .claude fetch origin && git -C .claude reset --hard origin/main
+      - git -C .claude clean -fd
+    silent: true
+
+  claude:update:
+    desc: Update .claude submodule and commit the change
+    vars:
+      MSG: '{{.MSG | default "Update .claude submodule"}}'
+    preconditions:
+      - sh: |
+          git -C .claude fetch --all -q
+          git -C .claude status | grep -q "Your branch is behind" || [ -n "$(git -C .claude status --porcelain)" ]
+        msg: ".claude submodule is already up to date and has no local changes"
+    cmds:
+      # Commit any local changes in the submodule first
+      - git -C .claude add --all
+      - git -C .claude diff --cached --quiet || git -C .claude commit -m "{{.MSG}}"
+      - git -C .claude push
+      # Now pull updates and commit submodule reference
+      - git -C .claude pull origin {{.BRANCH | default "main"}}
+      - git add .claude
+      - git diff --cached --quiet .claude || git commit -m "{{.MSG}}"
+      - git push
+    silent: true
+
+  claude:claude:
+    aliases:
+      - claude
+    cmds:
+      - task --dir ./.claude claude
+    silent: true
+
+  claude:shell:
+    cmds:
+      - task --dir ./.claude shell
+    silent: true
+
+  claude:clean:
+    cmds:
+      - task --dir ./.claude clean
+    silent: true
+
+  claude:purge:
+    cmds:
+      - task --dir ./.claude purge
+    silent: true
+
+  claude:nuke:
+    cmds:
+      - task --dir ./.claude purge
+    silent: true
+
+  claude:build:
+    cmds:
+      - task --dir ./.claude build
+    silent: true
+
+  claude:config:
+    cmds:
+      - task --dir ./.claude config
+    silent: true

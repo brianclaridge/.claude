@@ -1,0 +1,15 @@
+{
+    "recommendations": [
+        "tamasfe.even-better-toml",
+        "anthropic.claude-code",
+        "editorconfig.editorconfig",
+        "ms-vscode.powershell",
+        "ms-python.python",
+        "redhat.vscode-xml",
+        "redhat.vscode-yaml",
+        "vscode-icons-team.vscode-icons",
+        "esbenp.prettier-vscode",
+        "bierner.markdown-mermaid",
+        "task.vscode-task"
+    ]
+}

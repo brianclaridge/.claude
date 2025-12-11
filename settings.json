@@ -1,0 +1,189 @@
+{
+  "model": "Opus",
+  "forceLoginMethod": "claudeai",
+  "outputStyle": "Default",
+  "alwaysThinkingEnabled": true,
+  "companyAnnouncements": [
+    "An intelligence that only reflects your beliefs back to you is not thinking, it is polishing your blindness until it shines."
+  ],
+  "env": {
+    "MAX_THINKING_TOKENS": "29999",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": ["Bash", "Read", "Write"],
+    "deny": [],
+    "ask": ["Bash(rm:*)"],
+    "additionalDirectories": ["/tmp", "/workspace", "/root/.claude", "/root"],
+    "defaultMode": "acceptEdits"
+  },
+  "enabledMcpjsonServers": ["context7"],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"SessionStart\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/directive_loader python -m src"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"UserPromptSubmit\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/directive_loader python -m src"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"Stop\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"Notification\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"PreToolUse\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"PostToolUse\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"SubagentStop\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"PreCompact\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"SessionEnd\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"PermissionRequest\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); echo \"$(echo \"$input\" | jq -r '.model.display_name') | $(echo \"$input\" | jq -r '.workspace.current_dir')\""
+  }
+}

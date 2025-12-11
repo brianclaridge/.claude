@@ -1,0 +1,36 @@
+{
+  "workbench.colorTheme": "Abyss",
+  "workbench.iconTheme": "vscode-icons",
+  "workbench.preferredDarkColorTheme": "Abyss",
+  "workbench.preferredLightColorTheme": "Abyss",
+  "workbench.productIconTheme": "Default",
+  "editor.fontFamily": "RobotoMono Nerd Font Mono",
+  "terminal.integrated.fontFamily": "RobotoMono Nerd Font Mono",
+  "terminal.integrated.defaultProfile.linux": "pwsh",
+  "terminal.integrated.defaultProfile.windows": "pwsh",
+  "terminal.integrated.profiles.windows": {
+    "Ubuntu-24.04": {
+      "path": "C:\\Windows\\System32\\wsl.exe",
+      "args": ["-d", "Ubuntu-24.04"],
+      "icon": "terminal-ubuntu"
+    },
+    "pwsh": {
+      "path": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "icon": "terminal-bash"
+    }
+  },
+  "terminal.integrated.profiles.linux": {
+    "pwsh": {
+      "path": "/usr/bin/bash",
+      "icon": "terminal-ubuntu"
+    }
+  },
+  "terminal.integrated.scrollback": 5000,
+  "terminal.integrated.cursorBlinking": true,
+  "terminal.integrated.cursorStyle": "underline",
+  "[powershell]": {
+    "editor.defaultFormatter": "ms-vscode.powershell",
+    "editor.formatOnSave": true
+  },
+  "git.ignoreLimitWarning": true
+}

@@ -1,0 +1,68 @@
+services:
+  claude:
+    image: docker.localhost/claude:latest
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+      args:
+        poshThemesURL: https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/refs/heads/main/themes
+        poshThemesPath: /poshthemes
+        poshTheme: quick-term
+        baseImage: ubuntu:24.04
+        confdVersion: 0.16.0
+        kubectlVersion: 1.34.2
+        jdkVersion: 21
+        goVersion: 1.25.4
+        rustVersion: 1.91.1
+        nodeVersion: 24
+        powershellVersion: 7.5.4
+        sqlProxyVersion: 2.19.0
+        buildDate: 20251208.1
+        claudeCodeDate: 20251208.2
+    init: true
+    privileged: true
+    ulimits:
+      nofile:
+        hard: 90000
+        soft: 65000
+      nproc: 65535
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    working_dir: /workspace/${SLUG}
+    env_file:
+      - .env
+    environment:
+      HOST_HOME: ${HOME:-${USERPROFILE}}
+      HOST_PWD: ${PWD}
+      AWS_CONFIG_FILE: /root/.aws/config
+      OLLAMA_API_BASE: http://ollama:11434
+      OLLAMA_API_KEY: ollama
+      USERPROFILE: /root
+      UV_LINK_MODE: copy
+      CDK_DISABLE_CLI_TELEMETRY: true
+      CLAUDE_PROJECT_SLUG: ${SLUG}
+    volumes:
+      # dind stuff
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      # bind folder mounts
+      - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
+      - ./config:/etc/confd:ro
+      - ./:/workspace/.claude:rw
+      - ./:/workspace/${SLUG}/.claude:rw
+      - ../:/workspace/${SLUG}:delegated
+      # shared volumes
+      - claude-home-data:/root:rw
+      # misc volumes
+      - minikube-data:/root/.minikube
+      - kube-data:/root/.kube
+      - maven-data:/root/.m2
+
+volumes:
+  claude-home-data:
+    name: claude-home-data
+  minikube-data: {}
+  kube-data: {}
+  maven-data: {}

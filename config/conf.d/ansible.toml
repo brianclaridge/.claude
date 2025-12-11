@@ -1,0 +1,6 @@
+[template]
+src = "ansible.cfg"
+dest = "/root/ansible.cfg"
+uid = 0
+gid = 0
+mode = "0644"
