@@ -1,18 +1,27 @@
 # .claude
 
-> A customized development environment for Claude Code CLI providing Docker-based containerized workspace with custom directives, agents, hooks, and skills.
+> My opinionated, docker-ized development environment for Claude Code CLI.
 
 ## Quick Start
 
 ```bash
+# clone and ignore
 cd /path/to/your/project
-git submodule add -b main git@github.com:brianclaridge/.claude.git
-git submodule update --init --recursive --remote
+git clone git@github.com:brianclaridge/.claude.git
+
+# add .claude/ to your .gitignore
+echo ".claude" >> .gitignore
+
+# start claude
 cd .claude/
 task claude
+
+# optional, add .claude as a submodule
+git submodule add -b main git@github.com:brianclaridge/.claude.git
+git submodule update --init --recursive --remote
 ```
 
-## Updating .claude
+## Updating .claude Submodule
 
 ```pwsh
 # run
@@ -30,7 +39,7 @@ git -C .claude reset --hard origin/main
 git -C .claude clean -fd
 ```
 
-## Removing .claude
+## Removing .claude Submodule
 
 ```bash
 git submodule deinit -f .claude
