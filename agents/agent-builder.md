@@ -1,5 +1,5 @@
 ---
-name: agent-builder-skill
+name: agent-builder
 description: Create new Claude Code agents with complementary skills and slash commands. Use when the user wants to build a new agent, automate complex workflows, or add delegated analysis capabilities. Triggers on "I want to create a new agent that does...", "build an agent for...", or "create an automation agent".
 tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 model: opus

@@ -1,7 +1,7 @@
 ---
 name: git-manager
 description: Commit implementation changes to git with interactive branch selection and push confirmation. Use after completing implementation tasks, when all TODOs are marked complete, or when user requests to commit changes.
-allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion
+allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion, EnterPlanMode
 ---
 
 # Git Manager
@@ -106,6 +106,37 @@ Use AskUserQuestion:
 
 If yes: `git push -u origin {branch}` (use -u for new branches)
 
+### Step 7: Workflow Completion
+
+After commit is complete (whether pushed or kept local), present next action options.
+
+Use AskUserQuestion:
+
+```json
+{
+  "question": "What would you like to plan next?",
+  "header": "Next Plan",
+  "options": [
+    {"label": "Plan next feature", "description": "Define new functionality to build"},
+    {"label": "Plan bug fix", "description": "Identify and fix an issue"},
+    {"label": "Plan refactoring", "description": "Improve existing code structure"},
+    {"label": "Plan documentation", "description": "Update or create documentation"}
+  ],
+  "multiSelect": false
+}
+```
+
+**After ANY selection:** ALWAYS invoke EnterPlanMode to transition user back to planning workflow.
+
+| Selection | Action |
+|-----------|--------|
+| Plan next feature | Invoke EnterPlanMode |
+| Plan bug fix | Invoke EnterPlanMode |
+| Plan refactoring | Invoke EnterPlanMode |
+| Plan documentation | Invoke EnterPlanMode |
+
+**Important:** ALL options invoke EnterPlanMode. There is no escape hatch - plan mode is mandatory after git operations.
+
 ## Safety Rules
 
 **NEVER**:
@@ -182,4 +213,11 @@ Claude: Committed! Push to origin/feature/auth?
 User: [selects Yes]
 
 Claude: Changes pushed to origin/feature/auth.
+        What would you like to plan next?
+[AskUserQuestion: Plan feature | Plan bug fix | Plan refactor | Plan docs]
+
+User: [selects "Plan bug fix"]
+
+Claude: Transitioning to plan mode for bug fix...
+[Invokes EnterPlanMode]
 ```
