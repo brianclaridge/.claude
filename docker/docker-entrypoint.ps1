@@ -58,7 +58,10 @@ link_scripts
 # setup ssh
 setup-ssh-env
 
-_value "CLAUDE_PROJECT_SLUG" "${env:CLAUDE_PROJECT_SLUG}"
+_value "CLAUDE_PROJECT_SLUG" ${env:CLAUDE_PROJECT_SLUG}
+_value "HOST_HOME" ${env:HOST_HOME}
+_value "HOST_PWD" ${env:HOST_PWD}
+_value "PARENT_PATH" ${env:PARENT_PATH}
 
 # run any commands
 $exit_code = 0

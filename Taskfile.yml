@@ -7,15 +7,21 @@ vars:
   AWS_SCRIPTS_PATH: /workspace/.claude/aws
   DOCKERFILE_PATH: '{{.DOCKERFILE_PATH | default "/workspace/.claude/docker/Dockerfile"}}'
   ACCOUNT: '{{.ACCOUNT | default "root"}}'
-  SLUG:
+  PARENT_PATH:
     sh: |
       pwsh -NoProfile -Command "
         \$parent = (Resolve-Path '{{.ROOT_DIR}}/..').Path
-        \$slug = \$parent -replace '^([A-Za-z]):', '/\$1' -replace '\\\\', '/'
+        Write-Output \$parent.ToLower()
+      "
+  SLUG:
+    sh: |
+      pwsh -NoProfile -Command "
+        \$slug = '{{.PARENT_PATH}}' -replace '^([A-Za-z]):', '/\$1' -replace '\\\\', '/'
         Write-Output \$slug.ToLower()
       "
 
 env:
+  PARENT_PATH: "{{.PARENT_PATH}}"
   SLUG: "{{.SLUG}}"
 
 tasks:
