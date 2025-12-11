@@ -176,6 +176,16 @@ RUN \
   ln -s /usr/local/share/chrome/chrome-headless-shell/linux-*/chrome-headless-shell-linux64/chrome-headless-shell /usr/local/bin/chrome-headless-shell && \
   chrome-headless-shell --version
 
+# install playwright with chromium
+ENV PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright
+RUN \
+  npm install -g playwright && \
+  npx playwright install chromium --with-deps && \
+  npx playwright install-deps chromium && \
+  uv pip install --system playwright && \
+  python -m playwright install chromium && \
+  chmod -R 755 ${PLAYWRIGHT_BROWSERS_PATH}
+
 # install jdk and maven
 ARG jdkVersion
 ENV JDK_VERSION=${jdkVersion}
