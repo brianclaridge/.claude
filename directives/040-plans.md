@@ -4,6 +4,14 @@
 
 **IMPORTANT:** `{CWD}` refers to Claude Code's current working directory (the directory where the session was started), NOT the directory of the project being edited. For example, if Claude Code was started in `/workspace/projects/` but you are editing files in `/workspace/.claude/hooks/logger/`, plans go in `/workspace/projects/plans/`.
 
+**SUBMODULE EXCEPTION:** When working on features, bugs, or improvements within the `.claude/` submodule itself:
+
+1. Plans go to `.claude/plans/` (within the submodule), NOT `{CWD}/plans/`
+2. Plans MUST be committed and pushed to the `.claude` repo
+3. This ensures plan history is preserved with the submodule's version control
+
+Detection: If the primary files being modified are within `.claude/` (agents, skills, hooks, directives, etc.), use `.claude/plans/` as the target directory.
+
 This applies whether or not the user explicitly asks for a plan. The plan should be created BEFORE the work. Once the plan is written, ask the user permission to proceed. The plan should include the contents of your TODO list. Ensure the user knows you're doing this.
 
 **PLAN MODE INTEGRATION:** When ExitPlanMode is invoked during plan mode:
