@@ -25,6 +25,25 @@ tasks:
       - pwsh -NoProfile -File .claude/scripts/update-submodule.ps1 -Message "{{.MSG}}" -Branch "{{.BRANCH}}"
     silent: true
 
+  claude:record:
+    desc: Record video of a URL
+    vars:
+      URL: '{{.URL}}'
+      DURATION: '{{.DURATION | default "10"}}'
+      OUTPUT: '{{.OUTPUT | default ""}}'
+    cmds:
+      - uv run --directory .claude/skills/playwright-automation python scripts/video_recorder.py "{{.URL}}" --duration {{.DURATION}} {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
+    silent: true
+
+  claude:screenshot:
+    desc: Take screenshot of a URL
+    vars:
+      URL: '{{.URL}}'
+      OUTPUT: '{{.OUTPUT | default ""}}'
+    cmds:
+      - uv run --directory .claude/skills/playwright-automation python scripts/screenshot.py "{{.URL}}" {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
+    silent: true
+
   claude:claude:
     aliases:
       - claude
