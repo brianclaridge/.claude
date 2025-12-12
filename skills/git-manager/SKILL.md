@@ -114,9 +114,10 @@ Use AskUserQuestion:
 
 ```json
 {
-  "question": "What would you like to plan next?",
-  "header": "Next Plan",
+  "question": "What would you like to do next?",
+  "header": "Next",
   "options": [
+    {"label": "Done for now", "description": "Exit without further planning"},
     {"label": "Plan next feature", "description": "Define new functionality to build"},
     {"label": "Plan bug fix", "description": "Identify and fix an issue"},
     {"label": "Plan refactoring", "description": "Improve existing code structure"},
@@ -126,16 +127,15 @@ Use AskUserQuestion:
 }
 ```
 
-**After ANY selection:** ALWAYS invoke EnterPlanMode to transition user back to planning workflow.
-
 | Selection | Action |
 |-----------|--------|
+| Done for now | Exit skill, return control to user |
 | Plan next feature | Invoke EnterPlanMode |
 | Plan bug fix | Invoke EnterPlanMode |
 | Plan refactoring | Invoke EnterPlanMode |
 | Plan documentation | Invoke EnterPlanMode |
 
-**Important:** ALL options invoke EnterPlanMode. There is no escape hatch - plan mode is mandatory after git operations.
+**Important:** Only invoke EnterPlanMode if user selects a planning option. "Done for now" exits without entering plan mode.
 
 ## Safety Rules
 
@@ -213,11 +213,10 @@ Claude: Committed! Push to origin/feature/auth?
 User: [selects Yes]
 
 Claude: Changes pushed to origin/feature/auth.
-        What would you like to plan next?
-[AskUserQuestion: Plan feature | Plan bug fix | Plan refactor | Plan docs]
+        What would you like to do next?
+[AskUserQuestion: Done for now | Plan feature | Plan bug fix | Plan refactor | Plan docs]
 
-User: [selects "Plan bug fix"]
+User: [selects "Done for now"]
 
-Claude: Transitioning to plan mode for bug fix...
-[Invokes EnterPlanMode]
+Claude: Commit complete. Ready for your next request.
 ```
