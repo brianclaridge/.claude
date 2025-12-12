@@ -27,24 +27,22 @@ tasks:
     silent: true
 
   claude:update:
-    desc: Update .claude submodule and commit the change
+    desc: Commit and sync .claude submodule changes
     vars:
-      MSG: '{{.MSG | default "Update .claude submodule"}}'
+      MSG: '{{.MSG | default "chore: update .claude"}}'
+      BRANCH: '{{.BRANCH | default "main"}}'
+      GIT_DIR:
+        sh: '[ -d .claude ] && echo ".claude" || echo "."'
     preconditions:
       - sh: |
-          git -C .claude fetch --all -q
-          git -C .claude status | grep -q "Your branch is behind" || [ -n "$(git -C .claude status --porcelain)" ]
-        msg: ".claude submodule is already up to date and has no local changes"
+          git -C {{.GIT_DIR}} fetch --all -q
+          git -C {{.GIT_DIR}} status | grep -q "Your branch is behind" || [ -n "$(git -C {{.GIT_DIR}} status --porcelain)" ]
+        msg: "Submodule is already up to date and has no local changes"
     cmds:
-      # Commit any local changes in the submodule first
-      - git -C .claude add --all
-      - git -C .claude diff --cached --quiet || git -C .claude commit -m "{{.MSG}}"
-      - git -C .claude push
-      # Now pull updates and commit submodule reference
-      - git -C .claude pull origin {{.BRANCH | default "main"}}
-      - git add .claude
-      - git diff --cached --quiet .claude || git commit -m "{{.MSG}}"
-      - git push
+      - git -C {{.GIT_DIR}} add --all
+      - git -C {{.GIT_DIR}} diff --cached --quiet || git -C {{.GIT_DIR}} commit -m "{{.MSG}}"
+      - git -C {{.GIT_DIR}} push
+      - git -C {{.GIT_DIR}} pull origin {{.BRANCH}}
     silent: true
 
   claude:claude:
