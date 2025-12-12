@@ -173,7 +173,7 @@ tasks:
     silent: true
 
   host:git:fetch:
-    desc: fetches and pulls latest
+    desc: Update .claude submodule from origin
     aliases:
       - pull
       - fetch
@@ -181,8 +181,7 @@ tasks:
     deps:
       - ensure-host
     cmds:
-      - git fetch
-      - git pull
+      - git -C .claude fetch origin && git -C .claude reset --hard origin/main
     silent: true
 
   host:git:trivial-update:
