@@ -1,0 +1,13 @@
+[project]
+name = "project-metadata-builder"
+version = "0.1.0"
+description = "Build comprehensive project metadata for Claude Code"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    "loguru>=0.7.0",
+    "gitpython>=3.1.0",
+]
+
+[dependency-groups]
+dev = []

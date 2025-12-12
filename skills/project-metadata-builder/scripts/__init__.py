@@ -1,0 +1,3 @@
+"""
+Project metadata builder scripts.
+"""

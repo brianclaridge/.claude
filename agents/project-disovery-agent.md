@@ -83,3 +83,13 @@ Provide a structured FUNCTIONAL report focused on WHAT the project does:
 - Meaningless numeric metrics
 
 Keep the report focused on functional understanding of what the project accomplishes.
+
+## Post-Analysis
+
+After generating the functional report, update the global project registry:
+
+1. Invoke the `project-metadata-builder` skill
+2. Pass the analyzed project path to the skill
+3. The skill will update `~/.claude/projects.yml` with comprehensive metadata
+
+This ensures all analyzed projects are tracked in the central registry for dashboard and context purposes.

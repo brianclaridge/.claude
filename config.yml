@@ -1,0 +1,20 @@
+# Global configuration for Claude Code custom features
+# Location: /workspace/.claude/config.yml (project root)
+
+project_metadata:
+  # Session history settings
+  session_history_limit: 10          # Keep last N sessions per project
+
+  # Auto-update settings
+  auto_update_on_session: true       # Update on session start
+  periodic_refresh_hours: 24         # Periodic refresh interval (0 = disabled)
+
+  # Threshold settings
+  stale_project_days: 30             # Mark project stale after N days inactive
+  activity_threshold_commits: 5      # Minimum commits for "active" status
+
+  # Paths
+  projects_file: ~/.claude/projects.yml
+
+  # Logging
+  log_level: INFO
