@@ -3,27 +3,17 @@ version: '3'
 tasks:
 
   claude:trivial:
-    desc: creates a commit with a '{{.MSG}}' message and pushes it
+    desc: Create a trivial commit and push
     vars:
       MSG: '{{.MSG | default "(chore) trivial update"}}'
-    preconditions:
-      - sh: '[ -n "$(git status --porcelain)" ]'
-        msg: "No changes to commit"
     cmds:
-      - git status
-      - git add --all
-      - git commit -m '{{.MSG}}'
-      - git push
-      - git status
+      - pwsh -NoProfile -File .claude/scripts/trivial-commit.ps1 -Message "{{.MSG}}"
     silent: true
 
   claude:fetch:
+    desc: Fetch and reset .claude submodule to origin/main
     cmds:
-      - git config --global fetch.recurseSubmodules true
-      - git config --global submodule.recurse true
-      - git submodule sync --recursive
-      - git -C .claude fetch origin && git -C .claude reset --hard origin/main
-      - git -C .claude clean -fd
+      - pwsh -NoProfile -File .claude/scripts/fetch-submodule.ps1
     silent: true
 
   claude:update:
@@ -31,18 +21,8 @@ tasks:
     vars:
       MSG: '{{.MSG | default "chore: update .claude"}}'
       BRANCH: '{{.BRANCH | default "main"}}'
-      GIT_DIR:
-        sh: '[ -d .claude ] && echo ".claude" || echo "."'
-    preconditions:
-      - sh: |
-          git -C {{.GIT_DIR}} fetch --all -q
-          git -C {{.GIT_DIR}} status | grep -q "Your branch is behind" || [ -n "$(git -C {{.GIT_DIR}} status --porcelain)" ]
-        msg: "Submodule is already up to date and has no local changes"
     cmds:
-      - git -C {{.GIT_DIR}} add --all
-      - git -C {{.GIT_DIR}} diff --cached --quiet || git -C {{.GIT_DIR}} commit -m "{{.MSG}}"
-      - git -C {{.GIT_DIR}} push
-      - git -C {{.GIT_DIR}} pull origin {{.BRANCH}}
+      - pwsh -NoProfile -File .claude/scripts/update-submodule.ps1 -Message "{{.MSG}}" -Branch "{{.BRANCH}}"
     silent: true
 
   claude:claude:
