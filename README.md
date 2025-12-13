@@ -4,6 +4,7 @@
 
 ## Software Requirements
 
+- [Git](https://git-scm.com/downloads)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [PowerShell 7+](https://github.com/PowerShell/PowerShell) (`pwsh`)
 - [Task](https://taskfile.dev/) (Taskfile runner)
@@ -23,6 +24,43 @@ cd .claude/
 task claude
 ```
 
+## Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/hello` | Output Hello World message |
+| `/analyze` | Project analysis and codebase exploration |
+| `/cloud-auth` | Authenticate to cloud providers (AWS, GCP) |
+| `/playwright` | Browser automation (screenshots, video, scraping) |
+| `/build-agent` | Create a new Claude Code agent |
+| `/build-skill` | Create a new Claude Code skill |
+| `/gitops` | Git commit workflow with branch/push management |
+| `/context` | Gather session context (git status, environment) |
+| `/metadata` | Update project metadata registry |
+
+## Agents
+
+| Agent | Description | Skills Used |
+|-------|-------------|-------------|
+| hello-world | Simple Hello World output | — |
+| project-analysis | Comprehensive codebase analysis | session-context, project-metadata-builder |
+| cloud-auth | Cloud provider authentication | aws-login, gcp-login |
+| browser-automation | Browser tasks (screenshots, video, scraping) | playwright-automation |
+| agent-builder | Create new agents | — |
+| skill-builder | Create new skills | — |
+| gitops | Git commit workflow | git-manager |
+
+## Skills
+
+| Skill | Description | Trigger |
+|-------|-------------|---------|
+| git-manager | Interactive git commit workflow | After TODOs complete, "commit changes" |
+| playwright-automation | Browser automation scripts | "record video", "screenshot", "scrape" |
+| aws-login | AWS SSO authentication | "login to AWS", cloud-auth agent |
+| gcp-login | GCP authentication | "login to GCP", cloud-auth agent |
+| session-context | Gather session context | project-analysis agent |
+| project-metadata-builder | Update project registry | project-analysis agent |
+
 ## [OPTIONAL] Add as submodule
 
 ```bash
@@ -37,7 +75,7 @@ git submodule update --init --recursive --remote
 # run
 task claude:fetch
 
-# or 
+# or
 git submodule update --init --remote --merge .claude
 
 # or
@@ -70,22 +108,43 @@ git commit -m "Remove .claude submodule"
     │   └── playwright/             # Screenshots, videos, traces
     ├── .vscode/                    # VS Code workspace settings
     ├── agents/                     # Specialized sub-agents
+    │   ├── agent-builder.md
+    │   ├── browser-automation.md
+    │   ├── cloud-auth.md
+    │   ├── gitops.md
+    │   ├── hello-world.md
+    │   ├── project-analysis.md
+    │   └── skill-builder.md
     ├── assets/                     # Static assets (images, etc.)
-    ├── aws/                        # AWS SSO utilities
+    ├── commands/                   # Slash commands
+    │   ├── analyze.md
+    │   ├── build-agent.md
+    │   ├── build-skill.md
+    │   ├── cloud-auth.md
+    │   ├── context.md
+    │   ├── gitops.md
+    │   ├── hello.md
+    │   ├── metadata.md
+    │   └── playwright.md
     ├── config/                     # confd templates and conf.d
     ├── docker/                     # Dockerfile, entrypoints, assets
     ├── hooks/                      # Python event handlers
-    │   ├── rules_loader/           # Reinforces rules on prompts
+    │   ├── cloud_auth_prompt/      # Cloud authentication prompts
     │   ├── logger/                 # Logs all hook events
-    │   └── cloud_auth_prompt/      # Cloud authentication prompts
-    ├── includes/                   # Shared Taskfile includes
+    │   ├── playwright_healer/      # Playwright error recovery
+    │   ├── rules_loader/           # Reinforces rules on prompts
+    │   └── session_context_injector/
     ├── plans/                      # Implementation plans
     ├── prompts/                    # Prompt templates
     ├── rules/                      # Behavioral rules (000-080)
     ├── scripts/                    # PowerShell host utilities
     ├── skills/                     # Model-invoked capabilities
+    │   ├── aws-login/              # AWS SSO authentication
+    │   ├── gcp-login/              # GCP authentication
     │   ├── git-manager/            # Git commit workflow
-    │   └── playwright-automation/  # Browser automation
+    │   ├── playwright-automation/  # Browser automation
+    │   ├── project-metadata-builder/
+    │   └── session-context/        # Session context gathering
     ├── config.yml                  # Global feature configuration
     ├── settings.json               # Claude Code settings
     ├── docker-compose.yml          # Container configuration
