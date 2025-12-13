@@ -7,7 +7,7 @@
 ```bash
 # clone and ignore
 cd /path/to/your/project
-git clone git@github.com:brianclaridge/.claude.git
+git clone https://github.com/brianclaridge/.claude.git
 
 # add .claude/ to your .gitignore
 echo ".claude" >> .gitignore
@@ -17,7 +17,7 @@ cd .claude/
 task claude
 
 # optional, add .claude as a submodule
-git submodule add -b main git@github.com:brianclaridge/.claude.git
+git submodule add -b main https://github.com/brianclaridge/.claude.git
 git submodule update --init --recursive --remote
 ```
 
