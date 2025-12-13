@@ -191,6 +191,8 @@ If yes: `git push -u origin {branch}` (use -u for new branches)
 
 ### Step 7: Workflow Completion
 
+**CRITICAL:** After presenting next action options and receiving user selection, you MUST invoke `EnterPlanMode`. This is mandatory for ALL selections - do not skip this step.
+
 After commit is complete (whether pushed or kept local), present next action options.
 
 Use AskUserQuestion:
