@@ -23,12 +23,12 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Any
 
-from loguru import logger
+# Add parent directories to path for imports
+aws_dir = Path(__file__).parent.parent
+if str(aws_dir) not in sys.path:
+    sys.path.insert(0, str(aws_dir))
 
-# Add scripts directory to path
-scripts_dir = Path(__file__).parent
-if str(scripts_dir) not in sys.path:
-    sys.path.insert(0, str(scripts_dir))
+from loguru import logger
 
 # Cache configuration
 CACHE_TTL_HOURS = 24
@@ -39,9 +39,9 @@ def get_cache_path() -> Path:
     Get path to accounts cache file.
 
     Returns:
-        Path: Path to .data/accounts_cache.json relative to aws.yml location
+        Path: Path to .data/accounts_cache.json relative to .claude directory
     """
-    from config_reader import get_config_path
+    from core.config_reader import get_config_path
 
     config_dir = get_config_path().parent
     return config_dir / ".data" / "accounts_cache.json"
@@ -115,7 +115,7 @@ def discover_accounts_from_org(profile_name: str = "root") -> list[dict[str, Any
         Exception: If Organizations API call fails
     """
 
-    from auth_helper import get_aws_session
+    from core.auth_helper import get_aws_session
 
     logger.info("Discovering accounts from AWS Organizations...")
 
@@ -170,7 +170,7 @@ def enrich_accounts_with_aliases(accounts: list[dict[str, Any]]) -> list[dict[st
     Returns:
         list: Accounts with 'alias' field added where configured
     """
-    from config_reader import list_all_accounts
+    from core.config_reader import list_all_accounts
 
     configured = {str(acc['account_number']): acc['alias'] for acc in list_all_accounts()}
 
@@ -246,7 +246,7 @@ def show_account_menu(accounts: list[dict[str, Any]]) -> dict[str, Any] | None:
 
 
 if __name__ == "__main__":
-    from logging_config import setup_logging
+    from core.logging_config import setup_logging
 
     setup_logging("account_discovery")
 

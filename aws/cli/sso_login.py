@@ -21,15 +21,16 @@ import sys
 from pathlib import Path
 import subprocess
 
-# Add scripts directory to path
-scripts_dir = Path(__file__).parent
-if str(scripts_dir) not in sys.path:
-    sys.path.insert(0, str(scripts_dir))
+# Add parent directories to path for imports
+aws_dir = Path(__file__).parent.parent
+if str(aws_dir) not in sys.path:
+    sys.path.insert(0, str(aws_dir))
 
-from logging_config import setup_logging
-from config_reader import get_account_by_alias, get_profile_name, get_sso_start_url, list_all_accounts
-from aws_config_helper import ensure_profile_for_account
 from loguru import logger
+
+from core.logging_config import setup_logging
+from core.config_reader import get_account_by_alias, get_profile_name, get_sso_start_url, list_all_accounts
+from config.aws_config_helper import ensure_profile_for_account
 
 
 def find_alias_for_account_id(account_id: str) -> str | None:
@@ -104,7 +105,7 @@ def main() -> int:
 
     # If no account specified, show interactive menu
     if not args.account_alias:
-        from account_discovery import get_org_accounts, show_account_menu
+        from discovery.account_discovery import get_org_accounts, show_account_menu
 
         try:
             logger.info("No account specified - launching interactive selection...")
@@ -177,8 +178,8 @@ def main() -> int:
         # Ensure AWS profile exists (auto-create if missing)
         if dynamic_account:
             # For dynamic accounts, create profile directly
-            from aws_config_helper import ensure_profile_exists, set_default_profile
-            from config_reader import get_default_region
+            from config.aws_config_helper import ensure_profile_exists, set_default_profile
+            from core.config_reader import get_default_region
 
             region = get_default_region()
             ensure_profile_exists(account_alias, account, region, sso_url)

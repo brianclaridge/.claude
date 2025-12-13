@@ -21,17 +21,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# Add parent directories to path for imports
+aws_dir = Path(__file__).parent.parent
+if str(aws_dir) not in sys.path:
+    sys.path.insert(0, str(aws_dir))
+
 import yaml
 from loguru import logger
 
-# Add scripts directory to path
-scripts_dir = Path(__file__).parent
-if str(scripts_dir) not in sys.path:
-    sys.path.insert(0, str(scripts_dir))
-
-from auth_helper import get_aws_session
-from config_reader import get_config_path
-from logging_config import setup_logging
+from core.auth_helper import get_aws_session
+from core.config_reader import get_config_path
+from core.logging_config import setup_logging
 
 
 @dataclass

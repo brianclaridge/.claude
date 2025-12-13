@@ -3,14 +3,14 @@
 version: '3'
 
 vars:
-  LOG_DIR: .data/logs
-  AWS_SCRIPTS_PATH: /workspace/.claude/aws
-  DOCKERFILE_PATH: '{{.DOCKERFILE_PATH | default "/workspace/.claude/docker/Dockerfile"}}'
-  ACCOUNT: '{{.ACCOUNT | default "root"}}'
+  LOG_DIR: "{{.TASKFILE_DIR}}/.data/logs"
+  AWS_SCRIPTS_PATH: "{{.TASKFILE_DIR}}/.claude/aws"
+  DOCKERFILE_PATH: '{{.DOCKERFILE_PATH | default "{{.TASKFILE_DIR}}/.claude/docker/Dockerfile"}}'
+  AWS_ACCOUNT: '{{.AWS_ACCOUNT | default "root"}}'
   PARENT_PATH:
     sh: |
       pwsh -NoProfile -Command "
-        \$parent = (Resolve-Path '{{.ROOT_DIR}}/..').Path
+        \$parent = (Resolve-Path '{{.TASKFILE_DIR}}/..').Path
         Write-Output \$parent.ToLower()
       "
   SLUG:
@@ -29,6 +29,14 @@ tasks:
     aliases:
       - default
     cmds:
+      - cmd: "echo 'TASKFILE_DIR: {{.TASKFILE_DIR}}'"
+      - cmd: "echo 'LOG_DIR: {{.LOG_DIR}}'"
+      - cmd: "echo 'AWS_SCRIPTS_PATH: {{.AWS_SCRIPTS_PATH}}'"
+      - cmd: "echo 'DOCKERFILE_PATH: {{.DOCKERFILE_PATH}}'"
+      - cmd: "echo 'AWS_ACCOUNT: {{.AWS_ACCOUNT}}'"
+      - cmd: "echo 'PARENT_PATH: {{.PARENT_PATH}}'"
+      - cmd: "echo 'SLUG: {{.SLUG}}'"
+      - cmd: "echo '---'"
       - cmd: task --list-all
     silent: true
 
@@ -47,11 +55,12 @@ tasks:
       - claude
     deps:
       - claude:ensure-env
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location "/workspace/${env:CLAUDE_PROJECT_SLUG}"
+          Set-Location "{{.TASKFILE_DIR}}/${env:CLAUDE_PROJECT_SLUG}"
           claude update
           claude --continue 2>\$null || claude
         } else {
@@ -66,15 +75,19 @@ tasks:
       - build
     deps:
       - claude:ensure-env
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose build
     silent: true
 
   claude:shell:
     desc: Runs the claude container in shell mode
+    aliases:
+      - shell
     deps:
       - claude:ensure-env
       - claude:build
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose run --remove-orphans claude shell
     silent: true
@@ -85,16 +98,18 @@ tasks:
     desc: Create a trivial commit and push
     vars:
       MSG: '{{.MSG | default "(chore) trivial update"}}'
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - pwsh -NoProfile -File .claude/scripts/trivial-commit.ps1 -Message "{{.MSG}}"
+      - pwsh -NoProfile -File scripts/trivial-commit.ps1 -Message "{{.MSG}}"
     silent: true
 
   claude:fetch:
     aliases:
       - fetch
     desc: Fetch and reset .claude submodule to origin/main
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - pwsh -NoProfile -File .claude/scripts/fetch-submodule.ps1
+      - pwsh -NoProfile -File .scripts/fetch-submodule.ps1
     silent: true
 
   claude:update:
@@ -104,6 +119,7 @@ tasks:
     vars:
       MSG: '{{.MSG | default "chore: update .claude"}}'
       BRANCH: '{{.BRANCH | default "main"}}'
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - pwsh -NoProfile -File .claude/scripts/update-submodule.ps1 -Message "{{.MSG}}" -Branch "{{.BRANCH}}"
     silent: true
@@ -114,6 +130,7 @@ tasks:
       - config
     deps:
       - claude:ensure-env
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose config claude
     silent: true
@@ -125,6 +142,7 @@ tasks:
     preconditions:
       - sh: test ! -f /.dockerenv
         msg: "This task can only be run on the host"
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - echo "Running on the host"
     silent: true
@@ -137,6 +155,7 @@ tasks:
     vars:
       TARGET_PATH: '.data/logs'
     desc: Remove the {{.TARGET_PATH}} folder from the current directory
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - cmd: rm -rf {{.TARGET_PATH}}
         platforms: [linux, darwin]
@@ -154,6 +173,7 @@ tasks:
       TARGET_PATH: '.data/'
     desc: Remove the {{.TARGET_PATH}} folder from the current directory
     prompt: This will delete the {{.TARGET_PATH}} folder. Continue?
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - cmd: rm -rf {{.TARGET_PATH}}
         platforms: [linux, darwin]
@@ -166,6 +186,7 @@ tasks:
     desc: Kills and removes all running containers on the host
     deps:
       - claude:ensure-env
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker kill $(docker ps -q) 2>/dev/null || true
       - docker rm -f $(docker ps -aq) 2>/dev/null || true
@@ -179,6 +200,7 @@ tasks:
     deps:
       - claude:ensure-env
       - claude:clean
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - cmd: docker volume rm $(docker volume ls -q) 2>/dev/null || true
         platforms: [linux, darwin, windows]
@@ -192,6 +214,7 @@ tasks:
     deps:
       - claude:ensure-env
       - claude:purge
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - cmd: docker system prune -f -a --volumes 2>/dev/null || true
         platforms: [linux, darwin, windows]
@@ -223,8 +246,9 @@ tasks:
         msg: "ACCOUNT is required. Usage: task sso:ensure ACCOUNT=<alias>"
     vars:
       _ACCOUNT: '{{.ACCOUNT | default "manager"}}'
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - uv run {{.AWS_SCRIPTS_PATH}}/sso_login.py {{.ACCOUNT}} {{if .FORCE}}--force{{end}}
+      - uv run {{.AWS_SCRIPTS_PATH}}/cli/sso_login.py {{.ACCOUNT}} {{if .FORCE}}--force{{end}}
     silent: true
 
   aws-check:
@@ -233,8 +257,9 @@ tasks:
       - check
     deps:
       - claude:ensure-docker
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - uv run {{.AWS_SCRIPTS_PATH}}/sso_check.py {{.ACCOUNT}}
+      - uv run {{.AWS_SCRIPTS_PATH}}/cli/sso_check.py {{.ACCOUNT}}
     preconditions:
       - sh: '[ -n "{{.ACCOUNT}}" ]'
         msg: "ACCOUNT is required. Usage: task sso:check ACCOUNT=<alias>"
@@ -246,8 +271,9 @@ tasks:
     desc: "Ensure SSO credentials valid - silent mode for automation"
     deps:
       - claude:ensure-docker
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - uv run {{.AWS_SCRIPTS_PATH}}/sso_ensure.py {{.ACCOUNT}}
+      - uv run {{.AWS_SCRIPTS_PATH}}/cli/sso_check.py --quiet {{.ACCOUNT}}
     preconditions:
       - sh: '[ -n "{{.ACCOUNT}}" ]'
         msg: "ACCOUNT is required. Usage: task sso:ensure ACCOUNT=<alias>"
@@ -259,6 +285,7 @@ tasks:
       - list-accounts
     deps:
       - claude:ensure-docker
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - |
         echo "Configured accounts:"
@@ -269,13 +296,14 @@ tasks:
     desc: "Sync aws.yml with AWS Organizations hierarchy"
     deps:
       - claude:ensure-docker
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - |
-        uv run {{.AWS_SCRIPTS_PATH}}/sso_ensure.py root || {
+        uv run {{.AWS_SCRIPTS_PATH}}/cli/sso_check.py --quiet root || {
           echo "Root account credentials required. Run: task login ACCOUNT=root"
           exit 1
         }
-      - uv run {{.AWS_SCRIPTS_PATH}}/org_sync.py {{if .DRY_RUN}}--dry-run{{end}}
+      - uv run {{.AWS_SCRIPTS_PATH}}/cli/org_sync.py {{if .DRY_RUN}}--dry-run{{end}}
     silent: true
 
   playwright:record:
@@ -284,6 +312,7 @@ tasks:
       URL: '{{.URL}}'
       DURATION: '{{.DURATION | default "10"}}'
       OUTPUT: '{{.OUTPUT | default ""}}'
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - uv run --directory .claude/skills/playwright-automation python scripts/video_recorder.py "{{.URL}}" --duration {{.DURATION}} {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
     silent: true
@@ -293,6 +322,7 @@ tasks:
     vars:
       URL: '{{.URL}}'
       OUTPUT: '{{.OUTPUT | default ""}}'
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - uv run --directory .claude/skills/playwright-automation python scripts/screenshot.py "{{.URL}}" {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
     silent: true
@@ -301,6 +331,7 @@ tasks:
     desc: uses the playwright to test recording twitch navigation
     deps:
       - claude:ensure-docker
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
       - |
         uv run --directory .claude/skills/playwright-automation \

@@ -16,19 +16,20 @@ import sys
 from pathlib import Path
 from configparser import ConfigParser
 
-# Add scripts directory to path
-scripts_dir = Path(__file__).parent
-if str(scripts_dir) not in sys.path:
-    sys.path.insert(0, str(scripts_dir))
+# Add parent directories to path for imports
+aws_dir = Path(__file__).parent.parent
+if str(aws_dir) not in sys.path:
+    sys.path.insert(0, str(aws_dir))
 
-from config_reader import (
+from loguru import logger
+
+from core.config_reader import (
     get_sso_start_url,
     get_sso_region,
     get_sso_role_name,
     get_account_region,
     get_account_by_alias,
 )
-from loguru import logger
 
 
 def get_aws_config_path() -> Path:
@@ -197,7 +198,7 @@ def ensure_profile_for_account(account_alias: str) -> None:
 
 
 if __name__ == "__main__":
-    from logging_config import setup_logging
+    from core.logging_config import setup_logging
     setup_logging("aws_config_helper")
 
     if len(sys.argv) < 2:

@@ -5,13 +5,14 @@ from datetime import datetime
 from loguru import logger
 import sys
 
-from config_reader import get_log_path
+from .config_reader import get_log_path
 
 
 def setup_logging(
     script_name: str,
     log_dir: str | Path | None = None,
     subdirectory: str | None = "aws_sso",
+    level: str = "INFO",
 ) -> None:
     """
     Configure loguru for consistent logging across all scripts.
@@ -37,11 +38,11 @@ def setup_logging(
     # Remove default handler
     logger.remove()
 
-    # Console handler (INFO and above, simple format)
+    # Console handler (configurable level, simple format)
     logger.add(
         sys.stderr,
         format="<level>{message}</level>",
-        level="INFO",
+        level=level,
         colorize=True
     )
 

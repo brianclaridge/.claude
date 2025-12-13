@@ -10,34 +10,47 @@ import yaml
 
 def get_config_path() -> Path:
     """
-    Get path to aws.yml with fallback lookup order.
+    Get path to .aws.yml configuration file.
 
-    Lookup order:
-    1. ../aws.yml (parent of project root - for submodule usage)
-    2. ./aws.yml (project root - for standalone usage)
+    Location: .claude/.aws.yml (gitignored, user-specific)
 
     Returns:
-        Path: Path to aws.yml
+        Path: Path to .aws.yml
 
     Raises:
-        FileNotFoundError: If aws.yml not found in either location
+        FileNotFoundError: If .aws.yml not found
     """
-    scripts_dir = Path(__file__).parent
-    project_root = scripts_dir.parent
+    # .claude/.aws.yml is in the parent of the aws/ directory
+    aws_dir = Path(__file__).parent
+    if aws_dir.name == "core":
+        # Called from core/config_reader.py
+        claude_dir = aws_dir.parent.parent
+    else:
+        # Called from aws/config_reader.py (during migration)
+        claude_dir = aws_dir.parent
 
-    # Priority 1: Parent directory (submodule usage)
-    parent_config = project_root.parent / ".data" / "aws.yml"
-    if parent_config.exists():
-        return parent_config
+    config_path = claude_dir / ".aws.yml"
 
-    # Priority 2: Project root (standalone usage)
-    local_config = project_root / ".data" / "aws.yml"
-    if local_config.exists():
-        return local_config
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f".aws.yml not found at {config_path}\n"
+            "Run sso_check to set up AWS SSO configuration."
+        )
 
-    raise FileNotFoundError(
-        f"aws.yml not found. Checked:\n  - {parent_config}\n  - {local_config}"
-    )
+    return config_path
+
+
+def config_exists() -> bool:
+    """Check if .aws.yml configuration exists.
+
+    Returns:
+        True if config file exists
+    """
+    try:
+        get_config_path()
+        return True
+    except FileNotFoundError:
+        return False
 
 
 def load_config() -> dict[str, Any]:
