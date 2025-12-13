@@ -200,7 +200,7 @@ Use AskUserQuestion:
   "question": "What would you like to do next?",
   "header": "Next",
   "options": [
-    {"label": "Done for now", "description": "Exit without further planning"},
+    {"label": "Done for now", "description": "Enter plan mode for next task"},
     {"label": "Plan next feature", "description": "Define new functionality to build"},
     {"label": "Plan bug fix", "description": "Identify and fix an issue"},
     {"label": "Plan refactoring", "description": "Improve existing code structure"},
@@ -212,13 +212,13 @@ Use AskUserQuestion:
 
 | Selection | Action |
 |-----------|--------|
-| Done for now | Exit skill, return control to user |
+| Done for now | Invoke EnterPlanMode |
 | Plan next feature | Invoke EnterPlanMode |
 | Plan bug fix | Invoke EnterPlanMode |
 | Plan refactoring | Invoke EnterPlanMode |
 | Plan documentation | Invoke EnterPlanMode |
 
-**Important:** Only invoke EnterPlanMode if user selects a planning option. "Done for now" exits without entering plan mode.
+**All selections invoke EnterPlanMode.** The skill always exits to plan mode for the next task.
 
 ## Safety Rules
 
@@ -294,7 +294,8 @@ What would you like to do next?
 
 User: [selects "Done for now"]
 
-Claude: Commit complete. Ready for your next request.
+Claude: Commit complete. Entering plan mode...
+[Invokes EnterPlanMode]
 ```
 
 ### Interactive Mode Example
@@ -340,5 +341,6 @@ Claude: Changes pushed to origin/feature/auth.
 
 User: [selects "Done for now"]
 
-Claude: Commit complete. Ready for your next request.
+Claude: Commit complete. Entering plan mode...
+[Invokes EnterPlanMode]
 ```
