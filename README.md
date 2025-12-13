@@ -15,13 +15,17 @@ echo ".claude" >> .gitignore
 # start claude
 cd .claude/
 task claude
+```
 
+## [OPTIONAL] Add as submodule
+
+```bash
 # optional, add .claude as a submodule
 git submodule add -b main https://github.com/brianclaridge/.claude.git
 git submodule update --init --recursive --remote
 ```
 
-## Updating .claude Submodule
+### Updating .claude Submodule
 
 ```pwsh
 # run
@@ -39,7 +43,7 @@ git -C .claude reset --hard origin/main
 git -C .claude clean -fd
 ```
 
-## Removing .claude Submodule
+### Removing .claude Submodule
 
 ```bash
 git submodule deinit -f .claude

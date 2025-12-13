@@ -112,6 +112,16 @@ tasks:
       - pwsh -NoProfile -File scripts/fetch-submodule.ps1
     silent: true
 
+  claude:remove-submodule:
+    aliases:
+      - remove-submodule
+    desc: Completely remove .claude submodule from parent repository
+    prompt: This will permanently remove the .claude submodule. Continue?
+    dir: "{{.TASKFILE_DIR}}/.."
+    cmds:
+      - pwsh -NoProfile -File .claude/scripts/remove-submodule.ps1
+    silent: true
+
   claude:update:
     aliases:
       - update
