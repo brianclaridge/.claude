@@ -1,5 +1,5 @@
 ---
-name: skill-builder-agent
+name: skill-builder
 description: Create new Claude Code skills with complementary agents and slash commands. Use when the user wants to build a skill, add model-triggered automation, or create file-type specific capabilities. Triggers on "I want to create a new skill that does...", "build a skill for...", or "create a skill".
 tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 model: opus
@@ -109,13 +109,13 @@ Create the skill directory and files:
 
 ```bash
 # Check for existing skills to avoid name conflicts
-ls /workspace/.claude/skills/ 2>/dev/null
+ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/ 2>/dev/null
 
 # Create skill directory structure
-mkdir -p /workspace/.claude/skills/{skill-name}
+mkdir -p /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/{skill-name}
 
 # Skill locations:
-# Personal: /workspace/.claude/skills/{name}/SKILL.md
+# Personal: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/{name}/SKILL.md
 # Project:  .claude/skills/{name}/SKILL.md
 ```
 
@@ -167,7 +167,7 @@ Options:
 
 ### Phase 5: Generate Complementary Files (if accepted)
 
-**Agent Format** (`/workspace/.claude/agents/{name}.md`):
+**Agent Format** (`/workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/{name}.md`):
 ```yaml
 ---
 name: agent-name
@@ -186,7 +186,7 @@ How this agent complements the skill for complex tasks.
 Step-by-step instructions for complex analysis.
 ```
 
-**Slash Command Format** (`/workspace/.claude/commands/{name}.md`):
+**Slash Command Format** (`/workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/{name}.md`):
 ```markdown
 ---
 description: Short description for /help
@@ -208,7 +208,7 @@ Before generating any file:
 
 ```bash
 # Check for conflicts
-ls /workspace/.claude/skills/ 2>/dev/null | grep -i "proposed-name"
+ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/ 2>/dev/null | grep -i "proposed-name"
 ```
 
 ## Tool Restrictions Reference
@@ -230,9 +230,9 @@ allowed-tools: Read, Grep, Glob, Bash
 
 | Type | Location | Invocation | Best For |
 |------|----------|------------|----------|
-| **Skill** | `/workspace/.claude/skills/` | Model-triggered | File-type automation, progressive loading |
-| **Agent** | `/workspace/.claude/agents/` | Explicit Task tool | Complex delegated analysis, subprocess isolation |
-| **Command** | `/workspace/.claude/commands/` | User types `/name` | Quick shortcuts, template expansion |
+| **Skill** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/` | Model-triggered | File-type automation, progressive loading |
+| **Agent** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/` | Explicit Task tool | Complex delegated analysis, subprocess isolation |
+| **Command** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/` | User types `/name` | Quick shortcuts, template expansion |
 
 ## Example Interaction
 
@@ -256,7 +256,7 @@ Skill Creator:
 - Description: Format Python docstrings to Google style. Auto-activates when editing .py files and user mentions docstrings, documentation, or formatting.
 - Tools: Read, Edit, Glob (minimal for task)
 
-Creating: /workspace/.claude/skills/docstring-formatter/SKILL.md"
+Creating: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/docstring-formatter/SKILL.md"
 
 [Creates skill file]
 
@@ -273,8 +273,8 @@ User: [selects No]
 
 Skill Creator:
 "Created:
-- /workspace/.claude/skills/docstring-formatter/SKILL.md (main skill)
-- /workspace/.claude/agents/docstring-converter.md (bulk conversion agent)
+- /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/docstring-formatter/SKILL.md (main skill)
+- /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/docstring-converter.md (bulk conversion agent)
 
 To use:
 1. Skill: Auto-activates when working with Python files and mentioning docstrings
@@ -298,9 +298,9 @@ After completion, provide summary:
 
 | File | Type | Path |
 |------|------|------|
-| {skill-name} | Skill | /workspace/.claude/skills/{name}/SKILL.md |
-| {agent-name} | Agent | /workspace/.claude/agents/{name}.md |
-| {command-name} | Command | /workspace/.claude/commands/{name}.md |
+| {skill-name} | Skill | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/{name}/SKILL.md |
+| {agent-name} | Agent | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/{name}.md |
+| {command-name} | Command | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/{name}.md |
 
 ## Usage
 

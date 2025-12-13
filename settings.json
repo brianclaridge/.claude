@@ -42,6 +42,10 @@
           {
             "type": "command",
             "command": "uv run --directory /workspace/.claude/hooks/cloud_auth_prompt python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/session_context_injector python -m src"
           }
         ]
       }

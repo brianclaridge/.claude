@@ -1,5 +1,5 @@
 ---
-name: cloud-auth-agent
+name: cloud-auth
 description: Orchestrate cloud provider authentication. Use when user says "cloud auth", "login to cloud", "/cloud-auth", or at session start when prompted. Presents multi-select provider choice and invokes appropriate login skills.
 tools: Bash, Read, Glob, Grep, AskUserQuestion
 model: haiku
@@ -23,7 +23,7 @@ Orchestrate authentication to multiple cloud providers (AWS, GCP) with interacti
 Check enabled providers from config.yml:
 
 ```bash
-cat /workspace/.claude/config.yml | grep -A 20 "cloud_providers:"
+cat /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config.yml | grep -A 20 "cloud_providers:"
 ```
 
 ### Step 2: Provider Selection

@@ -52,3 +52,25 @@ rules_loader:
       reinforce: true                # Agent usage reminder
     080-ask-user-questions:
       reinforce: true                # UX consistency
+
+# Session context settings (for session_context_injector hook and session-context skill)
+session_context:
+  # Automatically invoke project-analysis agent on session start
+  auto_invoke_agent: true
+
+  # Analysis mode per session type
+  # full = comprehensive analysis with all sections
+  # abbreviated = focused on recent changes and pending work
+  session_behavior:
+    startup: full           # New session: full analysis
+    resume: abbreviated     # --continue/--resume: abbreviated
+    clear: full             # After /clear: full analysis
+    compact: abbreviated    # After context compaction: abbreviated
+
+  # Git context gathering settings
+  git:
+    commit_history_limit: 5   # Number of recent commits to include
+
+  # Plans gathering settings
+  plans:
+    recent_limit: 3           # Number of recent plans to review

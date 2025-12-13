@@ -16,10 +16,10 @@ Specialized agent for web browser automation using Playwright MCP tools and Pyth
 
 ## Output Directories
 
-- Screenshots: `/workspace/.claude/.data/playwright/screencaps/`
-- Videos: `/workspace/.claude/.data/playwright/videos/`
-- PDFs: `/workspace/.claude/.data/playwright/pdfs/`
-- Data: `/workspace/.claude/.data/playwright/data/`
+- Screenshots: `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/screencaps/`
+- Videos: `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/videos/`
+- PDFs: `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/pdfs/`
+- Data: `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/data/`
 
 ## Approach Selection
 
@@ -87,14 +87,14 @@ For Python scripts:
 ```
 User: Take a screenshot of https://example.com
 Action: Use browser_screenshot MCP tool
-Output: /workspace/.claude/.data/playwright/screencaps/example-com-{timestamp}.png
+Output: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/screencaps/example-com-{timestamp}.png
 ```
 
 ### Video Recording
 ```
 User: Record a video of navigating example.com for 10 seconds
 Action: Use Python script with video recording context
-Output: /workspace/.claude/.data/playwright/videos/example-{timestamp}.webm
+Output: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/videos/example-{timestamp}.webm
 ```
 
 ### Form Automation
@@ -108,7 +108,7 @@ Output: Screenshot of completed form
 ```
 User: Extract all product prices from example-shop.com
 Action: Use Python script with data extraction
-Output: /workspace/.claude/.data/playwright/data/prices-{timestamp}.json
+Output: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/data/prices-{timestamp}.json
 ```
 
 ## Error Handling
