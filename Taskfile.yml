@@ -367,3 +367,39 @@ tasks:
         uv run --directory {{.TASKFILE_DIR}}/skills/playwright-automation \
           python scripts/test_twitch_navigation.py
     silent: true
+
+  rules-loader:test:
+    desc: Run rules_loader hook test suite
+    aliases:
+      - rl:test
+    dir: "{{.TASKFILE_DIR}}/hooks/rules_loader"
+    cmds:
+      - uv run --extra test pytest -v
+    silent: false
+
+  rules-loader:test-cov:
+    desc: Run rules_loader tests with coverage report
+    aliases:
+      - rl:test-cov
+    dir: "{{.TASKFILE_DIR}}/hooks/rules_loader"
+    cmds:
+      - uv run --extra test pytest --cov=src --cov-report=term-missing
+    silent: false
+
+  rules-loader:test-unit:
+    desc: Run only rules_loader unit tests
+    aliases:
+      - rl:test-unit
+    dir: "{{.TASKFILE_DIR}}/hooks/rules_loader"
+    cmds:
+      - uv run --extra test pytest tests/unit/ -v
+    silent: false
+
+  rules-loader:test-integration:
+    desc: Run only rules_loader integration tests
+    aliases:
+      - rl:test-integration
+    dir: "{{.TASKFILE_DIR}}/hooks/rules_loader"
+    cmds:
+      - uv run --extra test pytest tests/integration/ -v
+    silent: false
