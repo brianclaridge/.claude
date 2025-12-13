@@ -33,3 +33,22 @@ project_metadata:
 
   # Logging
   log_level: INFO
+
+# Rules loader settings (per-message reinforcement)
+# Native Claude Code loads .claude/rules/*.md at session start
+# This hook optionally reinforces specific rules on every UserPromptSubmit
+rules_loader:
+  reinforcement_enabled: false       # Global default for per-message injection
+  rules_path: rules/                 # Source directory relative to .claude/
+
+  # Per-rule reinforcement overrides
+  # Rules not listed inherit global reinforcement_enabled value
+  rules:
+    000-directives:
+      reinforce: true                # Core directive compliance - always reinforce
+    020-persona:
+      reinforce: true                # Persona consistency
+    030-agents:
+      reinforce: true                # Agent usage reminder
+    080-ask-user-questions:
+      reinforce: true                # UX consistency

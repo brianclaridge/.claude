@@ -1,0 +1,6 @@
+{
+  "log_base_path": "/workspace/.claude/.data/logs/rules_loader",
+  "rules_path": "/workspace/.claude/rules",
+  "log_enabled": true,
+  "log_level": "INFO"
+}

@@ -2,17 +2,18 @@ import sys
 import json
 import time
 from .reader import process_stdin
-from .loader import load_directives
+from .loader import load_rules, filter_rules_for_reinforcement
 from .formatter import format_to_hook_json
 from .logger import log_directive_event, log_error, log_summary, setup_logger
-from .paths import get_directives_path
+from .paths import get_rules_path, get_global_config
 
 
 def main():
     try:
         setup_logger()
 
-        directives_path = get_directives_path()
+        rules_path = get_rules_path()
+        global_config = get_global_config()
 
         for hook_data in process_stdin():
             event_name = hook_data.get("hook_event_name", "Unknown")
@@ -20,32 +21,44 @@ def main():
 
             start_time = time.time()
 
-            directives = load_directives(directives_path)
+            # Load all rules from directory
+            all_rules = load_rules(rules_path)
+
+            # Filter rules based on event and reinforcement config
+            rules = filter_rules_for_reinforcement(all_rules, global_config, event_name)
 
             load_time_ms = (time.time() - start_time) * 1000
 
-            if not directives:
-                print(f"No directives found in {directives_path}", file=sys.stderr)
+            if not rules:
+                # No rules to inject (either none found or filtered out)
+                if event_name == "UserPromptSubmit":
+                    # Silent exit for UserPromptSubmit when no reinforcement configured
+                    print(json.dumps({"hookSpecificOutput": {"hookEventName": event_name, "additionalContext": ""}}))
+                    sys.stdout.flush()
+                    continue
+                else:
+                    print(f"No rules found in {rules_path}", file=sys.stderr)
+
                 log_directive_event(
                     session_id=session_id,
                     event_name=event_name,
                     directive_count=0,
                     directives=[],
                     load_time_ms=load_time_ms,
-                    source_directory=directives_path
+                    source_directory=rules_path
                 )
 
-            if directives:
+            if rules:
                 log_directive_event(
                     session_id=session_id,
                     event_name=event_name,
-                    directive_count=len(directives),
-                    directives=directives,
+                    directive_count=len(rules),
+                    directives=rules,
                     load_time_ms=load_time_ms,
-                    source_directory=directives_path
+                    source_directory=rules_path
                 )
 
-            output = format_to_hook_json(directives, event_name, pretty=False)
+            output = format_to_hook_json(rules, event_name, pretty=False)
 
             log_summary(session_id=session_id, event_name=event_name, output_size=len(output), pretty=False)
 

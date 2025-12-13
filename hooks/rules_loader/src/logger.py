@@ -3,7 +3,7 @@ import structlog
 from pathlib import Path
 from typing import Dict, Any, List
 
-from .paths import get_config, get_log_path, get_error_log_path
+from .paths import get_hook_config, get_log_path, get_error_log_path
 
 
 _logger = None
@@ -43,7 +43,7 @@ def setup_logger():
     if _logger is not None:
         return _logger
 
-    config = get_config()
+    config = get_hook_config()
 
     if not config.get("log_enabled", True):
         return None

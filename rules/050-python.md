@@ -1,4 +1,4 @@
-# DIRECTIVE: 050 python standards
+# RULE: 050 python standards
 
 **CRITICAL** Python projects should always be run using astral's uv run syntax. Python apps should be structured and organized. .py files should never be large/monolithic.
 

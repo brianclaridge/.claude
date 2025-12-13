@@ -1,9 +1,9 @@
 [project]
-name = "directive-loader"
-version = "0.1.0"
-description = "Load and combine markdown directives into JSON hook format"
+name = "rules-loader"
+version = "0.2.0"
+description = "Load and filter rules for Claude Code hook reinforcement"
 requires-python = ">=3.12"
-dependencies = ["structlog>=24.0.0"]
+dependencies = ["structlog>=24.0.0", "pyyaml>=6.0"]
 
 [build-system]
 requires = ["hatchling"]

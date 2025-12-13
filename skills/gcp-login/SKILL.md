@@ -10,7 +10,7 @@ Authenticate to Google Cloud Platform using `gcloud auth login --update-adc`.
 
 ## Activation Triggers
 
-- cloud-auth-agent invokes this skill after user selects GCP
+- cloud-auth agent invokes this skill after user selects GCP
 - User says: "login to GCP", "gcloud auth", "authenticate to GCP"
 - User explicitly invokes: "use the gcp-login skill"
 

@@ -1,4 +1,4 @@
-# DIRECTIVE: 040 plans
+# RULE: 040 plans
 
 **CRITICAL** For ANY non-trivial task, multi-step operation, or complex request, ALWAYS create and save a plan to `{CWD}/plans/` BEFORE starting work.
 

@@ -1,6 +1,0 @@
-{
-  "log_base_path": "/workspace/.claude/.data/logs/directive_loader",
-  "directives_path": "/workspace/.claude/directives",
-  "log_enabled": true,
-  "log_level": "INFO"
-}

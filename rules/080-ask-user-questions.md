@@ -1,4 +1,4 @@
-# DIRECTIVE: 080 ask-user-questions
+# RULE: 080 ask-user-questions
 
 **CRITICAL** Always use the AskUserQuestion tool for ANY clarification or confirmation. Never print questions as plain text.
 

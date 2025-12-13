@@ -64,19 +64,23 @@ git commit -m "Remove .claude submodule"
     │   └── playwright/             # Screenshots, videos, traces
     ├── .vscode/                    # VS Code workspace settings
     ├── agents/                     # Specialized sub-agents
+    ├── assets/                     # Static assets (images, etc.)
     ├── aws/                        # AWS SSO utilities
     ├── config/                     # confd templates and conf.d
-    ├── directives/                 # Behavioral rules (000-080)
     ├── docker/                     # Dockerfile, entrypoints, assets
     ├── hooks/                      # Python event handlers
-    │   ├── directive_loader/       # Injects directives into sessions
-    │   └── logger/                 # Logs all hook events
+    │   ├── rules_loader/           # Reinforces rules on prompts
+    │   ├── logger/                 # Logs all hook events
+    │   └── cloud_auth_prompt/      # Cloud authentication prompts
     ├── includes/                   # Shared Taskfile includes
+    ├── plans/                      # Implementation plans
     ├── prompts/                    # Prompt templates
+    ├── rules/                      # Behavioral rules (000-080)
     ├── scripts/                    # PowerShell host utilities
     ├── skills/                     # Model-invoked capabilities
     │   ├── git-manager/            # Git commit workflow
     │   └── playwright-automation/  # Browser automation
+    ├── config.yml                  # Global feature configuration
     ├── settings.json               # Claude Code settings
     ├── docker-compose.yml          # Container configuration
     └── Taskfile.yml                # Task runner commands

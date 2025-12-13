@@ -37,7 +37,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/.claude/hooks/directive_loader python -m src"
+            "command": "uv run --directory /workspace/.claude/hooks/rules_loader python -m src"
           },
           {
             "type": "command",
@@ -60,7 +60,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/.claude/hooks/directive_loader python -m src"
+            "command": "uv run --directory /workspace/.claude/hooks/rules_loader python -m src"
           }
         ]
       }

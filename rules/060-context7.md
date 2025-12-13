@@ -1,4 +1,4 @@
-# DIRECTIVE: 060 context7
+# RULE: 060 context7
 
 **CRITICAL** Use context7 for ANY task involving external libraries/frameworks. This includes coding, debugging, and documentation.
 

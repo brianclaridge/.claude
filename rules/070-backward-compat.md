@@ -1,4 +1,4 @@
-# DIRECTIVE: 070 backward-compat
+# RULE: 070 backward-compat
 
 **CRITICAL** Do NOT consider backward compatibility unless explicitly requested. Assume breaking changes are acceptable.
 

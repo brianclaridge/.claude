@@ -1,15 +1,18 @@
-# DIRECTIVE: 010 start
+# RULE: 010 start
 
-**CRITICAL** Session start triggers that invoke `project-analysis-agent`.
+**CRITICAL** Session start triggers that invoke `project-analysis` agent.
 
 ## Trigger Patterns
 
 ### Generic Start
+
 **Triggers**: "hello", "vibe", "get started", "hi" (first session prompt)
-**Action**: Invoke `project-analysis-agent` for current directory
+**Action**: Invoke `project-analysis` agent for current directory
 
 ### Project Group Start
+
 **Triggers**:
+
 - "let's work on [group]"
 - "work on [group]"
 - "switch to [group]"
@@ -17,11 +20,12 @@
 
 Where `[group]` matches a key under `projects:` in `/workspace/projects.yml` (e.g., `camelot`, `gcp-ops`)
 
-**Action**: Invoke `project-analysis-agent` with "Analyze project group: [group]"
+**Action**: Invoke `project-analysis` agent with "Analyze project group: [group]"
 
 ## Validation
 
 Before invoking with a project group:
+
 1. Read `/workspace/projects.yml`
 2. Check if `[group]` exists as a key under `projects:`
 3. If not found: Respond with "Project group '[group]' not found. Available: camelot, gcp-ops"

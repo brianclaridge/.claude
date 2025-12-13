@@ -10,7 +10,7 @@ Authenticate to AWS using SSO (Single Sign-On) with interactive account selectio
 
 ## Activation Triggers
 
-- cloud-auth-agent invokes this skill after user selects AWS
+- cloud-auth agent invokes this skill after user selects AWS
 - User says: "login to AWS", "AWS SSO", "authenticate to AWS"
 - User explicitly invokes: "use the aws-login skill"
 
