@@ -112,49 +112,51 @@ $hasChanges = (git -C $SubmodulePath status --porcelain) -ne ""
 $status = git -C $SubmodulePath status
 $isBehind = $status -match "Your branch is behind"
 
+$skipSubmoduleCommit = $false
 if (-not $hasChanges -and -not $isBehind) {
-    Write-Host "No changes detected in $SubmodulePath" -ForegroundColor Green
-    exit 0
+    Write-Host "No local changes in $SubmodulePath" -ForegroundColor Green
+    $skipSubmoduleCommit = $true
+    # Don't exit - still need to check parent submodule reference
 }
 
-# Show changes
-if ($hasChanges) {
-    Write-Host "`nChanges detected:" -ForegroundColor Yellow
-    git -C $SubmodulePath status --porcelain | ForEach-Object { Write-Host "  $_" }
-}
+# Process .claude changes if any
+if (-not $skipSubmoduleCommit) {
+    # Show changes
+    if ($hasChanges) {
+        Write-Host "`nChanges detected:" -ForegroundColor Yellow
+        git -C $SubmodulePath status --porcelain | ForEach-Object { Write-Host "  $_" }
+    }
 
-# Determine commit message
-$CommitMessage = if ($Message) {
-    $Message  # Use provided message
-} else {
-    Get-ChangeSummary -Path $SubmodulePath  # Auto-generate
-}
+    # Determine commit message
+    $CommitMessage = if ($Message) {
+        $Message  # Use provided message
+    } else {
+        Get-ChangeSummary -Path $SubmodulePath  # Auto-generate
+    }
 
-if (-not $CommitMessage) {
-    Write-Host "No changes to commit" -ForegroundColor Green
-    exit 0
-}
+    if ($CommitMessage) {
+        # Stage and commit .claude changes
+        Write-Host "`nStaging changes..." -ForegroundColor Cyan
+        git -C $SubmodulePath add --all
 
-# Stage and commit .claude changes
-Write-Host "`nStaging changes..." -ForegroundColor Cyan
-git -C $SubmodulePath add --all
+        $hasStagedChanges = $false
+        git -C $SubmodulePath diff --cached --quiet 2>$null
+        if ($LASTEXITCODE -ne 0) { $hasStagedChanges = $true }
 
-$hasStagedChanges = $false
-git -C $SubmodulePath diff --cached --quiet 2>$null
-if ($LASTEXITCODE -ne 0) { $hasStagedChanges = $true }
+        if ($hasStagedChanges) {
+            Write-Host "Committing: $CommitMessage" -ForegroundColor Green
+            git -C $SubmodulePath commit -m $CommitMessage
 
-if ($hasStagedChanges) {
-    Write-Host "Committing: $CommitMessage" -ForegroundColor Green
-    git -C $SubmodulePath commit -m $CommitMessage
+            Write-Host "Pushing to origin/$Branch..." -ForegroundColor Cyan
+            git -C $SubmodulePath push origin $Branch
+        }
+    }
 
-    Write-Host "Pushing to origin/$Branch..." -ForegroundColor Cyan
-    git -C $SubmodulePath push origin $Branch
-}
-
-# Pull latest (in case remote has changes)
-if ($isBehind) {
-    Write-Host "Pulling from origin/$Branch..." -ForegroundColor Cyan
-    git -C $SubmodulePath pull origin $Branch
+    # Pull latest (in case remote has changes)
+    if ($isBehind) {
+        Write-Host "Pulling from origin/$Branch..." -ForegroundColor Cyan
+        git -C $SubmodulePath pull origin $Branch
+    }
 }
 
 Write-Host "`n.claude HEAD:" -ForegroundColor Green
@@ -164,23 +166,35 @@ git -C $SubmodulePath log -1 --oneline
 # Update parent repo's submodule reference (if applicable)
 # =============================================================================
 
+# Determine parent path based on context
 $ParentPath = if ($IsInSubmodule) { ".." } else { "." }
-$ParentHasSubmodule = Test-IsSubmodule -SubmodulePath $SubmodulePath
 
-if ($ParentHasSubmodule -and -not $IsInSubmodule) {
-    Write-Host "`nUpdating parent submodule reference..." -ForegroundColor Cyan
+# Check if parent has .claude as submodule
+$ParentGitmodules = Join-Path $ParentPath ".gitmodules"
+$ParentHasSubmodule = $false
+if (Test-Path $ParentGitmodules) {
+    $content = Get-Content $ParentGitmodules -Raw
+    $ParentHasSubmodule = $content -match '\.claude'
+}
+
+if ($ParentHasSubmodule) {
+    Write-Host "`nChecking parent submodule reference..." -ForegroundColor Cyan
+
+    # The submodule path from parent's perspective
+    $SubmoduleFromParent = if ($IsInSubmodule) { ".claude" } else { ".claude" }
 
     # Check if submodule reference changed
-    $parentChanges = git -C $ParentPath status --porcelain .claude
+    $parentChanges = git -C $ParentPath status --porcelain $SubmoduleFromParent 2>$null
 
     if ($parentChanges) {
-        git -C $ParentPath add .claude
+        Write-Host "Updating parent submodule reference..." -ForegroundColor Yellow
+        git -C $ParentPath add $SubmoduleFromParent
         git -C $ParentPath commit -m "chore: update .claude submodule"
 
         Write-Host "Pushing parent to origin..." -ForegroundColor Cyan
         git -C $ParentPath push
 
-        Write-Host "`nParent repo updated." -ForegroundColor Green
+        Write-Host "Parent repo updated." -ForegroundColor Green
     } else {
         Write-Host "Parent submodule reference unchanged." -ForegroundColor Green
     }
