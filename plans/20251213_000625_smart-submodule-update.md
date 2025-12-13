@@ -114,3 +114,4 @@ If >3 items:
 - [x] Add parent submodule update logic
 - [x] Test from both `.claude/` and parent directory
 - [x] Update task description in Taskfile.yml
+# test
