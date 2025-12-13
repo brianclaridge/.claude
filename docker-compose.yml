@@ -51,8 +51,7 @@ services:
       # bind folder mounts
       - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
       - ./config:/etc/confd:ro
-      - ./:/workspace/.claude:rw
-      - ./:/workspace/${SLUG}/.claude:rw
+      - ./:/workspace/${SLUG}/.claude:delegated
       - ../:/workspace/${SLUG}:delegated
       # shared volumes
       - claude-home-data:/root:rw

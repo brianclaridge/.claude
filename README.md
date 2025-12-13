@@ -38,6 +38,7 @@ task claude
 | `/context` | Gather session context (git status, environment) |
 | `/metadata` | Update project metadata registry |
 | `/stack-manager` | Recommend and bootstrap application stacks |
+| `/taskfile` | Validate Taskfile.yml against best practices |
 
 ## Agents
 
@@ -51,6 +52,7 @@ task claude
 | skill-builder | Create new skills | — |
 | gitops | Git commit workflow | git-manager |
 | stack-manager | Recommend and bootstrap app stacks | stack-manager |
+| taskfile-manager | Validate Taskfile against Rule 090 | taskfile-manager |
 
 ## Skills
 
@@ -63,6 +65,7 @@ task claude
 | session-context | Gather session context | project-analysis agent |
 | project-metadata-builder | Update project registry | project-analysis agent |
 | stack-manager | Recommend and bootstrap stacks | "/stack-manager", "suggest a stack" |
+| taskfile-manager | Validate Taskfile best practices | "/taskfile", "validate tasks" |
 
 ## [OPTIONAL] Add as submodule
 
@@ -99,6 +102,19 @@ git rm -f .claude
 git commit -m "Remove .claude submodule"
 ```
 
+## Stacks
+
+Available application stacks for bootstrapping via `/stack-manager`:
+
+| Stack | Language | Use Cases |
+|-------|----------|-----------|
+| htmx-fastapi | Python | Server-rendered apps, dashboards |
+| nextjs-prisma | TypeScript | SaaS, e-commerce, content sites |
+| django-htmx | Python | Admin panels, rapid prototyping |
+| go-templ-htmx | Go | High-performance APIs, microservices |
+| sveltekit-supabase | TypeScript | MVPs, real-time apps |
+| vue-vite-fastapi | Python/TS | Data apps, dashboards |
+
 ## Structure
 
 ```text
@@ -118,7 +134,8 @@ git commit -m "Remove .claude submodule"
     │   ├── hello-world.md
     │   ├── project-analysis.md
     │   ├── skill-builder.md
-    │   └── stack-manager.md
+    │   ├── stack-manager.md
+    │   └── taskfile-manager.md
     ├── assets/                     # Static assets (images, etc.)
     ├── commands/                   # Slash commands
     │   ├── analyze.md
@@ -130,7 +147,8 @@ git commit -m "Remove .claude submodule"
     │   ├── hello.md
     │   ├── metadata.md
     │   ├── playwright.md
-    │   └── stack-manager.md
+    │   ├── stack-manager.md
+    │   └── taskfile.md
     ├── config/                     # confd templates and conf.d
     ├── docker/                     # Dockerfile, entrypoints, assets
     ├── hooks/                      # Python event handlers
@@ -141,7 +159,7 @@ git commit -m "Remove .claude submodule"
     │   └── session_context_injector/
     ├── plans/                      # Implementation plans
     ├── prompts/                    # Prompt templates
-    ├── rules/                      # Behavioral rules (000-080)
+    ├── rules/                      # Behavioral rules (000-090)
     ├── scripts/                    # PowerShell host utilities
     ├── skills/                     # Model-invoked capabilities
     │   ├── aws-login/              # AWS SSO authentication
@@ -150,7 +168,8 @@ git commit -m "Remove .claude submodule"
     │   ├── playwright-automation/  # Browser automation
     │   ├── project-metadata-builder/
     │   ├── session-context/        # Session context gathering
-    │   └── stack-manager/          # Stack recommendations & bootstrap
+    │   ├── stack-manager/          # Stack recommendations & bootstrap
+    │   └── taskfile-manager/       # Taskfile validation
     ├── config.yml                  # Global feature configuration
     ├── settings.json               # Claude Code settings
     ├── docker-compose.yml          # Container configuration
