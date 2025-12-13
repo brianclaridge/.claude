@@ -44,7 +44,7 @@ rules_loader:
   # Per-rule reinforcement overrides
   # Rules not listed inherit global reinforcement_enabled value
   rules:
-    000-directives:
+    000-rule-follower:
       reinforce: true                # Core directive compliance - always reinforce
     020-persona:
       reinforce: true                # Persona consistency

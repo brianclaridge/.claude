@@ -1,4 +1,4 @@
-# RULE: 010 start
+# RULE: 010 session-starter
 
 **CRITICAL** Session start triggers that invoke `project-analysis` agent.
 

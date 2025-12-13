@@ -69,6 +69,26 @@ tasks:
         }"
     silent: true
 
+  claude:debug:
+    desc: Runs claude in a container in debug mode
+    aliases:
+      - debug
+    deps:
+      - claude:ensure-env
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - >-
+        pwsh -c "
+        if (Test-Path /.dockerenv) {
+          Set-Location "{{.TASKFILE_DIR}}/${env:CLAUDE_PROJECT_SLUG}"
+          claude update
+          claude --continue --debug 2>\$null || claude --debug
+        } else {
+          docker compose build
+          docker compose run --remove-orphans claude pwsh -NoProfile -File /workspace/.claude/scripts/run-claude.ps1 -debug_claude
+        }"
+    silent: true
+
   claude:build:
     desc: Builds the claude image
     aliases:
