@@ -20,14 +20,13 @@ def get_config_path() -> Path:
     Raises:
         FileNotFoundError: If .aws.yml not found
     """
-    # .claude/.aws.yml is in the parent of the aws/ directory
-    aws_dir = Path(__file__).parent
-    if aws_dir.name == "core":
-        # Called from core/config_reader.py
-        claude_dir = aws_dir.parent.parent
-    else:
-        # Called from aws/config_reader.py (during migration)
-        claude_dir = aws_dir.parent
+    # Path: skills/aws-login/scripts/core/config_reader.py
+    # Need to go up 4 levels to reach .claude/
+    core_dir = Path(__file__).parent  # core/
+    scripts_dir = core_dir.parent  # scripts/
+    skill_dir = scripts_dir.parent  # aws-login/
+    skills_dir = skill_dir.parent  # skills/
+    claude_dir = skills_dir.parent  # .claude/
 
     config_path = claude_dir / ".aws.yml"
 

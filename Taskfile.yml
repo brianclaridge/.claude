@@ -4,8 +4,8 @@ version: '3'
 
 vars:
   LOG_DIR: "{{.TASKFILE_DIR}}/.data/logs"
-  AWS_SCRIPTS_PATH: "{{.TASKFILE_DIR}}/.claude/aws"
-  DOCKERFILE_PATH: '{{.DOCKERFILE_PATH | default "{{.TASKFILE_DIR}}/.claude/docker/Dockerfile"}}'
+  AWS_SCRIPTS_PATH: "{{.TASKFILE_DIR}}/skills/aws-login/scripts"
+  DOCKERFILE_PATH: '{{.DOCKERFILE_PATH | default "{{.TASKFILE_DIR}}/docker/Dockerfile"}}'
   AWS_ACCOUNT: '{{.AWS_ACCOUNT | default "root"}}'
   PARENT_PATH:
     sh: |
@@ -43,7 +43,7 @@ tasks:
   claude:ensure-env:
     desc: Ensures a .env is present, even if empty
     cmds:
-      - cmd: touch ./.env
+      - cmd: touch {{.TASKFILE_DIR}}/.env
         platforms: [linux, darwin]
       - cmd: pwsh -Command "if (!(Test-Path ./.env)) { New-Item -Path ./.env -ItemType File -Force | Out-Null }"
         platforms: [windows]
@@ -109,7 +109,7 @@ tasks:
     desc: Fetch and reset .claude submodule to origin/main
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - pwsh -NoProfile -File .scripts/fetch-submodule.ps1
+      - pwsh -NoProfile -File scripts/fetch-submodule.ps1
     silent: true
 
   claude:update:
@@ -121,7 +121,7 @@ tasks:
       BRANCH: '{{.BRANCH | default "main"}}'
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - pwsh -NoProfile -File .claude/scripts/update-submodule.ps1 -Message "{{.MSG}}" -Branch "{{.BRANCH}}"
+      - pwsh -NoProfile -File scripts/update-submodule.ps1 -Message "{{.MSG}}" -Branch "{{.BRANCH}}"
     silent: true
 
   claude:config:
@@ -314,7 +314,7 @@ tasks:
       OUTPUT: '{{.OUTPUT | default ""}}'
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - uv run --directory .claude/skills/playwright-automation python scripts/video_recorder.py "{{.URL}}" --duration {{.DURATION}} {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
+      - uv run --directory {{.TASKFILE_DIR}}/skills/playwright-automation python scripts/video_recorder.py "{{.URL}}" --duration {{.DURATION}} {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
     silent: true
 
   playwright:screenshot:
@@ -324,7 +324,7 @@ tasks:
       OUTPUT: '{{.OUTPUT | default ""}}'
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - uv run --directory .claude/skills/playwright-automation python scripts/screenshot.py "{{.URL}}" {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
+      - uv run --directory {{.TASKFILE_DIR}}/skills/playwright-automation python scripts/screenshot.py "{{.URL}}" {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
     silent: true
 
   playwright:test-twitch:
@@ -334,6 +334,6 @@ tasks:
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - |
-        uv run --directory .claude/skills/playwright-automation \
+        uv run --directory {{.TASKFILE_DIR}}/skills/playwright-automation \
           python scripts/test_twitch_navigation.py
     silent: true

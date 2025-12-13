@@ -38,6 +38,10 @@
           {
             "type": "command",
             "command": "uv run --directory /workspace/.claude/hooks/directive_loader python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/cloud_auth_prompt python -m src"
           }
         ]
       }

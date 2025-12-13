@@ -1,6 +1,21 @@
 # Global configuration for Claude Code custom features
 # Location: /workspace/.claude/config.yml (project root)
 
+# Cloud provider authentication settings
+cloud_providers:
+  aws:
+    enabled: true
+    display_name: "AWS"
+    description: "Amazon Web Services SSO"
+    config_file: .aws.yml
+    prompt_at_start: true
+
+  gcp:
+    enabled: true
+    display_name: "GCP"
+    description: "Google Cloud Platform"
+    prompt_at_start: true
+
 project_metadata:
   # Session history settings
   session_history_limit: 10          # Keep last N sessions per project
