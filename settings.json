@@ -108,6 +108,15 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "mcp__playwright__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/.claude/hooks/playwright_healer python -m src"
+          }
+        ]
+      },
+      {
         "matcher": "*",
         "hooks": [
           {

@@ -12,7 +12,8 @@
         "--browser=chromium",
         "--caps=vision,pdf",
         "--timeout-action=30000",
-        "--viewport-size=1920x1080"
+        "--viewport-size=1920x1080",
+        "--isolated"
       ]
     }
   }
