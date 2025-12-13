@@ -37,6 +37,7 @@ task claude
 | `/gitops` | Git commit workflow with branch/push management |
 | `/context` | Gather session context (git status, environment) |
 | `/metadata` | Update project metadata registry |
+| `/stack-manager` | Recommend and bootstrap application stacks |
 
 ## Agents
 
@@ -49,6 +50,7 @@ task claude
 | agent-builder | Create new agents | — |
 | skill-builder | Create new skills | — |
 | gitops | Git commit workflow | git-manager |
+| stack-manager | Recommend and bootstrap app stacks | stack-manager |
 
 ## Skills
 
@@ -60,6 +62,7 @@ task claude
 | gcp-login | GCP authentication | "login to GCP", cloud-auth agent |
 | session-context | Gather session context | project-analysis agent |
 | project-metadata-builder | Update project registry | project-analysis agent |
+| stack-manager | Recommend and bootstrap stacks | "/stack-manager", "suggest a stack" |
 
 ## [OPTIONAL] Add as submodule
 
@@ -114,7 +117,8 @@ git commit -m "Remove .claude submodule"
     │   ├── gitops.md
     │   ├── hello-world.md
     │   ├── project-analysis.md
-    │   └── skill-builder.md
+    │   ├── skill-builder.md
+    │   └── stack-manager.md
     ├── assets/                     # Static assets (images, etc.)
     ├── commands/                   # Slash commands
     │   ├── analyze.md
@@ -125,7 +129,8 @@ git commit -m "Remove .claude submodule"
     │   ├── gitops.md
     │   ├── hello.md
     │   ├── metadata.md
-    │   └── playwright.md
+    │   ├── playwright.md
+    │   └── stack-manager.md
     ├── config/                     # confd templates and conf.d
     ├── docker/                     # Dockerfile, entrypoints, assets
     ├── hooks/                      # Python event handlers
@@ -144,7 +149,8 @@ git commit -m "Remove .claude submodule"
     │   ├── git-manager/            # Git commit workflow
     │   ├── playwright-automation/  # Browser automation
     │   ├── project-metadata-builder/
-    │   └── session-context/        # Session context gathering
+    │   ├── session-context/        # Session context gathering
+    │   └── stack-manager/          # Stack recommendations & bootstrap
     ├── config.yml                  # Global feature configuration
     ├── settings.json               # Claude Code settings
     ├── docker-compose.yml          # Container configuration
