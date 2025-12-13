@@ -115,13 +115,13 @@ tasks:
   claude:update:
     aliases:
       - update
-    desc: Commit and sync .claude submodule changes
+    desc: Smart commit .claude changes with auto-generated message, update parent submodule
     vars:
-      MSG: '{{.MSG | default "chore: update .claude"}}'
+      MSG: '{{.MSG | default ""}}'
       BRANCH: '{{.BRANCH | default "main"}}'
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - pwsh -NoProfile -File scripts/update-submodule.ps1 -Message "{{.MSG}}" -Branch "{{.BRANCH}}"
+      - pwsh -NoProfile -File scripts/update-submodule.ps1 {{if .MSG}}-Message "{{.MSG}}"{{end}} -Branch "{{.BRANCH}}"
     silent: true
 
   claude:config:
