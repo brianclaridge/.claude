@@ -2,6 +2,12 @@
 
 > My opinionated, docker-ized development environment for Claude Code CLI.
 
+## Software Requirements
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [PowerShell 7+](https://github.com/PowerShell/PowerShell) (`pwsh`)
+- [Task](https://taskfile.dev/) (Taskfile runner)
+
 ## Quick Start
 
 ```bash
