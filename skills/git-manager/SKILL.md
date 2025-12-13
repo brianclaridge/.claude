@@ -86,9 +86,49 @@ If SSH detection fails (no keys, no GitHub access):
 Run `git status` to detect changes:
 
 - If no changes: Inform user "No uncommitted changes detected" and exit
-- If changes exist: Proceed to step 2
+- If changes exist: Proceed to Step 1.5
 
-### Step 2: Branch Selection
+### Step 1.5: Mode Selection
+
+Use AskUserQuestion to present commit mode options:
+
+```json
+{
+  "question": "How would you like to commit?",
+  "header": "Mode",
+  "options": [
+    {"label": "Auto commit & push", "description": "Generate message, commit to current branch, push immediately"},
+    {"label": "Interactive", "description": "Review changes, confirm branch, edit message"},
+    {"label": "Cancel", "description": "Exit without committing"}
+  ],
+  "multiSelect": false
+}
+```
+
+#### Auto Mode
+
+When "Auto commit & push" selected:
+
+1. Use current branch (skip branch selection)
+2. Run sensitive file detection - if found, fall back to Interactive mode
+3. Auto-generate commit message using conventional commit format
+4. Display summary: show `git diff --stat` and generated message
+5. Stage all changes: `git add -A`
+6. Commit with generated message
+7. Push immediately: `git push origin {current_branch}`
+8. Proceed to Step 7 (What's next?)
+
+#### Interactive Mode
+
+When "Interactive" selected:
+- Continue to Step 2 (full interactive workflow)
+
+#### Cancel
+
+When "Cancel" selected:
+- Exit without committing
+
+### Step 2: Branch Selection (Interactive Mode Only)
 
 Use AskUserQuestion to present branch options:
 
@@ -222,13 +262,52 @@ If found:
 - Ask whether to exclude them from commit
 - Use `git add` with explicit file list instead of `-A`
 
-## Example Flow
+## Example Flows
+
+### Auto Mode Example
 
 ```text
 User: [completes implementation, all TODOs done]
 
 Claude: I'll help commit these changes.
 [Runs git status: 5 files modified, 2 new]
+
+Claude: How would you like to commit?
+[AskUserQuestion: Auto commit & push | Interactive | Cancel]
+User: [selects Auto commit & push]
+
+Claude: Auto-committing to main...
+
+Changes:
+ src/auth.py    | 45 +++++++++
+ src/config.py  | 12 ++-
+ tests/test_auth.py | 78 ++++++++++++++++
+
+Generated message:
+---
+feat(auth): implement OAuth2 login flow
+---
+
+Committed and pushed to origin/main.
+What would you like to do next?
+[AskUserQuestion: Done for now | Plan feature | Plan bug fix | Plan refactor | Plan docs]
+
+User: [selects "Done for now"]
+
+Claude: Commit complete. Ready for your next request.
+```
+
+### Interactive Mode Example
+
+```text
+User: [completes implementation, all TODOs done]
+
+Claude: I'll help commit these changes.
+[Runs git status: 5 files modified, 2 new]
+
+Claude: How would you like to commit?
+[AskUserQuestion: Auto commit & push | Interactive | Cancel]
+User: [selects Interactive]
 
 Claude: Where should I commit?
 [AskUserQuestion: Current branch: feature/auth | Create new | Cancel]
