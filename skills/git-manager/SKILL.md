@@ -18,25 +18,68 @@ Interactive git commit workflow with safety checks and user confirmation.
 
 ### Step 0: Git Identity Configuration
 
-Before any git operations, ensure git identity is configured:
+Before any git operations, ensure git identity is configured using this detection cascade:
+
+#### 0.1 Load from .env (preferred)
 
 ```bash
-# Load git credentials from /workspace/.claude/.env
 source /workspace/.claude/.env 2>/dev/null || true
 
-# Configure git if credentials are available
-if [ -n "$GIT_USER_EMAIL" ]; then
+if [ -n "$GIT_USER_EMAIL" ] && [ -n "$GIT_USER_NAME" ]; then
   git config user.email "$GIT_USER_EMAIL"
-fi
-if [ -n "$GIT_USER_NAME" ]; then
   git config user.name "$GIT_USER_NAME"
+  # Identity configured, proceed silently to Step 1
 fi
 ```
 
-If `GIT_USER_EMAIL` and `GIT_USER_NAME` are not set in `/workspace/.claude/.env`:
-- Check if git already has identity configured: `git config user.email`
-- If not configured, ask user for email and name using AskUserQuestion
-- Suggest saving to `/workspace/.claude/.env` for future sessions
+#### 0.2 Auto-detect from SSH (if .env empty)
+
+If `.env` lacks credentials, attempt SSH-based detection:
+
+```bash
+# Extract GitHub username from SSH authentication
+GIT_USER_NAME=$(ssh -T git@github.com 2>&1 | grep -oP 'Hi \K[^!]+' || echo "")
+
+# Derive email using GitHub's noreply pattern
+if [ -n "$GIT_USER_NAME" ]; then
+  GIT_USER_EMAIL="${GIT_USER_NAME}@users.noreply.github.com"
+fi
+```
+
+#### 0.3 Confirm detected values
+
+If SSH detection succeeded, present to user via AskUserQuestion:
+
+```json
+{
+  "question": "Git identity detected from SSH. Use these values?",
+  "header": "Git ID",
+  "options": [
+    {"label": "Yes, use detected", "description": "{name} <{email}>"},
+    {"label": "Enter custom", "description": "I'll ask for your preferred email/name"}
+  ],
+  "multiSelect": false
+}
+```
+
+- If "Yes, use detected": Configure git and persist to .env
+- If "Enter custom": Ask for free-form email/name (plain text per DIRECTIVE 080 exception)
+
+#### 0.4 Persist to .env
+
+After confirmation, append credentials to `/workspace/.claude/.env`:
+
+```bash
+echo "GIT_USER_NAME=${GIT_USER_NAME}" >> /workspace/.claude/.env
+echo "GIT_USER_EMAIL=${GIT_USER_EMAIL}" >> /workspace/.claude/.env
+```
+
+#### 0.5 Fallback (no SSH)
+
+If SSH detection fails (no keys, no GitHub access):
+- Ask user for email and name using plain text (free-form input exception)
+- Persist to `.env` after receiving values
+- Configure git and proceed
 
 ### Step 1: Status Check
 

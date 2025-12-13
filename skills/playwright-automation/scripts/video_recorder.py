@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
 Video recording utility for Playwright automation.
-Usage: python video_recorder.py <url> [--duration 10] [--wait-until STRATEGY] [--timeout MS] [--output filename.webm]
+Usage: python video_recorder.py <url> [--duration 10] [--wait-until STRATEGY] [--timeout MS] [--output filename]
 
 Output: /workspace/.claude/.data/playwright/videos/
+        Produces both .webm (native) and .mp4 (converted) formats.
 """
 import argparse
 import os
+import subprocess
 import time
 from datetime import datetime
 from urllib.parse import urlparse
@@ -26,6 +28,39 @@ logger.add(
 )
 
 
+def convert_to_mp4(webm_path: str) -> str:
+    """Convert WebM to MP4 using ffmpeg.
+
+    Args:
+        webm_path: Path to the WebM file
+
+    Returns:
+        Path to the converted MP4 file
+    """
+    mp4_path = webm_path.replace(".webm", ".mp4")
+    logger.info(f"Converting to MP4: {mp4_path}")
+    print(f"Converting to MP4...")
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-i",
+            webm_path,
+            "-c:v",
+            "libx264",
+            "-c:a",
+            "aac",
+            "-y",
+            "-loglevel",
+            "error",
+            mp4_path,
+        ],
+        check=True,
+        capture_output=True,
+    )
+    logger.info(f"MP4 conversion complete: {mp4_path}")
+    return mp4_path
+
+
 def record_video(
     url: str,
     duration: int = 10,
@@ -34,20 +69,20 @@ def record_video(
     height: int = 720,
     wait_until: str = "domcontentloaded",
     timeout: int = 30000,
-) -> str:
-    """Record a video of a URL and return the file path.
+) -> tuple[str, str]:
+    """Record a video of a URL and return paths to both WebM and MP4 files.
 
     Args:
         url: URL to record
         duration: Recording duration in seconds
-        output: Output filename (auto-generated if None)
+        output: Output base filename without extension (auto-generated if None)
         width: Video width
         height: Video height
         wait_until: Wait strategy - domcontentloaded (default), load, or networkidle
         timeout: Navigation timeout in milliseconds (default 30000)
 
     Returns:
-        Path to saved video
+        Tuple of (webm_path, mp4_path)
     """
     os.makedirs(VIDEO_DIR, exist_ok=True)
     os.makedirs("/workspace/.claude/.data/logs/playwright", exist_ok=True)
@@ -96,19 +131,30 @@ def record_video(
         # Now safe to close
         page.close()
 
+        # Close context first - video is only fully written after context.close()
+        context.close()
+        browser.close()
+
         # Rename if custom output specified
         if video_path and output:
-            new_path = os.path.join(VIDEO_DIR, output)
+            # Ensure .webm extension for the base file
+            base_name = output.replace(".webm", "").replace(".mp4", "")
+            new_path = os.path.join(VIDEO_DIR, f"{base_name}.webm")
             os.rename(video_path, new_path)
             video_path = new_path
 
-        if video_path:
-            logger.info(f"Video saved: {video_path}")
-            print(f"Video saved: {video_path}")
+        webm_path = video_path or ""
+        mp4_path = ""
 
-        context.close()
-        browser.close()
-        return video_path or ""
+        if webm_path:
+            logger.info(f"WebM saved: {webm_path}")
+            print(f"Video saved (WebM): {webm_path}")
+
+            # Convert to MP4
+            mp4_path = convert_to_mp4(webm_path)
+            print(f"Video saved (MP4):  {mp4_path}")
+
+        return (webm_path, mp4_path)
 
 
 def main() -> None:
