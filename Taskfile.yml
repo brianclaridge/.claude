@@ -54,7 +54,8 @@ tasks:
     aliases:
       - ensure-stack-network
     cmds:
-      - cmd: pwsh -c "docker network create --subnet=10.234.0.0/24 claude-stack *> \$null 2>&1"
+      - cmd: pwsh -c "docker network create --subnet=10.234.0.0/24 claude-stack *> \$null"
+        ignore_error: true
     silent: true
 
   claude:claude:
@@ -73,7 +74,7 @@ tasks:
         if (Test-Path /.dockerenv) {
           Set-Location {{.TASKFILE_DIR}}/{{.SLUG}}
           claude update
-          claude --continue 2>\$null || claude
+          claude --continue 2> \$null || claude
         } else {
           docker compose build
           docker compose run --remove-orphans claude run-claude
