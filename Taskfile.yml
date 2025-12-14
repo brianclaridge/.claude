@@ -17,6 +17,7 @@ vars:
         \$slug = '{{.PARENT_PATH}}' -replace '^([A-Za-z]):', '/\$1' -replace '\\\\', '/'
         Write-Output \$slug.ToLower()
       "
+  CLAUDE_HOME_ROOT_DIRS: '{{env "HOME" | default (env "USERPROFILE") | replace "\\" "/"}}/.claudebox/root_homes'
 
 env:
   PARENT_PATH: "{{.PARENT_PATH}}"
@@ -32,6 +33,7 @@ tasks:
       - cmd: "echo 'DOCKERFILE_PATH: {{.DOCKERFILE_PATH}}'"
       - cmd: "echo 'PARENT_PATH: {{.PARENT_PATH}}'"
       - cmd: "echo 'SLUG: {{.SLUG}}'"
+      - cmd: "echo 'CLAUDE_HOME_ROOT_DIRS: {{.CLAUDE_HOME_ROOT_DIRS}}'"
       - cmd: "echo '---'"
       - cmd: task --list-all
     silent: true
@@ -63,6 +65,7 @@ tasks:
           claude --continue 2>\$null || claude
         } else {
           docker compose build
+          docker network create --subnet=10.234.0.0/24 claude-stack *>$null
           docker compose run --remove-orphans claude run-claude
         }"
     silent: true
@@ -83,6 +86,7 @@ tasks:
           echo {{.CLI_ARGS}} | claude --print --fork-session --input-format stream-json --output-format stream-json --verbose
         } else {
           docker compose build
+          docker network create --subnet=10.234.0.0/24 claude-stack *>$null
           echo {{.CLI_ARGS}} | docker compose run -T --remove-orphans claude 'claude --print --fork-session --input-format stream-json --output-format stream-json --verbose'
         }"
     silent: true
@@ -103,6 +107,7 @@ tasks:
           claude --continue --debug 2>\$null || claude --debug
         } else {
           docker compose build
+          docker network create --subnet=10.234.0.0/24 claude-stack *>$null
           docker compose run --remove-orphans claude 'run-claude -debug_claude'
         }"
     silent: true
@@ -230,6 +235,24 @@ tasks:
       - cmd: echo "deleted data folder..."
     silent: true
 
+  claude:delete-claude-root-homes:
+    aliases:
+      - delete-claude-root-homes
+    deps:
+      - claude:ensure-host
+    vars:
+      TARGET_PATH: "{{.CLAUDE_HOME_ROOT_DIRS}}"
+    desc: Remove the {{.TARGET_PATH}} folder from the current directory
+    prompt: This will delete the {{.TARGET_PATH}} folder. Continue?
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - cmd: rm -rf {{.TARGET_PATH}}
+        platforms: [linux, darwin]
+      - cmd: pwsh -Command "Remove-Item -Path '{{.TARGET_PATH}}' -Recurse -Force -ErrorAction SilentlyContinue; exit 0"
+        platforms: [windows]
+      - cmd: echo "deleted {{.TARGET_PATH}} folder..."
+    silent: true
+
   claude:clean-docker:
     desc: Kills and removes all running containers on the host
     aliases:
@@ -256,6 +279,7 @@ tasks:
       - cmd: docker volume rm $(docker volume ls -q) 2>/dev/null || true
         platforms: [linux, darwin, windows]
       - task: delete-data-folder
+      - task: delete-claude-root-homes
     silent: true
 
   claude:nuke-docker:
