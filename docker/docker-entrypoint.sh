@@ -25,11 +25,11 @@ find /tmp -name "*playwright*" -type d -cmin +30 -exec rm -rf {} + 2>/dev/null |
 
 # run gomplate
 touch /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/gomplate.log
-gomplate \
-  --config /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config/gomplate.yaml \
+gomplate --config /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config/gomplate.yaml \
   &> /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/gomplate.log
 
 # set permissions (gomplate doesn't support mode like confd)
+touch /root/.ssh/config
 chmod 0600 /root/.ssh/config
 
 # copy .mcp.json

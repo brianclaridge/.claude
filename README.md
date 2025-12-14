@@ -201,6 +201,13 @@ Available application stacks for bootstrapping via `/stack-manager`:
     │   ├── taskfile-manager/       # Taskfile validation
     │   ├── health-check/           # Environment validation
     │   └── rule-builder/           # Rule scaffolding
+    ├── stacks/                     # Application stack definitions
+    │   ├── htmx-fastapi.md         # HTMX + FastAPI stack
+    │   ├── nextjs-prisma.md        # Next.js + Prisma stack
+    │   ├── django-htmx.md          # Django + HTMX stack
+    │   ├── go-templ-htmx.md        # Go + Templ + HTMX stack
+    │   ├── sveltekit-supabase.md   # SvelteKit + Supabase stack
+    │   └── vue-vite-fastapi.md     # Vue + Vite + FastAPI stack
     ├── config.yml                  # Global feature configuration
     ├── settings.json               # Claude Code settings
     ├── docker-compose.yml          # Container configuration

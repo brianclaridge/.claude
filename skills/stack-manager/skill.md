@@ -17,7 +17,7 @@ Recommend application stacks and bootstrap projects with predictable tooling.
 
 ## Stack Definitions
 
-Stack definitions are stored in `./stacks/*.md` within this skill directory. Each stack file follows a consistent schema with frontmatter metadata.
+Stack definitions are stored in `.claude/stacks/*.md`. Each stack file follows a consistent schema with frontmatter metadata.
 
 ## Workflow
 
@@ -52,12 +52,12 @@ Execute the chosen selection method:
 
 #### Tag-Based Search
 1. Ask user for tags (comma-separated or space-separated)
-2. Read all stack files from `./stacks/`
+2. Read all stack files from `.claude/stacks/`
 3. Match tags against stack frontmatter
 4. Present matching stacks ranked by match count
 
 #### Show All Stacks
-1. Read all stack files from `./stacks/`
+1. Read all stack files from `.claude/stacks/`
 2. Display table with: Stack Name, Language, Use Cases, Complexity
 3. Highlight recommended stack based on common patterns
 4. Ask user to select from list
@@ -130,7 +130,7 @@ After bootstrap completion:
 
 ## Stack File Schema
 
-Each stack file in `./stacks/` follows this structure:
+Each stack file in `.claude/stacks/` follows this structure:
 
 ```yaml
 ---
