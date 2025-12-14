@@ -33,9 +33,7 @@
       "//tmp",
       "//workspace",
       "//root",
-      "//root/.claude",
-      "//workspace/${CLAUDE_PROJECT_SLUG}",
-      "//workspace/${CLAUDE_PROJECT_SLUG}/.claude"
+      "//root/.claude"
     ],
     "defaultMode": "plan"
   },
