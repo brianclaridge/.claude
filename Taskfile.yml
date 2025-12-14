@@ -42,11 +42,13 @@ tasks:
     desc: Ensures a .env is present, even if empty
     aliases:
       - ensure-env
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - cmd: touch {{.TASKFILE_DIR}}/.env
-        platforms: [linux, darwin]
-      - cmd: pwsh -Command "if (!(Test-Path {{.TASKFILE_DIR}}/.env)) { New-Item -Path {{.TASKFILE_DIR}}/.env -ItemType File -Force | Out-Null }"
-        platforms: [windows]
+      - cmd: >-
+          pwsh -c "
+          if (!(Test-Path .env)) {
+            cp .env.sample .env
+          }"
     silent: true
 
   claude:ensure-stack-network:

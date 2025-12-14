@@ -34,7 +34,6 @@ chmod 0600 /root/.ssh/config
 
 # defaults
 echo "tree_view=1" > ${HOME}/.config/htop/htoprc
-touch /workspace${CLAUDE_PROJECT_SLUG}/.claude/.env
 
 case "${1}" in
     shell|pwsh|powershell)
