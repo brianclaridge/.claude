@@ -1,6 +1,0 @@
-[template]
-src = "mcp.json"
-dest = "/root/.claude/.mcp.json"
-uid = 0
-gid = 0
-mode = "0644"

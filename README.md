@@ -167,6 +167,7 @@ Available application stacks for bootstrapping via `/stack-manager`:
     │   ├── cloud-auth.md
     │   ├── context.md
     │   ├── gitops.md
+    │   ├── gomplate.md
     │   ├── hello.md
     │   ├── metadata.md
     │   ├── playwright.md
@@ -174,7 +175,7 @@ Available application stacks for bootstrapping via `/stack-manager`:
     │   ├── taskfile.md
     │   ├── health.md
     │   └── build-rule.md
-    ├── config/                     # confd templates and conf.d
+    ├── config/                     # gomplate templates and configuration
     ├── docker/                     # Dockerfile, entrypoints, assets
     ├── hooks/                      # Python event handlers
     │   ├── cloud_auth_prompt/      # Cloud authentication prompts
@@ -185,15 +186,14 @@ Available application stacks for bootstrapping via `/stack-manager`:
     │   └── changelog_monitor/      # Tracks Claude Code updates
     ├── plans/                      # Implementation plans
     ├── prompts/                    # Prompt templates
-    ├── rules/                      # Behavioral rules (000-090)
-    ├── scripts/                    # Utility scripts
-    │   └── taskfile-validator/     # Python Taskfile validation tool
+    ├── rules/                      # Behavioral rules (000-095)
     ├── docs/                       # Documentation
     │   └── ROADMAP.md              # Feature tracking from changelog
     ├── skills/                     # Model-invoked capabilities
     │   ├── aws-login/              # AWS SSO authentication
     │   ├── gcp-login/              # GCP authentication
     │   ├── git-manager/            # Git commit workflow
+    │   ├── gomplate-manager/       # Gomplate template validation
     │   ├── playwright-automation/  # Browser automation
     │   ├── project-metadata-builder/
     │   ├── session-context/        # Session context gathering
@@ -219,3 +219,7 @@ Available application stacks for bootstrapping via `/stack-manager`:
 - AI: Claude Code CLI, Google MCP GenMedia (Imagen, Veo, Chirp3, Lyria)
 - Automation: Task (Taskfile), oh-my-posh
 - Integration: Context7 MCP, Playwright MCP
+
+## Resources
+
+- [https://github.com/hairyhenderson/gomplate](https://github.com/hairyhenderson/gomplate)

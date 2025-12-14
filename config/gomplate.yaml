@@ -1,0 +1,17 @@
+# Gomplate configuration - replaces confd conf.d/*.toml
+# Renders templates to their destination paths on container startup
+
+inputDir: templates/
+
+# Dynamic output mapping with environment variable support
+# .in contains the input filename relative to inputDir
+outputMap: |
+  {{- $map := dict
+    "ansible.cfg" "/root/ansible.cfg"
+    "bashrc.sh" "/root/.bashrc"
+    "claude_settings.json" "/root/.claude/settings.json"
+    "mcp.json" "/workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/.mcp.json"
+    "pwsh_profile.ps1" "/root/.config/powershell/Microsoft.PowerShell_profile.ps1"
+    "ssh_config.cfg" "/root/.ssh/config"
+  -}}
+  {{- index $map .in -}}

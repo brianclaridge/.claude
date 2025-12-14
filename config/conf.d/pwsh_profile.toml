@@ -1,6 +1,0 @@
-[template]
-src = "pwsh_profile.ps1"
-dest = "/root/.config/powershell/Microsoft.PowerShell_profile.ps1"
-uid = 0
-gid = 0
-mode = "0644"

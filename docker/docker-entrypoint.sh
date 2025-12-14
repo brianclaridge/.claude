@@ -23,12 +23,14 @@ mkdir -p \
 find /usr/local/share/playwright -name "mcp-*" -type d -mmin +30 -exec rm -rf {} + 2>/dev/null || true
 find /tmp -name "*playwright*" -type d -cmin +30 -exec rm -rf {} + 2>/dev/null || true
 
-# run confd
-touch /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/confd.log
-confd \
-  -backend env \
-  -confdir /etc/confd \
-  -onetime &> /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/confd.log
+# run gomplate
+touch /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/gomplate.log
+gomplate \
+  --config /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config/gomplate.yaml \
+  &> /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/gomplate.log
+
+# set permissions (gomplate doesn't support mode like confd)
+chmod 0600 /root/.ssh/config
 
 # copy .mcp.json
 cp -f /root/.claude/.mcp.json /workspace${CLAUDE_PROJECT_SLUG}

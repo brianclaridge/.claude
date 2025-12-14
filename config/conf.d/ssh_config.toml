@@ -1,6 +1,0 @@
-[template]
-src = "ssh_config.cfg"
-dest = "/root/.ssh/config"
-uid = 0
-gid = 0
-mode = "0644"

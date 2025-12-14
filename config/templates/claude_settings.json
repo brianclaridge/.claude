@@ -52,19 +52,19 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/rules_loader python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/rules_loader python -m src"
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/cloud_auth_prompt python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/cloud_auth_prompt python -m src"
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/session_context_injector python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/session_context_injector python -m src"
           }
         ]
       }
@@ -79,11 +79,11 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/rules_loader python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/rules_loader python -m src"
           }
         ]
       }
@@ -98,7 +98,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           }
         ]
       }
@@ -113,7 +113,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           }
         ]
       }
@@ -128,7 +128,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           }
         ]
       }
@@ -139,7 +139,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/playwright_healer python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/playwright_healer python -m src"
           }
         ]
       },
@@ -152,7 +152,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           }
         ]
       }
@@ -167,7 +167,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           }
         ]
       }
@@ -182,7 +182,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           }
         ]
       }
@@ -197,7 +197,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           }
         ]
       }
@@ -212,7 +212,7 @@
           },
           {
             "type": "command",
-            "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
+            "command": "uv run --directory /workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/hooks/logger python -m src"
           }
         ]
       }
