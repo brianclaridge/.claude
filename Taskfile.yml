@@ -214,6 +214,8 @@ tasks:
 
   claude:clean-docker:
     desc: Kills and removes all running containers on the host
+    aliases:
+      - clean
     deps:
       - claude:ensure-env
     dir: "{{.TASKFILE_DIR}}"
@@ -225,11 +227,12 @@ tasks:
     silent: true
 
   claude:purge-docker:
+    desc: clean + volume cleanup
     aliases:
       - purge
     deps:
       - claude:ensure-env
-      - claude:clean
+      - claude:clean-docker
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - cmd: docker volume rm $(docker volume ls -q) 2>/dev/null || true
@@ -243,7 +246,7 @@ tasks:
       - nuke
     deps:
       - claude:ensure-env
-      - claude:purge
+      - claude:purge-docker
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - cmd: docker system prune -f -a --volumes 2>/dev/null || true
