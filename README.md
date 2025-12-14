@@ -21,7 +21,6 @@
       # bind folder mounts
       - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
       - ${HOME:-${USERPROFILE}}/.claudebox/root_homes/${SLUG}:/root:delegated
-      - ./config:/etc/confd:ro
       - ../:/workspace/${SLUG}:delegated
 ```
 
@@ -216,7 +215,7 @@ Available application stacks for bootstrapping via `/stack-manager`:
 - Kubernetes: kubectl 1.34.2, minikube, Helm
 - Browser: Playwright, Chrome/Chromium, Headless Shell
 - Security: Vault (Hashicorp)
-- Config: Ansible, confd 0.16.0
+- Config: Ansible, gomplate
 - AI: Claude Code CLI, Google MCP GenMedia (Imagen, Veo, Chirp3, Lyria)
 - Automation: Task (Taskfile), oh-my-posh
 - Integration: Context7 MCP, Playwright MCP

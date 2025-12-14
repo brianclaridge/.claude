@@ -9,7 +9,6 @@ services:
         poshThemesPath: /poshthemes
         poshTheme: quick-term
         baseImage: ubuntu:24.04
-        confdVersion: 0.16.0
         kubectlVersion: 1.34.2
         jdkVersion: 21
         goVersion: 1.25.4
@@ -52,7 +51,6 @@ services:
       # bind folder mounts
       - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
       - ${HOME:-${USERPROFILE}}/.claudebox/root_homes/${SLUG}:/root:delegated
-      - ./config:/etc/confd:ro
       - ../:/workspace/${SLUG}:delegated
       # misc volumes
       - minikube-data:/root/.minikube

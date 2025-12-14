@@ -95,14 +95,8 @@ RUN \
 RUN pip install uv --break-system-packages
 RUN pip install git+https://github.com/psf/black --break-system-packages
 
-# install confd
-ARG confdVersion
-RUN \
-    cd /tmp && \
-    curl -fsSLO https://github.com/kelseyhightower/confd/releases/download/v${confdVersion}/confd-${confdVersion}-linux-amd64 && \
-    mkdir -p /etc/confd && \
-    mv confd-${confdVersion}-linux-amd64 /usr/sbin/confd && \
-    chmod +x /usr/sbin/confd
+# install gomplate
+COPY --from=hairyhenderson/gomplate:stable /gomplate /bin/gomplate
 
 # install docker
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
