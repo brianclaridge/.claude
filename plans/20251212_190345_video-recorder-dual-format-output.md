@@ -48,8 +48,8 @@ Output: Both files saved
 
 ### Output Example
 ```
-Video saved (WebM): /workspace/.claude/.data/playwright/videos/example_20251212.webm
-Video saved (MP4):  /workspace/.claude/.data/playwright/videos/example_20251212.mp4
+Video saved (WebM): /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/videos/example_20251212.webm
+Video saved (MP4):  /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/videos/example_20251212.mp4
 ```
 
 ## TODO

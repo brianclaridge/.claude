@@ -39,6 +39,8 @@ task claude
 | `/metadata` | Update project metadata registry |
 | `/stack-manager` | Recommend and bootstrap application stacks |
 | `/taskfile` | Validate Taskfile.yml against best practices |
+| `/health` | Validate .claude environment integrity |
+| `/build-rule` | Create a new behavioral rule |
 
 ## Agents
 
@@ -53,6 +55,8 @@ task claude
 | gitops | Git commit workflow | git-manager |
 | stack-manager | Recommend and bootstrap app stacks | stack-manager |
 | taskfile-manager | Validate Taskfile against Rule 090 | taskfile-manager |
+| health-check | Validate environment integrity | health-check |
+| rule-builder | Create new behavioral rules | rule-builder |
 
 ## Skills
 
@@ -66,6 +70,8 @@ task claude
 | project-metadata-builder | Update project registry | project-analysis agent |
 | stack-manager | Recommend and bootstrap stacks | "/stack-manager", "suggest a stack" |
 | taskfile-manager | Validate Taskfile best practices | "/taskfile", "validate tasks" |
+| health-check | Validate environment | "/health", "check setup" |
+| rule-builder | Scaffold new rules | "/build-rule", "create rule" |
 
 ## [OPTIONAL] Add as submodule
 
@@ -135,7 +141,9 @@ Available application stacks for bootstrapping via `/stack-manager`:
     │   ├── project-analysis.md
     │   ├── skill-builder.md
     │   ├── stack-manager.md
-    │   └── taskfile-manager.md
+    │   ├── taskfile-manager.md
+    │   ├── health-check.md
+    │   └── rule-builder.md
     ├── assets/                     # Static assets (images, etc.)
     ├── commands/                   # Slash commands
     │   ├── analyze.md
@@ -148,7 +156,9 @@ Available application stacks for bootstrapping via `/stack-manager`:
     │   ├── metadata.md
     │   ├── playwright.md
     │   ├── stack-manager.md
-    │   └── taskfile.md
+    │   ├── taskfile.md
+    │   ├── health.md
+    │   └── build-rule.md
     ├── config/                     # confd templates and conf.d
     ├── docker/                     # Dockerfile, entrypoints, assets
     ├── hooks/                      # Python event handlers
@@ -156,11 +166,15 @@ Available application stacks for bootstrapping via `/stack-manager`:
     │   ├── logger/                 # Logs all hook events
     │   ├── playwright_healer/      # Playwright error recovery
     │   ├── rules_loader/           # Reinforces rules on prompts
-    │   └── session_context_injector/
+    │   ├── session_context_injector/
+    │   └── changelog_monitor/      # Tracks Claude Code updates
     ├── plans/                      # Implementation plans
     ├── prompts/                    # Prompt templates
     ├── rules/                      # Behavioral rules (000-090)
-    ├── scripts/                    # PowerShell host utilities
+    ├── scripts/                    # Utility scripts
+    │   └── taskfile-validator/     # Python Taskfile validation tool
+    ├── docs/                       # Documentation
+    │   └── ROADMAP.md              # Feature tracking from changelog
     ├── skills/                     # Model-invoked capabilities
     │   ├── aws-login/              # AWS SSO authentication
     │   ├── gcp-login/              # GCP authentication
@@ -169,7 +183,9 @@ Available application stacks for bootstrapping via `/stack-manager`:
     │   ├── project-metadata-builder/
     │   ├── session-context/        # Session context gathering
     │   ├── stack-manager/          # Stack recommendations & bootstrap
-    │   └── taskfile-manager/       # Taskfile validation
+    │   ├── taskfile-manager/       # Taskfile validation
+    │   ├── health-check/           # Environment validation
+    │   └── rule-builder/           # Rule scaffolding
     ├── config.yml                  # Global feature configuration
     ├── settings.json               # Claude Code settings
     ├── docker-compose.yml          # Container configuration

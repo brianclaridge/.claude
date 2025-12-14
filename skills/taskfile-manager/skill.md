@@ -159,9 +159,30 @@ Overall: 1 error, 1 warning
 Status: NEEDS FIXES
 ```
 
+## Python Validator Script
+
+For automated validation, use the Python validator script:
+
+```bash
+# Run validation (text output)
+uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/scripts/taskfile-validator python -m src ./Taskfile.yml
+
+# Run validation (JSON output for programmatic use)
+uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/scripts/taskfile-validator python -m src ./Taskfile.yml --format json
+
+# Strict mode (treat warnings as errors)
+uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/scripts/taskfile-validator python -m src ./Taskfile.yml --strict
+```
+
+The Python script provides:
+- Line number tracking via ruamel.yaml
+- JSON output for CI integration
+- Exit codes for automation (0=pass, 1=fail)
+
 ## Integration
 
 This skill is invoked by:
 - `/taskfile` command
 - `taskfile-manager` agent
 - Direct skill invocation
+- Python script for automation

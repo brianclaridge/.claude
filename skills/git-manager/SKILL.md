@@ -23,7 +23,7 @@ Before any git operations, ensure git identity is configured using this detectio
 #### 0.1 Load from .env (preferred)
 
 ```bash
-source /workspace/.claude/.env 2>/dev/null || true
+source /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env 2>/dev/null || true
 
 if [ -n "$GIT_USER_EMAIL" ] && [ -n "$GIT_USER_NAME" ]; then
   git config user.email "$GIT_USER_EMAIL"
@@ -67,11 +67,11 @@ If SSH detection succeeded, present to user via AskUserQuestion:
 
 #### 0.4 Persist to .env
 
-After confirmation, append credentials to `/workspace/.claude/.env`:
+After confirmation, append credentials to `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env`:
 
 ```bash
-echo "GIT_USER_NAME=${GIT_USER_NAME}" >> /workspace/.claude/.env
-echo "GIT_USER_EMAIL=${GIT_USER_EMAIL}" >> /workspace/.claude/.env
+echo "GIT_USER_NAME=${GIT_USER_NAME}" >> /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env
+echo "GIT_USER_EMAIL=${GIT_USER_EMAIL}" >> /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env
 ```
 
 #### 0.5 Fallback (no SSH)

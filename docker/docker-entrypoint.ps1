@@ -38,8 +38,8 @@ New-Module -ScriptBlock {
 
   function _link_scripts {
     # link baked scripts
-    if (Test-Path -Path "/workspace/.claude/scripts") {
-      Get-ChildItem "/workspace/.claude/scripts" -Filter *.ps1 |
+    if (Test-Path -Path "/workspace/${env:CLAUDE_PROJECT_SLUG}/.claude/scripts") {
+      Get-ChildItem "/workspace/${env:CLAUDE_PROJECT_SLUG}/.claude/scripts" -Filter *.ps1 |
       Foreach-Object {
         New-Alias `
           -Name $_.BaseName `

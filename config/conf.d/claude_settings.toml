@@ -1,0 +1,6 @@
+[template]
+src = "claude_settings.json"
+dest = "/root/.claude/settings.json"
+uid = 0
+gid = 0
+mode = "0644"

@@ -6,7 +6,7 @@ Enhance git-manager skill to automatically detect and persist git identity for h
 ## Problem Statement
 Git commits fail in headless CLI when:
 1. `user.email` and `user.name` not configured
-2. No `/workspace/.claude/.env` credentials stored
+2. No `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env` credentials stored
 3. Interactive prompts cannot complete (no AskUserQuestion for free-form)
 
 ## Current State
@@ -24,7 +24,7 @@ Git commits fail in headless CLI when:
 
 ```bash
 # 1. Check .env first
-source /workspace/.claude/.env 2>/dev/null || true
+source /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env 2>/dev/null || true
 
 # 2. If missing, try to detect from SSH
 if [ -z "$GIT_USER_NAME" ]; then
@@ -47,7 +47,7 @@ fi
 
 1. **Auto-detect before asking**: Try SSH detection first
 2. **Suggest derived values**: Show user what we detected, ask to confirm
-3. **Persist to .env**: After confirmation, append to `/workspace/.claude/.env`
+3. **Persist to .env**: After confirmation, append to `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env`
 4. **Silent on subsequent runs**: If .env has values, use them without prompting
 
 ### New Step 0 Logic (pseudo-code)
@@ -84,7 +84,7 @@ ELSE:
 ```
 
 ## TODO
-- [ ] Seed /workspace/.claude/.env with GIT_USER_NAME and GIT_USER_EMAIL now
+- [ ] Seed /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env with GIT_USER_NAME and GIT_USER_EMAIL now
 - [ ] Update Step 0 in SKILL.md with auto-detection logic
 - [ ] Add SSH username extraction command
 - [ ] Add .env persistence after confirmation
@@ -93,11 +93,11 @@ ELSE:
 - [ ] Test full workflow in headless environment
 
 ## Files to Modify
-- `/workspace/.claude/.env` (seed GIT_USER_* variables)
+- `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env` (seed GIT_USER_* variables)
 - `.claude/skills/git-manager/SKILL.md` (enhance Step 0)
 
 ## Testing
-1. Clear /workspace/.claude/.env of GIT_* vars
+1. Clear /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env of GIT_* vars
 2. Invoke git-manager skill
 3. Verify SSH detection works
 4. Confirm values persisted to .env

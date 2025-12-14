@@ -39,7 +39,7 @@ Edit `config.json` to customize behavior:
 
 ```json
 {
-  "log_base_path": "/workspace/.claude/.data/logs/claude_hooks"
+  "log_base_path": "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/claude_hooks"
 }
 ```
 
@@ -90,7 +90,7 @@ The hook outputs JSON to stdout:
 
 Logs are written to:
 ```
-/workspace/.claude/.data/logs/claude_hooks/{session_id}/{hook_event_name}/{timestamp}.json
+/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/claude_hooks/{session_id}/{hook_event_name}/{timestamp}.json
 ```
 
 Each log file contains a JSON array of events:
@@ -127,12 +127,12 @@ The hook runs automatically when configured in `.claude/settings.json`:
   "hooks": {
     "UserPromptSubmit": [
       {
-        "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+        "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
       }
     ],
     "PostToolUse": [
       {
-        "command": "uv run --directory /workspace/.claude/hooks/logger python -m src"
+        "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src"
       }
     ]
   }
@@ -144,10 +144,10 @@ The hook runs automatically when configured in `.claude/settings.json`:
 ```bash
 # Test with sample input
 echo '{"hook_event_name": "PostToolUse", "session_id": "test123", "tool_name": "Bash"}' | \
-  uv run --directory /workspace/.claude/hooks/logger python -m src
+  uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/logger python -m src
 
 # Verify log was created
-cat /workspace/.claude/.data/logs/claude_hooks/test123/PostToolUse/*.json
+cat /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/claude_hooks/test123/PostToolUse/*.json
 ```
 
 ## Log File Management
@@ -156,13 +156,13 @@ Log files accumulate over time. To manage disk space:
 
 ```bash
 # View all session logs
-ls -la /workspace/.claude/.data/logs/claude_hooks/
+ls -la /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/claude_hooks/
 
 # Remove logs older than 7 days
-find /workspace/.claude/.data/logs/claude_hooks -type f -mtime +7 -delete
+find /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/claude_hooks -type f -mtime +7 -delete
 
 # Remove empty directories
-find /workspace/.claude/.data/logs/claude_hooks -type d -empty -delete
+find /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/claude_hooks -type d -empty -delete
 ```
 
 ## Interaction with Other Hooks

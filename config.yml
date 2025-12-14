@@ -1,5 +1,5 @@
 # Global configuration for Claude Code custom features
-# Location: /workspace/.claude/config.yml (project root)
+# Location: /workspace/${SLUG}/.claude/config.yml (project root)
 
 # Cloud provider authentication settings
 cloud_providers:
@@ -74,3 +74,12 @@ session_context:
   # Plans gathering settings
   plans:
     recent_limit: 3           # Number of recent plans to review
+
+# Changelog monitor settings (for changelog_monitor hook)
+changelog_monitor:
+  enabled: true                 # Enable/disable changelog monitoring
+  cache_ttl_hours: 24           # How long to cache changelog before refetching
+  github_url: "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md"
+  roadmap_path: "docs/ROADMAP.md"
+  notify_on_new_features: true  # Inject context about new features
+  auto_update_roadmap: false    # Automatically update ROADMAP.md (requires explicit invocation)

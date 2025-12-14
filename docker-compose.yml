@@ -17,8 +17,8 @@ services:
         nodeVersion: 24
         powershellVersion: 7.5.4
         sqlProxyVersion: 2.19.0
-        buildDate: 20251208.1
-        claudeCodeDate: 20251213.1
+        buildDate: 20251213.2
+        claudeCodeDate: 20251213.2
     init: true
     privileged: true
     ulimits:

@@ -339,6 +339,5 @@ RUN \
     chmod +x /usr/local/sbin/docker-compose
 
 EXPOSE 8084
-WORKDIR /workspace
 ENTRYPOINT [ "/docker-entrypoint" ]
 CMD [ "claude" ]

@@ -19,7 +19,7 @@ Build comprehensive project metadata and maintain a global registry at `~/.claud
 Run the builder script for a project:
 
 ```bash
-cd /workspace/.claude/skills/project-metadata-builder && \
+cd /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/project-metadata-builder && \
 uv run python -m scripts.builder <project_path> [--session-id <id>]
 ```
 
@@ -47,7 +47,7 @@ Updates `~/.claude/projects.yml` with:
 
 ## Configuration
 
-Settings in `/workspace/.claude/config.yml` (project root):
+Settings in `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/config.yml` (project root):
 
 ```yaml
 project_metadata:

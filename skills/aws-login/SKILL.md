@@ -27,11 +27,11 @@ Authenticate to AWS using SSO (Single Sign-On) with interactive account selectio
 Verify AWS SSO configuration exists:
 
 ```bash
-cat /workspace/.claude/.aws.yml 2>/dev/null | head -20
+cat /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.aws.yml 2>/dev/null | head -20
 ```
 
 If config not found:
-- Run setup wizard: `uv run --directory /workspace/.claude/skills/aws-login python scripts/config/setup_wizard.py`
+- Run setup wizard: `uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/aws-login python scripts/config/setup_wizard.py`
 - Wizard will prompt for SSO URL and detect region
 
 ### Step 2: Check Current Credentials
@@ -39,7 +39,7 @@ If config not found:
 Check if valid SSO credentials exist:
 
 ```bash
-uv run --directory /workspace/.claude/skills/aws-login python scripts/cli/sso_check.py --quiet ${ACCOUNT}
+uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/aws-login python scripts/cli/sso_check.py --quiet ${ACCOUNT}
 ```
 
 Where `${ACCOUNT}` is the account alias (e.g., "root", "sandbox", "manager").
@@ -67,7 +67,7 @@ If no account specified, use AskUserQuestion to present available accounts:
 
 If "Interactive menu" selected:
 ```bash
-uv run --directory /workspace/.claude/skills/aws-login python scripts/discovery/account_discovery.py
+uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/aws-login python scripts/discovery/account_discovery.py
 ```
 
 ### Step 4: Authenticate
@@ -75,7 +75,7 @@ uv run --directory /workspace/.claude/skills/aws-login python scripts/discovery/
 If credentials expired or missing, initiate SSO login:
 
 ```bash
-uv run --directory /workspace/.claude/skills/aws-login python scripts/cli/sso_login.py ${ACCOUNT}
+uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/aws-login python scripts/cli/sso_login.py ${ACCOUNT}
 ```
 
 This will:
@@ -98,7 +98,7 @@ Report to user:
 
 ## Configuration File (.aws.yml)
 
-Located at `/workspace/.claude/.aws.yml`:
+Located at `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.aws.yml`:
 
 ```yaml
 schema_version: "2.0"

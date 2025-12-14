@@ -10,17 +10,17 @@ Create a new skill `project-metadata-builder` that generates and maintains a com
 |------|---------|
 | `~/.claude/config.yml` | Global configuration for custom features |
 | `~/.claude/projects.yml` | Project metadata registry (generated) |
-| `/workspace/.claude/skills/project-metadata-builder/SKILL.md` | Skill definition |
-| `/workspace/.claude/skills/project-metadata-builder/pyproject.toml` | Python dependencies |
-| `/workspace/.claude/skills/project-metadata-builder/scripts/builder.py` | Main metadata builder |
-| `/workspace/.claude/skills/project-metadata-builder/scripts/schema.py` | YAML schema definitions |
-| `/workspace/.claude/skills/project-metadata-builder/scripts/collectors/` | Metadata collection modules |
+| `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/project-metadata-builder/SKILL.md` | Skill definition |
+| `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/project-metadata-builder/pyproject.toml` | Python dependencies |
+| `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/project-metadata-builder/scripts/builder.py` | Main metadata builder |
+| `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/project-metadata-builder/scripts/schema.py` | YAML schema definitions |
+| `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/project-metadata-builder/scripts/collectors/` | Metadata collection modules |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `/workspace/.claude/agents/project-disovery-agent.md` | Add skill invocation after analysis |
+| `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/project-disovery-agent.md` | Add skill invocation after analysis |
 
 ## TODO List
 
@@ -159,7 +159,7 @@ projects:
 ### Directory Structure
 
 ```
-/workspace/.claude/skills/project-metadata-builder/
+/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/project-metadata-builder/
 ├── SKILL.md                    # Skill definition
 ├── pyproject.toml              # Dependencies
 └── scripts/

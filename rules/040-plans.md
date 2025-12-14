@@ -6,7 +6,7 @@
 
 **SUBMODULE EXCEPTION:** When working on features, bugs, or improvements within the `.claude/` submodule itself:
 
-For example, if Claude Code was started in `/workspace` but you are editing files in `/workspace/.claude/**`, plans go in `/workspace/.claude/plans/`.
+For example, if Claude Code was started in `/workspace` but you are editing files in `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/**`, plans go in `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/plans/`.
 
 1. Plans go to `.claude/plans/` (within the submodule), NOT `{CWD}/plans/`
 2. Plans MUST be committed and pushed to the `.claude` repo
