@@ -1,7 +1,5 @@
 #!/bin/bash
 
-clear
-
 # update ca trust
 update-ca-trust --fresh &>/dev/null
 
