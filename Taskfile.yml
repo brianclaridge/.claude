@@ -49,6 +49,8 @@ tasks:
     desc: Runs claude in a container
     aliases:
       - claude
+      - ai
+      - start
     deps:
       - claude:ensure-env
     dir: "{{.TASKFILE_DIR}}"

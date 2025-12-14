@@ -11,7 +11,7 @@
 
 ## **CRITICAL**
 
-> docker-compose uses both bind and volume mounts. The following relative and absolute paths MUST be allowed to Docker Desktop be read or written to if you want:
+> docker-compose uses both bind and volume mounts. The following relative and absolute paths MUST be allowed to Docker Desktop so they can be read or written to:
 
 ```yaml
     volumes:

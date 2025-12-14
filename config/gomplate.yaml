@@ -10,7 +10,7 @@ outputMap: |
     "ansible.cfg" "/root/ansible.cfg"
     "bashrc.sh" "/root/.bashrc"
     "claude_settings.json" "/root/.claude/settings.json"
-    "mcp.json" "/workspace/{{ .Env.CLAUDE_PROJECT_SLUG }}/.claude/.mcp.json"
+    "mcp.json" ".mcp.json"
     "pwsh_profile.ps1" "/root/.config/powershell/Microsoft.PowerShell_profile.ps1"
     "ssh_config.cfg" "/root/.ssh/config"
   -}}
