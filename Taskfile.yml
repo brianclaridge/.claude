@@ -179,7 +179,7 @@ tasks:
 
   claude:delete-logs-folder:
     aliases:
-      - claude:delete-logs-folder
+      - delete-logs-folder
     deps:
       - claude:ensure-host
     vars:
@@ -223,7 +223,7 @@ tasks:
       - docker kill $(docker ps -q) 2>/dev/null || true
       - docker rm -f $(docker ps -aq) 2>/dev/null || true
       - docker image prune -f
-      - task: delete-logs
+      - task: delete-logs-folder
     silent: true
 
   claude:purge-docker:
@@ -237,7 +237,7 @@ tasks:
     cmds:
       - cmd: docker volume rm $(docker volume ls -q) 2>/dev/null || true
         platforms: [linux, darwin, windows]
-      - task: delete-data
+      - task: delete-data-folder
     silent: true
 
   claude:nuke-docker:
