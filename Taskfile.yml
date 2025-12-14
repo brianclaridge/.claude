@@ -54,7 +54,7 @@ tasks:
     aliases:
       - ensure-stack-network
     cmds:
-      - cmd: pwsh -c "docker network create --subnet=10.234.0.0/24 claude-stack *> $null 2>&1"
+      - cmd: pwsh -c "docker network create --subnet=10.234.0.0/24 claude-stack *> \$null 2>&1"
     silent: true
 
   claude:claude:
