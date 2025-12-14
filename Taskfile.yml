@@ -65,7 +65,7 @@ tasks:
           claude --continue 2>\$null || claude
         } else {
           docker compose build
-          docker network create --subnet=10.234.0.0/24 claude-stack *>$null
+          docker network create --subnet=10.234.0.0/24 claude-stack > \$null
           docker compose run --remove-orphans claude run-claude
         }"
     silent: true
@@ -86,7 +86,7 @@ tasks:
           echo {{.CLI_ARGS}} | claude --print --fork-session --input-format stream-json --output-format stream-json --verbose
         } else {
           docker compose build
-          docker network create --subnet=10.234.0.0/24 claude-stack *>$null
+          docker network create --subnet=10.234.0.0/24 claude-stack > \$null
           echo {{.CLI_ARGS}} | docker compose run -T --remove-orphans claude 'claude --print --fork-session --input-format stream-json --output-format stream-json --verbose'
         }"
     silent: true
@@ -107,7 +107,7 @@ tasks:
           claude --continue --debug 2>\$null || claude --debug
         } else {
           docker compose build
-          docker network create --subnet=10.234.0.0/24 claude-stack *>$null
+          docker network create --subnet=10.234.0.0/24 claude-stack > \$null
           docker compose run --remove-orphans claude 'run-claude -debug_claude'
         }"
     silent: true
