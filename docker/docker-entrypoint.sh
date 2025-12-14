@@ -7,6 +7,7 @@ update-ca-trust --fresh &>/dev/null
 
 # ensure directories
 mkdir -p \
+    ${HOME}/.claude \
     ${HOME}/.ssh \
     ${HOME}/.aws \
     ${HOME}/.docker \
