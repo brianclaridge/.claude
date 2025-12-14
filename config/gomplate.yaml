@@ -1,7 +1,7 @@
 # Gomplate configuration - replaces confd conf.d/*.toml
 # Renders templates to their destination paths on container startup
 
-inputDir: templates/
+inputDir: .claude/config/templates/
 
 # Dynamic output mapping with environment variable support
 # .in contains the input filename relative to inputDir

@@ -8,6 +8,63 @@ allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion, EnterPlanMode
 
 Interactive git commit workflow with safety checks and user confirmation.
 
+## Python Automation Scripts
+
+This skill includes Python scripts for consistent automation. Invoke via:
+
+```bash
+uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+  python -m scripts --format json <subcommand> [args]
+```
+
+### Available Subcommands
+
+| Command | Description | Exit Codes |
+|---------|-------------|------------|
+| `identity` | Detect git identity (env → gh → SSH) | 0=found, 2=needs-input |
+| `message` | Generate commit message from plans | 0=success, 1=no-changes |
+| `auth-check` | Check remote authentication | 0=authenticated, 1=needs-auth |
+| `sensitive-scan` | Scan for sensitive files | 0=clear, 1=found |
+
+### Example: Identity Detection
+
+```bash
+IDENTITY=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+  python -m scripts --format json identity --env-path /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env)
+
+# Parse: detected, source, name, email, needs_input
+```
+
+### Example: Auth Check (HTTPS + gh)
+
+```bash
+AUTH=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+  python -m scripts --format json auth-check)
+
+# If needs_auth=true for HTTPS GitHub, guidance shows:
+# "Run: gh auth login --git-protocol https --web"
+```
+
+### Example: Commit Message Generation
+
+```bash
+MSG=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+  python -m scripts --format json message \
+  --plans-dir "$(pwd)/plans" \
+  --claude-plans-dir /workspace/${CLAUDE_PROJECT_SLUG}/.claude/plans)
+
+# Returns: type, scope, subject, body, full_message, plan_reference
+```
+
+### Example: Sensitive File Scan
+
+```bash
+SENSITIVE=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+  python -m scripts --format json sensitive-scan)
+
+# If found=true, files[] contains detected sensitive files
+```
+
 ## Activation Triggers
 
 - All plan TODOs marked complete (invoked via DIRECTIVE 040)

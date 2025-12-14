@@ -4,9 +4,7 @@ version: '3'
 
 vars:
   LOG_DIR: "{{.TASKFILE_DIR}}/.data/logs"
-  AWS_SCRIPTS_PATH: "{{.TASKFILE_DIR}}/skills/aws-login/scripts"
   DOCKERFILE_PATH: '{{.DOCKERFILE_PATH | default "{{.TASKFILE_DIR}}/docker/Dockerfile"}}'
-  AWS_ACCOUNT: '{{.AWS_ACCOUNT | default "root"}}'
   PARENT_PATH:
     sh: |
       pwsh -NoProfile -Command "
@@ -31,9 +29,7 @@ tasks:
     cmds:
       - cmd: "echo 'TASKFILE_DIR: {{.TASKFILE_DIR}}'"
       - cmd: "echo 'LOG_DIR: {{.LOG_DIR}}'"
-      - cmd: "echo 'AWS_SCRIPTS_PATH: {{.AWS_SCRIPTS_PATH}}'"
       - cmd: "echo 'DOCKERFILE_PATH: {{.DOCKERFILE_PATH}}'"
-      - cmd: "echo 'AWS_ACCOUNT: {{.AWS_ACCOUNT}}'"
       - cmd: "echo 'PARENT_PATH: {{.PARENT_PATH}}'"
       - cmd: "echo 'SLUG: {{.SLUG}}'"
       - cmd: "echo '---'"
@@ -60,7 +56,7 @@ tasks:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location '{{.TASKFILE_DIR}}/{{.SLUG}}''
+          Set-Location {{.TASKFILE_DIR}}/{{.SLUG}}
           claude update
           claude --continue 2>\$null || claude
         } else {
@@ -69,7 +65,7 @@ tasks:
         }"
     silent: true
 
-  claude:stream-json:
+  claude:stream:
     desc: A no persistence query to claude
     aliases:
       - stream-json
@@ -82,11 +78,12 @@ tasks:
         if (Test-Path /.dockerenv) {
           Set-Location {{.TASKFILE_DIR}}
           claude update
-          echo {{.CLI_ARGS}} | claude --print --no-session-persistence --input-format text --output-format stream-json --verbose
+          echo {{.CLI_ARGS}} | claude --print --fork-session --input-format stream-json --output-format stream-json --verbose
         } else {
           docker compose build
-          echo {{.CLI_ARGS}} | docker compose run -T --remove-orphans claude 'claude --print --no-session-persistence --input-format text --output-format stream-json --verbose'
+          echo {{.CLI_ARGS}} | docker compose run -T --remove-orphans claude 'claude --print --fork-session --input-format stream-json --output-format stream-json --verbose'
         }"
+    silent: true
 
   claude:debug:
     desc: Runs claude in a container in debug mode
@@ -285,77 +282,6 @@ tasks:
         msg: "This task can only be run inside a Docker container"
     cmds:
       - echo "/.dockerenv exists"
-    silent: true
-
-  aws-login:
-    desc: "Login to AWS SSO (interactive menu if ACCOUNT not specified)"
-    aliases:
-      - login
-    deps:
-      - claude:ensure-docker
-    preconditions:
-      - sh: '[ -n "{{.ACCOUNT}}" ]'
-        msg: "ACCOUNT is required. Usage: task sso:ensure ACCOUNT=<alias>"
-    vars:
-      _ACCOUNT: '{{.ACCOUNT | default "manager"}}'
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - uv run {{.AWS_SCRIPTS_PATH}}/cli/sso_login.py {{.ACCOUNT}} {{if .FORCE}}--force{{end}}
-    silent: true
-
-  aws-check:
-    desc: "Check SSO credential status (usage: task sso:check ACCOUNT=sandbox)"
-    aliases:
-      - check
-    deps:
-      - claude:ensure-docker
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - uv run {{.AWS_SCRIPTS_PATH}}/cli/sso_check.py {{.ACCOUNT}}
-    preconditions:
-      - sh: '[ -n "{{.ACCOUNT}}" ]'
-        msg: "ACCOUNT is required. Usage: task sso:check ACCOUNT=<alias>"
-    silent: true
-
-  aws-ensure-login:
-    aliases:
-      - ensure-login
-    desc: "Ensure SSO credentials valid - silent mode for automation"
-    deps:
-      - claude:ensure-docker
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - uv run {{.AWS_SCRIPTS_PATH}}/cli/sso_check.py --quiet {{.ACCOUNT}}
-    preconditions:
-      - sh: '[ -n "{{.ACCOUNT}}" ]'
-        msg: "ACCOUNT is required. Usage: task sso:ensure ACCOUNT=<alias>"
-    silent: true
-
-  aws-list-accounts:
-    desc: "List all configured accounts"
-    aliases:
-      - list-accounts
-    deps:
-      - claude:ensure-docker
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - |
-        echo "Configured accounts:"
-        grep -E "^  [a-z]" aws.yml | grep -v "account_" | sed 's/://g' | sed 's/^  /  - /'
-    silent: true
-
-  aws-update:
-    desc: "Sync aws.yml with AWS Organizations hierarchy"
-    deps:
-      - claude:ensure-docker
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - |
-        uv run {{.AWS_SCRIPTS_PATH}}/cli/sso_check.py --quiet root || {
-          echo "Root account credentials required. Run: task login ACCOUNT=root"
-          exit 1
-        }
-      - uv run {{.AWS_SCRIPTS_PATH}}/cli/org_sync.py {{if .DRY_RUN}}--dry-run{{end}}
     silent: true
 
   playwright:record:
