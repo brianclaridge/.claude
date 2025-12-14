@@ -56,6 +56,15 @@ services:
       - minikube-data:/root/.minikube
       - kube-data:/root/.kube
       - maven-data:/root/.m2
+    networks:
+      - claude-stack
+      - default
+
+networks:
+  claude-stack:
+    external: true
+  default:
+    driver: bridge
 
 volumes:
   minikube-data: {}
