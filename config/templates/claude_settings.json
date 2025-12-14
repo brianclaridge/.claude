@@ -220,6 +220,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "input=$(cat); echo \"$(echo \"$input\" | jq -r '.model.display_name') | $(echo \"$input\" | jq -r '.workspace.current_dir')\""
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
   }
 }

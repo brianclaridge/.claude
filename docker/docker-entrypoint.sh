@@ -11,6 +11,7 @@ mkdir -p \
     ${HOME}/.docker \
     ${HOME}/.config/powershell \
     ${HOME}/.config/htop \
+    ${HOME}/.config/ccstatusline \
     /etc/ansible \
     /workspace${CLAUDE_PROJECT_SLUG}/.claude \
     /workspace${CLAUDE_PROJECT_SLUG}/.claude/.data/logs \

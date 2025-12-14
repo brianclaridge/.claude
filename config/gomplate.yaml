@@ -9,6 +9,7 @@ outputMap: |
   {{- $map := dict
     "ansible.cfg" "/root/ansible.cfg"
     "bashrc.sh" "/root/.bashrc"
+    "ccstatusline_settings.json" "/root/.config/ccstatusline/settings.json"
     "claude_settings.json" "/root/.claude/settings.json"
     "mcp.json" ".mcp.json"
     "pwsh_profile.ps1" "/root/.config/powershell/Microsoft.PowerShell_profile.ps1"
