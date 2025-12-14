@@ -43,6 +43,7 @@ services:
       USERPROFILE: /root
       UV_LINK_MODE: copy
       CDK_DISABLE_CLI_TELEMETRY: true
+      SLUG: ${SLUG}
       CLAUDE_PROJECT_SLUG: ${SLUG}
     volumes:
       # dind stuff
@@ -51,7 +52,6 @@ services:
       # bind folder mounts
       - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
       - ./config:/etc/confd:ro
-      - ./:/workspace/${SLUG}/.claude:delegated
       - ../:/workspace/${SLUG}:delegated
       # shared volumes
       - claude-home-data:/root:rw
