@@ -9,6 +9,22 @@
 - [PowerShell 7+](https://github.com/PowerShell/PowerShell) (`pwsh`)
 - [Task](https://taskfile.dev/) (Taskfile runner)
 
+## **CRITICAL**
+
+> docker-compose uses both bind and volume mounts. The following relative and absolute paths MUST be allowed to Docker Desktop be read or written to if you want:
+
+```yaml
+    volumes:
+      # dind stuff
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      # bind folder mounts
+      - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
+      - ${HOME:-${USERPROFILE}}/.claudebox/root_homes/${SLUG}:/root:delegated
+      - ./config:/etc/confd:ro
+      - ../:/workspace/${SLUG}:delegated
+```
+
 ## Quick Start
 
 ```bash

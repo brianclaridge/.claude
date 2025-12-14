@@ -51,18 +51,15 @@ services:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       # bind folder mounts
       - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
+      - ${HOME:-${USERPROFILE}}/.claudebox/root_homes/${SLUG}:/root:delegated
       - ./config:/etc/confd:ro
       - ../:/workspace/${SLUG}:delegated
-      # shared volumes
-      - claude-home-data:/root:rw
       # misc volumes
       - minikube-data:/root/.minikube
       - kube-data:/root/.kube
       - maven-data:/root/.m2
 
 volumes:
-  claude-home-data:
-    name: claude-home-data
   minikube-data: {}
   kube-data: {}
   maven-data: {}

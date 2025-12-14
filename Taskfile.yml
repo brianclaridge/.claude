@@ -60,7 +60,7 @@ tasks:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location "{{.TASKFILE_DIR}}/${env:CLAUDE_PROJECT_SLUG}"
+          Set-Location "{{.TASKFILE_DIR}}/{{.SLUG}}"
           claude update
           claude --continue 2>\$null || claude
         } else {
@@ -80,12 +80,12 @@ tasks:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location "{{.TASKFILE_DIR}}/${env:CLAUDE_PROJECT_SLUG}"
+          Set-Location "{{.TASKFILE_DIR}}/{{.SLUG}}"
           claude update
           claude --continue --debug 2>\$null || claude --debug
         } else {
           docker compose build
-          docker compose run --remove-orphans claude pwsh -NoProfile -File /workspace/.claude/scripts/run-claude.ps1 -debug_claude
+          docker compose run --remove-orphans claude 'run-claude -debug_claude'
         }"
     silent: true
 
