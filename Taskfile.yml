@@ -351,3 +351,10 @@ tasks:
     cmds:
       - uv run --extra test pytest tests/integration/ -v
     silent: false
+
+  claude:gh:login:
+    aliases:
+      - gh-login
+    cmds:
+      - echo | gh auth login --git-protocol https --web
+    silent: false
