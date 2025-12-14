@@ -47,6 +47,14 @@ tasks:
         platforms: [windows]
     silent: true
 
+  claude:ensure-stack-network:
+    desc: Ensures the claude-stack external network is available
+    aliases:
+      - ensure-stack-network
+    cmds:
+      - cmd: pwsh -c "docker network create --subnet=10.234.0.0/24 claude-stack *> $null 2>&1"
+    silent: true
+
   claude:claude:
     desc: Runs claude in a container
     aliases:
@@ -54,7 +62,8 @@ tasks:
       - ai
       - start
     deps:
-      - claude:ensure-env
+      - ensure-env
+      - ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
@@ -65,7 +74,6 @@ tasks:
           claude --continue 2>\$null || claude
         } else {
           docker compose build
-          docker network create --subnet=10.234.0.0/24 claude-stack > \$null
           docker compose run --remove-orphans claude run-claude
         }"
     silent: true
@@ -75,7 +83,8 @@ tasks:
     aliases:
       - stream-json
     deps:
-      - claude:ensure-env
+      - ensure-env
+      - ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
@@ -86,7 +95,6 @@ tasks:
           echo {{.CLI_ARGS}} | claude --print --fork-session --input-format stream-json --output-format stream-json --verbose
         } else {
           docker compose build
-          docker network create --subnet=10.234.0.0/24 claude-stack > \$null
           echo {{.CLI_ARGS}} | docker compose run -T --remove-orphans claude 'claude --print --fork-session --input-format stream-json --output-format stream-json --verbose'
         }"
     silent: true
@@ -96,7 +104,8 @@ tasks:
     aliases:
       - debug
     deps:
-      - claude:ensure-env
+      - ensure-env
+      - ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
@@ -107,7 +116,6 @@ tasks:
           claude --continue --debug 2>\$null || claude --debug
         } else {
           docker compose build
-          docker network create --subnet=10.234.0.0/24 claude-stack > \$null
           docker compose run --remove-orphans claude 'run-claude -debug_claude'
         }"
     silent: true
@@ -263,6 +271,7 @@ tasks:
     cmds:
       - docker kill $(docker ps -q) 2>/dev/null || true
       - docker rm -f $(docker ps -aq) 2>/dev/null || true
+      - docker network prune -f 2>/dev/null || true
       - docker image prune -f
       - task: delete-logs-folder
     silent: true
