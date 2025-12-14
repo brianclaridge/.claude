@@ -53,7 +53,7 @@ MSG=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-ma
   --plans-dir "$(pwd)/plans" \
   --claude-plans-dir /workspace/${CLAUDE_PROJECT_SLUG}/.claude/plans)
 
-# Returns: type, scope, subject, body, full_message, plan_reference
+# Returns: type, scope, subject, body, full_message, plan_reference, session_stats
 ```
 
 ### Example: Sensitive File Scan
@@ -242,7 +242,21 @@ Generate commit message using this professional format:
 ## Files Modified
 
 {count} files changed
+
+## Session Statistics
+
+- **Tokens**: {input} input / {output} output
+- **Cache**: {cache_read} read / {cache_created} created
+- **Cost**: ${estimated_cost}
+- **Duration**: {session_duration}
+- **API Calls**: {api_call_count}
+- **Tool Calls**: {tool_call_count}
+- **Model**: {model_name}
 ```
+
+> **Note**: Session statistics are automatically extracted from Claude Code transcripts
+> and included in every commit message. Statistics may be omitted if the transcript
+> is unavailable.
 
 #### 4.3 Conventional Commit Types
 

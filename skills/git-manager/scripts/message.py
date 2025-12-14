@@ -11,6 +11,7 @@ from typing import Optional
 import structlog
 
 from .plan import find_active_plan, PlanInfo
+from .stats import get_session_stats, format_stats_section
 
 logger = structlog.get_logger()
 
@@ -42,6 +43,7 @@ class MessageResult:
     plan_reference: Optional[str] = None
     exit_code: int = 0
     error: Optional[str] = None
+    session_stats: Optional[dict] = None
 
     def to_dict(self) -> dict:
         return {
@@ -53,6 +55,7 @@ class MessageResult:
             "files_changed": self.files_changed,
             "plan_reference": self.plan_reference,
             "error": self.error,
+            "session_stats": self.session_stats,
         }
 
 
@@ -212,6 +215,14 @@ def generate_message(
     # Files modified
     body_parts.append("## Files Modified\n")
     body_parts.append(f"{count} files changed")
+
+    # Session statistics
+    stats = get_session_stats(repo_path)
+    stats_section = format_stats_section(stats)
+    if stats_section:
+        body_parts.append("")
+        body_parts.append(stats_section)
+    result.session_stats = stats.to_dict()
 
     result.body = "\n".join(body_parts)
     result.full_message = f"{header}\n\n{result.body}"
