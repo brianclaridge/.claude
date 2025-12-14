@@ -40,6 +40,8 @@ tasks:
 
   claude:ensure-env:
     desc: Ensures a .env is present, even if empty
+    aliases:
+      - ensure-env
     cmds:
       - cmd: touch {{.TASKFILE_DIR}}/.env
         platforms: [linux, darwin]
@@ -62,8 +64,8 @@ tasks:
       - ai
       - start
     deps:
-      - ensure-env
-      - ensure-stack-network
+      - claude:ensure-env
+      - claude:ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
@@ -83,8 +85,8 @@ tasks:
     aliases:
       - stream-json
     deps:
-      - ensure-env
-      - ensure-stack-network
+      - claude:ensure-env
+      - claude:ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
@@ -104,8 +106,8 @@ tasks:
     aliases:
       - debug
     deps:
-      - ensure-env
-      - ensure-stack-network
+      - claude:ensure-env
+      - claude:ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
