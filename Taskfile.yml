@@ -69,6 +69,16 @@ tasks:
         }"
     silent: true
 
+  claude:ask:
+    desc: A no persistence query to claude
+    aliases:
+      - ask
+    deps:
+      - claude:ensure-env
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - cmd: docker compose run --remove-orphans claude 'claude --print --fork-session --input-format text --output-format text "{{.CLI_ARGS}}"'
+
   claude:debug:
     desc: Runs claude in a container in debug mode
     aliases:

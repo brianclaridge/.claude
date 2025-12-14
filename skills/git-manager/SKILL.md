@@ -150,17 +150,67 @@ Display summary of changes:
 
 ### Step 4: Generate Commit Message
 
-Analyze implementation context to generate commit message:
+#### 4.1 Context Gathering
 
-- Review recent conversation for task context
-- Check TODO list completions if available
-- Follow conventional commit format when appropriate:
-  - `feat:` for new features
-  - `fix:` for bug fixes
-  - `docs:` for documentation
-  - `refactor:` for refactoring
-  - `chore:` for maintenance
-- Generate multi-line message with summary and details
+Gather information from multiple sources:
+
+1. **Plan file** (if exists): Read from `{CWD}/plans/` or `.claude/plans/`
+   - Extract summary section
+   - Extract completed TODO items
+   - Note the problem statement if present
+2. **Conversation context**: Review recent implementation discussion
+3. **File changes**: Analyze `git diff --stat` for scope
+
+#### 4.2 Commit Message Template
+
+Generate commit message using this professional format:
+
+```markdown
+{type}({scope}): {short-summary}
+
+## Summary
+
+{2-3 sentence description of what was implemented and why}
+
+## Changes
+
+- {bullet point for each significant change}
+- {grouped by logical category if many changes}
+
+## Plan Reference
+
+{If plan file exists: "Implementation of: {plan-topic}"}
+{Optional: Link to related issue/ticket if mentioned}
+
+## Files Modified
+
+{count} files changed
+```
+
+#### 4.3 Conventional Commit Types
+
+- `feat:` - New features or capabilities
+- `fix:` - Bug fixes
+- `docs:` - Documentation changes only
+- `refactor:` - Code restructuring without behavior change
+- `chore:` - Maintenance, dependencies, config
+- `test:` - Adding or updating tests
+- `perf:` - Performance improvements
+- `style:` - Formatting, whitespace (no logic change)
+
+#### 4.4 Scope Inference
+
+Infer scope from changed files:
+- `auth` - Authentication related
+- `api` - API endpoints
+- `ui` - User interface
+- `db` - Database/models
+- `config` - Configuration
+- `skill` - Claude skill files
+- `agent` - Claude agent files
+- `hook` - Claude hook files
+
+#### 4.5 Confirmation
 
 Use AskUserQuestion to confirm or edit:
 
@@ -182,7 +232,35 @@ EOF
 
 ### Step 6: Push Confirmation
 
-Use AskUserQuestion:
+#### 6.1 Pre-Push Authentication Check
+
+Before offering push options, verify authentication based on remote URL:
+
+```bash
+# Get remote URL
+REMOTE_URL=$(git remote get-url origin 2>/dev/null)
+
+# Check if HTTPS GitHub URL
+if [[ "$REMOTE_URL" == https://github.com/* ]]; then
+  # Verify GitHub CLI authentication
+  if ! gh auth status &>/dev/null; then
+    # Not authenticated - inform user
+    echo "HTTPS remote detected but GitHub CLI not authenticated"
+    echo "Run: gh auth login"
+    # Do NOT suggest changing remote URL
+    # Exit push flow, keep commit local
+  fi
+fi
+```
+
+**CRITICAL**: If HTTPS authentication fails:
+- Inform user to run `gh auth login`
+- Keep commit local (do not push)
+- **NEVER suggest changing the remote URL to SSH**
+
+#### 6.2 Push Confirmation
+
+If authentication verified (or SSH remote), use AskUserQuestion:
 
 - Yes, push to origin/{branch}
 - No, keep local only
@@ -226,6 +304,7 @@ Use AskUserQuestion:
 
 **NEVER**:
 
+- **Modify git remote URLs** (NEVER change between HTTPS/SSH - this is CRITICAL)
 - Force push (`--force`, `-f`)
 - Skip hooks (`--no-verify`)
 - Commit files matching these patterns:
@@ -249,6 +328,11 @@ Use AskUserQuestion:
 - **Conflicts detected**: Inform user about conflicts, provide guidance, exit workflow
 - **Command failure**: Display error message, do not retry automatically
 - **No remote**: Report error, commit preserved locally
+- **HTTPS auth failure**:
+  - Inform user: "GitHub CLI not authenticated for HTTPS push"
+  - Provide guidance: "Run `gh auth login` to authenticate"
+  - Keep commit local (do NOT push)
+  - **NEVER suggest changing remote URL to SSH**
 
 ## Sensitive File Detection
 
@@ -278,7 +362,8 @@ Claude: How would you like to commit?
 [AskUserQuestion: Auto commit & push | Interactive | Cancel]
 User: [selects Auto commit & push]
 
-Claude: Auto-committing to main...
+Claude: [Checks gh auth status for HTTPS remote - authenticated]
+Auto-committing to main...
 
 Changes:
  src/auth.py    | 45 +++++++++
@@ -288,6 +373,26 @@ Changes:
 Generated message:
 ---
 feat(auth): implement OAuth2 login flow
+
+## Summary
+
+Add OAuth2 authentication with Google provider. Users can now login
+using their Google account with secure token handling.
+
+## Changes
+
+- Add OAuth2 provider configuration
+- Create login callback handler
+- Implement session management
+- Add user model provider fields
+
+## Plan Reference
+
+Implementation of: oauth2-authentication
+
+## Files Modified
+
+5 files changed
 ---
 
 Committed and pushed to origin/main.
@@ -325,15 +430,31 @@ Claude: Proposed commit message:
 ---
 feat(auth): implement OAuth2 login flow
 
+## Summary
+
+Add OAuth2 authentication with Google provider. Users can now login
+using their Google account with secure token handling.
+
+## Changes
+
 - Add OAuth2 provider configuration
 - Create login callback handler
-- Add session management
-- Update user model with provider fields
+- Implement session management
+- Add user model provider fields
+
+## Plan Reference
+
+Implementation of: oauth2-authentication
+
+## Files Modified
+
+5 files changed
 ---
 [AskUserQuestion: Accept | Edit | Cancel]
 User: [selects Accept]
 
-Claude: Committed! Push to origin/feature/auth?
+Claude: [Checks HTTPS remote auth: gh auth status - OK]
+Committed! Push to origin/feature/auth?
 [AskUserQuestion: Yes | No]
 User: [selects Yes]
 
@@ -345,4 +466,29 @@ User: [selects "Done for now"]
 
 Claude: Commit complete. Entering plan mode...
 [Invokes EnterPlanMode]
+```
+
+### HTTPS Auth Failure Example
+
+```text
+Claude: Committed! Push to origin/main?
+[AskUserQuestion: Yes | No]
+User: [selects Yes]
+
+Claude: [Checks HTTPS remote: https://github.com/user/repo.git]
+[Runs: gh auth status]
+[Result: Not authenticated]
+
+Claude: GitHub CLI not authenticated for HTTPS push.
+Your commit is saved locally. To push, authenticate first:
+
+    gh auth login
+
+Then retry the push with: git push origin main
+
+Note: Your remote is configured for HTTPS. This is preserved.
+[Does NOT suggest changing to SSH]
+
+What would you like to do next?
+[AskUserQuestion: Done for now | Plan feature | ...]
 ```
