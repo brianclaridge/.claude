@@ -90,19 +90,18 @@ RUN \
   npm -v && \
   npm install -g npm@latest
 
-# install uv
+# install uv and python
 ARG pythonVersion
 ENV PYTHON_VERSION=${pythonVersion}
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
-RUN \
-  uv python install ${PYTHON_VERSION} && \
-    ln -s $(uv python find ${PYTHON_VERSION}) /usr/local/bin/python
+RUN uv python install ${PYTHON_VERSION}
 
-# install python packages
-RUN uv pip install --python ${PYTHON_VERSION} \
-    playwright \
-    numpy
+# create venv and install packages
+ENV VIRTUAL_ENV=/opt/venv
+RUN uv venv --python ${PYTHON_VERSION} ${VIRTUAL_ENV}
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+RUN uv pip install playwright numpy
 
 # install cli tools (goes to ~/.local/bin)
 RUN uv tool install black
@@ -184,7 +183,7 @@ RUN \
 
 # install playwright with chromium
 ENV PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright
-RUN uv run --python ${PYTHON_VERSION} python -m playwright install chromium --with-deps
+RUN python -m playwright install chromium --with-deps
 RUN chmod -R 755 ${PLAYWRIGHT_BROWSERS_PATH}
 
 
@@ -254,7 +253,7 @@ RUN npm install -g @aws-cdk/aws-lambda-nodejs
 
 # install gcloud
 ENV CLOUDSDK_PYTHON_SITEPACKAGES=1
-ENV CLOUDSDK_PYTHON=/usr/local/bin/python
+ENV CLOUDSDK_PYTHON=${VIRTUAL_ENV}/bin/python
 RUN \
   set -x && \
   cd /tmp && \
@@ -359,7 +358,7 @@ ENV PATH="${PATH}:/usr/local/cargo/bin"
 ENV PATH="${PATH}:/opt/microsoft/powershell/7"
 ENV PATH="${PATH}:/root/.bun/bin"
 ENV PATH="${PATH}:/root/.pulumi/bin"
-ENV PATH="${PATH}:/root/.local/share/uv/python/cpython-${PYTHON_VERSION}-linux-x86_64-gnu/bin"
+ENV PATH="${PATH}:${VIRTUAL_ENV}/bin"
 
 # copy assets
 COPY ./docker-entrypoint.sh /docker-entrypoint

@@ -1,6 +1,6 @@
 services:
   claude:
-    image: docker.localhost/claude:latest
+    image: brianclaridge/claudebox:latest
     build:
       context: ./docker
       dockerfile: Dockerfile
