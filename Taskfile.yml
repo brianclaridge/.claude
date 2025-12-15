@@ -226,6 +226,17 @@ tasks:
       - docker compose build
     silent: true
 
+  claude:push:
+    desc: Pushes the image to dockerhub
+    aliases:
+      - push
+    deps:
+      - ensure-env
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - docker compose push
+    silent: true
+
   claude:shell:
     desc: Runs the claude container in shell mode
     aliases:
