@@ -16,15 +16,15 @@ if (-Not (Test-Path -Path $logDir)) {
 }
 
 try {
-  $output = gomplate --config $configPath 2>&1
-  $output | Out-File -FilePath $logPath -Encoding utf8
+  # Run gomplate, capture all output to log file only
+  gomplate --config $configPath --verbose *> $logPath
 
   if ($LASTEXITCODE -ne 0) {
-    throw ($output | Out-String)
+    throw "Exit code: $LASTEXITCODE - see $logPath"
   }
 }
 catch {
   # Append error to log
-  $_ | Out-File -FilePath $logPath -Append -Encoding utf8
+  $_.Exception.Message | Out-File -FilePath $logPath -Append -Encoding utf8
   throw "Template rendering failed - see $logPath"
 }

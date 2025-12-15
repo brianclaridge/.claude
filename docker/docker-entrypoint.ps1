@@ -169,6 +169,7 @@ _value "HOME_OS" $env:HOME_OS
 _value "HOME_DIR" $env:HOME_DIR
 _value "DOCKER_SOCK_PATH" $env:DOCKER_SOCK_PATH
 _value "AWS_CONFIG_FILE" $env:AWS_CONFIG_FILE
+_value "POSH_THEME" $env:POSH_THEME
 Write-Host ""
 
 # --- Execute command if provided ---
@@ -211,3 +212,5 @@ if ($args.Length -gt 0) {
     exit 1
   }
 }
+
+oh-my-posh init pwsh --config "${env:POSH_THEMES_PATH}/${env:POSH_THEME}.omp.json" | Invoke-Expression
