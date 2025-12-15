@@ -97,7 +97,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 RUN \
   uv python install ${PYTHON_VERSION} && \
-    ln -s /root/.local/share/uv/python/cpython-*/bin/python /usr/local/bin/python
+    ln -s $(uv python find ${PYTHON_VERSION}) /usr/local/bin/python
 
 # install python packages
 RUN uv pip install --python ${PYTHON_VERSION} \
@@ -254,7 +254,7 @@ RUN npm install -g @aws-cdk/aws-lambda-nodejs
 
 # install gcloud
 ENV CLOUDSDK_PYTHON_SITEPACKAGES=1
-ENV CLOUDSDK_PYTHON=/root/.local/share/uv/python/cpython-${PYTHON_VERSION}-linux-x86_64-gnu/bin/python
+ENV CLOUDSDK_PYTHON=/usr/local/bin/python
 RUN \
   set -x && \
   cd /tmp && \
