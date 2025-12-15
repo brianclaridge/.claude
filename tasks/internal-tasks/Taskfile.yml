@@ -1,0 +1,61 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  claude:internal:log-success:
+    aliases:
+      - success
+    cmds:
+      - pwsh -NoProfile -Command "Write-Host '{{.MSG}}' -ForegroundColor Green"
+    internal: true
+    silent: true
+
+  claude:internal:log-error:
+    aliases:
+      - error
+    cmds:
+      - pwsh -NoProfile -Command "Write-Host '{{.MSG}}' -ForegroundColor Red"
+    internal: true
+    silent: true
+
+  claude:internal:log-warn:
+    aliases:
+      - warn
+    cmds:
+      - pwsh -NoProfile -Command "Write-Host '{{.MSG}}' -ForegroundColor Yellow"
+    internal: true
+    silent: true
+
+  claude:internal:log-info:
+    aliases:
+      - info
+    cmds:
+      - pwsh -NoProfile -Command "Write-Host '{{.MSG}}' -ForegroundColor Cyan"
+    internal: true
+    silent: true
+
+  claude:internal:print-var:
+    aliases:
+      - print-var
+    cmds:
+      - cmd: >-
+          pwsh -c "
+            Write-Host '{{.K}}: ' -ForegroundColor Yellow -NoNewline
+            Write-Host '{{.V}}' -ForegroundColor Green
+          "
+    internal: true
+    silent: true
+
+  claude:internal:wait:
+    aliases:
+      - wait
+      - sleep
+      - pause
+    cmds:
+      - cmd: sleep {{.SECONDS}}
+        platforms: [linux, darwin]
+      - cmd: pwsh -NoProfile -Command "Start-Sleep -Seconds {{.SECONDS}}"
+        platforms: [windows]
+    internal: true
+    silent: true

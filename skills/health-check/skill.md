@@ -20,10 +20,10 @@ Validate the .claude environment for integrity, completeness, and external tool 
 
 ```bash
 # Find all components
-AGENTS=$(ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/*.md 2>/dev/null)
-COMMANDS=$(ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/*.md 2>/dev/null)
-SKILLS=$(ls -d /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/*/ 2>/dev/null)
-HOOKS=$(ls -d /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/*/ 2>/dev/null)
+AGENTS=$(ls ${CLAUDE_AGENTS_PATH}/*.md 2>/dev/null)
+COMMANDS=$(ls ${CLAUDE_PATH}/commands/*.md 2>/dev/null)
+SKILLS=$(ls -d ${CLAUDE_SKILLS_PATH}/*/ 2>/dev/null)
+HOOKS=$(ls -d ${CLAUDE_PATH}/hooks/*/ 2>/dev/null)
 ```
 
 ### Step 2: Validate Agent-Skill References
@@ -75,10 +75,10 @@ Check config files are valid:
 
 ```bash
 # Validate YAML
-python3 -c "import yaml; yaml.safe_load(open('/workspace/${CLAUDE_PROJECT_SLUG}/.claude/config.yml'))"
+python3 -c "import yaml; yaml.safe_load(open('${CLAUDE_PATH}/config.yml'))"
 
 # Validate JSON
-python3 -c "import json; json.load(open('/workspace/${CLAUDE_PROJECT_SLUG}/.claude/settings.json'))"
+python3 -c "import json; json.load(open('${CLAUDE_PATH}/settings.json'))"
 ```
 
 ### Step 7: Generate Report

@@ -13,7 +13,7 @@ Interactive git commit workflow with safety checks and user confirmation.
 This skill includes Python scripts for consistent automation. Invoke via:
 
 ```bash
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
   python -m scripts --format json <subcommand> [args]
 ```
 
@@ -29,8 +29,8 @@ uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager 
 ### Example: Identity Detection
 
 ```bash
-IDENTITY=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
-  python -m scripts --format json identity --env-path /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env)
+IDENTITY=$(uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
+  python -m scripts --format json identity --env-path ${CLAUDE_PATH}/.env)
 
 # Parse: detected, source, name, email, needs_input
 ```
@@ -38,7 +38,7 @@ IDENTITY=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/g
 ### Example: Auth Check (HTTPS + gh)
 
 ```bash
-AUTH=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+AUTH=$(uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
   python -m scripts --format json auth-check)
 
 # If needs_auth=true for HTTPS GitHub, guidance shows:
@@ -48,10 +48,10 @@ AUTH=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-m
 ### Example: Commit Message Generation
 
 ```bash
-MSG=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+MSG=$(uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
   python -m scripts --format json message \
   --plans-dir "$(pwd)/plans" \
-  --claude-plans-dir /workspace/${CLAUDE_PROJECT_SLUG}/.claude/plans)
+  --claude-plans-dir ${CLAUDE_PATH}/plans)
 
 # Returns: type, scope, subject, body, full_message, plan_reference, session_stats
 ```
@@ -59,7 +59,7 @@ MSG=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-ma
 ### Example: Sensitive File Scan
 
 ```bash
-SENSITIVE=$(uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/git-manager \
+SENSITIVE=$(uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
   python -m scripts --format json sensitive-scan)
 
 # If found=true, files[] contains detected sensitive files
@@ -80,7 +80,7 @@ Before any git operations, ensure git identity is configured using this detectio
 #### 0.1 Load from .env (preferred)
 
 ```bash
-source /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env 2>/dev/null || true
+source ${CLAUDE_PATH}/.env 2>/dev/null || true
 
 if [ -n "$GIT_USER_EMAIL" ] && [ -n "$GIT_USER_NAME" ]; then
   git config user.email "$GIT_USER_EMAIL"
@@ -124,11 +124,11 @@ If SSH detection succeeded, present to user via AskUserQuestion:
 
 #### 0.4 Persist to .env
 
-After confirmation, append credentials to `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env`:
+After confirmation, append credentials to `${CLAUDE_PATH}/.env`:
 
 ```bash
-echo "GIT_USER_NAME=${GIT_USER_NAME}" >> /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env
-echo "GIT_USER_EMAIL=${GIT_USER_EMAIL}" >> /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.env
+echo "GIT_USER_NAME=${GIT_USER_NAME}" >> ${CLAUDE_PATH}/.env
+echo "GIT_USER_EMAIL=${GIT_USER_EMAIL}" >> ${CLAUDE_PATH}/.env
 ```
 
 #### 0.5 Fallback (no SSH)

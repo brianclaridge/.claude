@@ -6,12 +6,13 @@ inputDir: .claude/config/templates/
 # Dynamic output mapping with environment variable support
 # .in contains the input filename relative to inputDir
 outputMap: |
+  {{- $claudePath := getenv "CLAUDE_PATH" | required "CLAUDE_PATH environment variable must be set" -}}
   {{- $map := dict
     "ansible.cfg" "/root/ansible.cfg"
     "bashrc.sh" "/root/.bashrc"
     "ccstatusline_settings.json" "/root/.config/ccstatusline/settings.json"
-    "claude_settings.json" "/root/.claude/settings.json"
     "mcp.json" ".mcp.json"
+    "settings.json" (printf "%s/settings.json" $claudePath)
     "pwsh_profile.ps1" "/root/.config/powershell/Microsoft.PowerShell_profile.ps1"
     "ssh_config.cfg" "/root/.ssh/config"
   -}}

@@ -57,7 +57,7 @@ To manually refresh this document:
 
 ```bash
 # Force refresh changelog cache
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/changelog_monitor python -c "
+uv run --directory ${CLAUDE_PATH}/hooks/changelog_monitor python -c "
 from src.fetcher import fetch_changelog
 from src.parser import parse_changelog
 from src.analyzer import analyze_versions, generate_roadmap_content

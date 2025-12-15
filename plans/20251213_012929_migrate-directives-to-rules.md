@@ -107,8 +107,8 @@ rules_loader:
 **`.claude/hooks/rules_loader/config.json`** - Update path:
 ```json
 {
-  "rules_path": "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/rules",
-  "log_base_path": "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/rules_loader"
+  "rules_path": "${CLAUDE_PATH}/rules",
+  "log_base_path": "${CLAUDE_PATH}/.data/logs/rules_loader"
 }
 ```
 

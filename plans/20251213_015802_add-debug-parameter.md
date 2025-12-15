@@ -31,7 +31,7 @@ if ($debug_claude) {
 Pass `-debug_claude` when calling run-claude outside Docker:
 
 ```yaml
-docker compose run --remove-orphans claude pwsh -NoProfile -File /workspace/${CLAUDE_PROJECT_SLUG}/.claude/scripts/run-claude.ps1 -debug_claude
+docker compose run --remove-orphans claude pwsh -NoProfile -File ${CLAUDE_PATH}/scripts/run-claude.ps1 -debug_claude
 ```
 
 ## Files Modified

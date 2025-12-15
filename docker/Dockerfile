@@ -38,6 +38,7 @@ RUN \
     dialog \
     dnsutils \
     ffmpeg \
+    file \
     fonts-liberation \
     git \
     gnupg \
@@ -55,11 +56,9 @@ RUN \
     net-tools \
     openssh-client \
     postgresql-client \
-    python-is-python3 \
-    python3-pip \
-    python3-venv \
-    python3-full \
+    procps \
     software-properties-common \
+    sudo \
     tar \
     tree \
     unzip \
@@ -69,7 +68,7 @@ RUN \
 
 # install task
 RUN \
-  curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.deb.sh' | bash && \
+  curl -fsSL 'https://dl.cloudsmith.io/public/task/task/setup.deb.sh' | bash && \
   apt-get install -y task
 
 # install vault
@@ -92,8 +91,19 @@ RUN \
   npm install -g npm@latest
 
 # install uv
-RUN pip install uv --break-system-packages
-RUN pip install git+https://github.com/psf/black --break-system-packages
+ARG pythonVersion
+ENV PYTHON_VERSION=${pythonVersion}
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+RUN uv python install ${PYTHON_VERSION}
+
+# install python packages
+RUN uv pip install --python ${PYTHON_VERSION} \
+    playwright \
+    numpy
+
+# install cli tools (goes to ~/.local/bin)
+RUN uv tool install black
 
 # install gomplate
 COPY --from=hairyhenderson/gomplate:stable /gomplate /bin/gomplate
@@ -172,15 +182,9 @@ RUN \
 
 # install playwright with chromium
 ENV PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright
-RUN \
-  npm install -g playwright && \
-  npx playwright install chromium --with-deps && \
-  npx playwright install-deps chromium
+RUN uv run --python ${PYTHON_VERSION} python -m playwright install chromium --with-deps
+RUN chmod -R 755 ${PLAYWRIGHT_BROWSERS_PATH}
 
-RUN \
-  pip install playwright --break-system-packages && \
-  python -m playwright install chromium && \
-  chmod -R 755 ${PLAYWRIGHT_BROWSERS_PATH}
 
 # install jdk and maven
 ARG jdkVersion
@@ -247,19 +251,19 @@ RUN npm install -g aws-cdk
 RUN npm install -g @aws-cdk/aws-lambda-nodejs
 
 # install gcloud
-ENV CLOUDSDK_PYTHON_SITEPACKAGES 1
+ENV CLOUDSDK_PYTHON_SITEPACKAGES=1
+ENV CLOUDSDK_PYTHON=/root/.local/share/uv/python/cpython-${PYTHON_VERSION}-linux-x86_64-gnu/bin/python
 RUN \
   set -x && \
   cd /tmp && \
   curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && \
   echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
   apt-get update && \
-  apt-get install -y google-cloud-cli && \
-  $(gcloud info --format="value(basic.python_location)") -m pip install numpy
+  apt-get install -y google-cloud-cli
 
 # install gcloud sql proxy
 ARG sqlProxyVersion
-ENV CLOUD_SQL_PROXY_VERSION ${sqlProxyVersion}
+ENV CLOUD_SQL_PROXY_VERSION=${sqlProxyVersion}
 RUN \
   set -x && \
   cd /tmp && \
@@ -314,9 +318,20 @@ RUN \
     && apt-get install -y gh \
     && gh --version
 
+# install gitlab cli
+ARG glabVersion
+ENV GLAB_VERSION=${glabVersion}
+RUN \
+  curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_amd64.deb" -o /tmp/glab.deb && \
+  dpkg -i /tmp/glab.deb && \
+  rm /tmp/glab.deb
+
+# install bunx
+RUN curl -fsSL https://bun.sh/install | bash
+
 # install claude-code
 ARG claudeCodeDate
-ENV CLAUDE_CODE_DATE ${claudeCodeDate}
+ENV CLAUDE_CODE_DATE=${claudeCodeDate}
 RUN set -x && echo "${CLAUDE_CODE_DATE}"
 RUN \
   npm install -g @anthropic-ai/claude-code
@@ -327,7 +342,22 @@ RUN \
   apt-get autoremove -y && \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-ENV PATH="/opt/microsoft/powershell/7:/usr/local/cargo/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin:/root/go/bin"
+# use opinionated paths
+RUN echo "${PATH}" > /old_path_vars
+ENV PATH="/bin"
+ENV PATH="${PATH}:/sbin"
+ENV PATH="${PATH}:/usr/local/bin"
+ENV PATH="${PATH}:/usr/local/sbin"
+ENV PATH="${PATH}:/usr/sbin"
+ENV PATH="${PATH}:/usr/bin"
+ENV PATH="${PATH}:/root/.local/bin"
+ENV PATH="${PATH}:/root/go/bin"
+ENV PATH="${PATH}:/usr/local/go/bin"
+ENV PATH="${PATH}:/usr/local/cargo/bin"
+ENV PATH="${PATH}:/opt/microsoft/powershell/7"
+ENV PATH="${PATH}:/root/.bun/bin"
+ENV PATH="${PATH}:/root/.pulumi/bin"
+ENV PATH="${PATH}:/root/.local/share/uv/python/cpython-${PYTHON_VERSION}-linux-x86_64-gnu/bin"
 
 # copy assets
 COPY ./docker-entrypoint.sh /docker-entrypoint

@@ -32,16 +32,16 @@ Execute the validation script:
 
 ```bash
 # Run validation (text output)
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/gomplate-manager python -m scripts .claude/config/gomplate.yaml
+uv run --directory ${CLAUDE_SKILLS_PATH}/gomplate-manager python -m scripts .claude/config/gomplate.yaml
 
 # Run validation (JSON output)
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/gomplate-manager python -m scripts .claude/config/gomplate.yaml --format json
+uv run --directory ${CLAUDE_SKILLS_PATH}/gomplate-manager python -m scripts .claude/config/gomplate.yaml --format json
 
 # Strict mode (treat warnings as errors)
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/gomplate-manager python -m scripts .claude/config/gomplate.yaml --strict
+uv run --directory ${CLAUDE_SKILLS_PATH}/gomplate-manager python -m scripts .claude/config/gomplate.yaml --strict
 
 # Dry-run with current environment
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/gomplate-manager python -m scripts .claude/config/gomplate.yaml --dry-run
+uv run --directory ${CLAUDE_SKILLS_PATH}/gomplate-manager python -m scripts .claude/config/gomplate.yaml --dry-run
 ```
 
 ### Step 3: Report Results

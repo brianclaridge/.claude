@@ -9,8 +9,8 @@ import structlog
 
 log = structlog.get_logger()
 
-WORKSPACE_PATH = os.environ.get("WORKSPACE_PATH", "/workspace")
-CLAUDE_PROJECT_SLUG = os.environ.get("CLAUDE_PROJECT_SLUG", "")
+WORKSPACE_PATH = os.environ.get("CLAUDE_WORKSPACE_PATH")
+CLAUDE_PATH = os.environ.get("CLAUDE_PATH")
 
 
 @dataclass
@@ -28,7 +28,7 @@ class UpdateResult:
 
 def get_submodule_path() -> Path:
     """Get the path to the .claude submodule."""
-    return Path(f"{WORKSPACE_PATH}{CLAUDE_PROJECT_SLUG}/.claude")
+    return Path(f"{CLAUDE_PATH}")
 
 
 def is_git_repo(path: Path) -> bool:

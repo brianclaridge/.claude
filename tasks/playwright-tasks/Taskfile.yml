@@ -1,0 +1,50 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  claude:playwright:record:
+    desc: Record video of a URL
+    aliases:
+      - record
+    vars:
+      URL: '{{.URL}}'
+      DURATION: '{{.DURATION | default "10"}}'
+      OUTPUT: '{{.OUTPUT | default ""}}'
+    deps:
+      - claude:ensure-docker
+    dir: "{{.TASKFILE_DIR}}/../../skills/playwright-automation"
+    cmds:
+      - cmd: >-
+          uv run python scripts/video_recorder.py "{{.URL}}" --duration {{.DURATION}} {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
+        platforms: [linux]
+    silent: true
+
+  claude:playwright:screenshot:
+    desc: Take screenshot of a URL
+    aliases:
+      - screenshot
+    vars:
+      URL: '{{.URL}}'
+      OUTPUT: '{{.OUTPUT | ./default ""}}'
+    deps:
+      - claude:ensure-docker
+    dir: "{{.TASKFILE_DIR}}/../../skills/playwright-automation"
+    cmds:
+      - cmd: >-
+          uv run  python scripts/screenshot.py "{{.URL}}" {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
+        platforms: [linux]
+    silent: true
+
+  claude:playwright:test-twitch:
+    desc: uses the playwright to test recording twitch navigation
+    aliases:
+      - test-witch
+    deps:
+      - claude:ensure-docker
+    dir: "{{.TASKFILE_DIR}}/../../skills/playwright-automation"
+    cmds:
+      - cmd: >-
+          uv run python scripts/test_twitch_navigation.py
+        platforms: [linux]
+    silent: true

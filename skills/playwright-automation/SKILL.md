@@ -20,7 +20,7 @@ Python-based browser automation for complex workflows requiring video recording,
 ## Output Directories
 
 ```
-/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/
+${CLAUDE_PATH}/.data/playwright/
 ├── screencaps/    # Screenshots (.png, .jpg)
 ├── videos/        # Recordings (.webm)
 ├── pdfs/          # Generated PDFs
@@ -42,7 +42,7 @@ Python-based browser automation for complex workflows requiring video recording,
 
 ### Screenshot Utility
 ```bash
-cd /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/playwright-automation && \
+cd ${CLAUDE_SKILLS_PATH}/playwright-automation && \
 uv run python scripts/screenshot.py <url> \
   [--full-page] \
   [--wait-until domcontentloaded|load|networkidle] \
@@ -52,7 +52,7 @@ uv run python scripts/screenshot.py <url> \
 
 ### Video Recorder
 ```bash
-cd /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/playwright-automation && \
+cd ${CLAUDE_SKILLS_PATH}/playwright-automation && \
 uv run python scripts/video_recorder.py <url> \
   [--duration 10] \
   [--wait-until domcontentloaded|load|networkidle] \
@@ -68,16 +68,16 @@ Use this template for custom automation scripts:
 #!/usr/bin/env python3
 """
 Browser automation script: [DESCRIPTION]
-Output: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/[TYPE]/[FILENAME]
+Output: ${CLAUDE_PATH}/.data/playwright/[TYPE]/[FILENAME]
 """
 import os
 from datetime import datetime
 from loguru import logger
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
-SCREENCAP_DIR = "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/screencaps"
-VIDEO_DIR = "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/videos"
-DATA_DIR = "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/data"
+SCREENCAP_DIR = "${CLAUDE_PATH}/.data/playwright/screencaps"
+VIDEO_DIR = "${CLAUDE_PATH}/.data/playwright/videos"
+DATA_DIR = "${CLAUDE_PATH}/.data/playwright/data"
 
 os.makedirs(SCREENCAP_DIR, exist_ok=True)
 os.makedirs(VIDEO_DIR, exist_ok=True)
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
 ### Screenshot Capture
 ```python
-SCREENCAP_DIR = "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/screencaps"
+SCREENCAP_DIR = "${CLAUDE_PATH}/.data/playwright/screencaps"
 
 # Full page
 page.screenshot(path=f"{SCREENCAP_DIR}/full.png", full_page=True)
@@ -147,7 +147,7 @@ page.screenshot(
 
 ### Video Recording
 ```python
-VIDEO_DIR = "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/videos"
+VIDEO_DIR = "${CLAUDE_PATH}/.data/playwright/videos"
 
 # Enable in context creation
 context = browser.new_context(
@@ -177,7 +177,7 @@ page.set_input_files("#file-upload", "/path/to/file.pdf")
 ```python
 import json
 
-DATA_DIR = "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/data"
+DATA_DIR = "${CLAUDE_PATH}/.data/playwright/data"
 
 title = page.locator("h1").text_content()
 items = page.locator(".item").all()
@@ -218,7 +218,7 @@ except PlaywrightTimeoutError:
 
 ### Tracing for Debug
 ```python
-DATA_DIR = "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/playwright/data"
+DATA_DIR = "${CLAUDE_PATH}/.data/playwright/data"
 
 context.tracing.start(screenshots=True, snapshots=True, sources=True)
 # ... perform actions ...
@@ -230,12 +230,12 @@ context.tracing.stop(path=f"{DATA_DIR}/trace.zip")
 
 Run scripts using uv from the skill directory:
 ```bash
-cd /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/playwright-automation && uv run python scripts/<script>.py
+cd ${CLAUDE_SKILLS_PATH}/playwright-automation && uv run python scripts/<script>.py
 ```
 
 Or for custom scripts in other locations:
 ```bash
-cd /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/playwright-automation && uv run python /path/to/custom_script.py
+cd ${CLAUDE_SKILLS_PATH}/playwright-automation && uv run python /path/to/custom_script.py
 ```
 
 ## Troubleshooting

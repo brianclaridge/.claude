@@ -8,7 +8,7 @@ Update DIRECTIVE 040 (plans) to specify that when working on features/bugs in th
 
 | File | Changes |
 |------|---------|
-| `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/directives/040-plans.md` | Add submodule-specific plan handling section |
+| `${CLAUDE_PATH}/directives/040-plans.md` | Add submodule-specific plan handling section |
 
 ## TODO List
 

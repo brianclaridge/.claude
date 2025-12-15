@@ -109,13 +109,13 @@ Create the skill directory and files:
 
 ```bash
 # Check for existing skills to avoid name conflicts
-ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/ 2>/dev/null
+ls ${CLAUDE_SKILLS_PATH}/ 2>/dev/null
 
 # Create skill directory structure
-mkdir -p /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/{skill-name}
+mkdir -p ${CLAUDE_SKILLS_PATH}/{skill-name}
 
 # Skill locations:
-# Personal: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/{name}/SKILL.md
+# Personal: ${CLAUDE_SKILLS_PATH}/{name}/SKILL.md
 # Project:  .claude/skills/{name}/SKILL.md
 ```
 
@@ -167,7 +167,7 @@ Options:
 
 ### Phase 5: Generate Complementary Files (if accepted)
 
-**Agent Format** (`/workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/{name}.md`):
+**Agent Format** (`${CLAUDE_AGENTS_PATH}/{name}.md`):
 ```yaml
 ---
 name: agent-name
@@ -186,7 +186,7 @@ How this agent complements the skill for complex tasks.
 Step-by-step instructions for complex analysis.
 ```
 
-**Slash Command Format** (`/workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/{name}.md`):
+**Slash Command Format** (`${CLAUDE_PATH}/commands/{name}.md`):
 ```markdown
 ---
 description: Short description for /help
@@ -208,7 +208,7 @@ Before generating any file:
 
 ```bash
 # Check for conflicts
-ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/ 2>/dev/null | grep -i "proposed-name"
+ls ${CLAUDE_SKILLS_PATH}/ 2>/dev/null | grep -i "proposed-name"
 ```
 
 ## Tool Restrictions Reference
@@ -230,9 +230,9 @@ allowed-tools: Read, Grep, Glob, Bash
 
 | Type | Location | Invocation | Best For |
 |------|----------|------------|----------|
-| **Skill** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/` | Model-triggered | File-type automation, progressive loading |
-| **Agent** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/` | Explicit Task tool | Complex delegated analysis, subprocess isolation |
-| **Command** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/` | User types `/name` | Quick shortcuts, template expansion |
+| **Skill** | `${CLAUDE_SKILLS_PATH}/` | Model-triggered | File-type automation, progressive loading |
+| **Agent** | `${CLAUDE_AGENTS_PATH}/` | Explicit Task tool | Complex delegated analysis, subprocess isolation |
+| **Command** | `${CLAUDE_PATH}/commands/` | User types `/name` | Quick shortcuts, template expansion |
 
 ## Example Interaction
 
@@ -256,7 +256,7 @@ Skill Creator:
 - Description: Format Python docstrings to Google style. Auto-activates when editing .py files and user mentions docstrings, documentation, or formatting.
 - Tools: Read, Edit, Glob (minimal for task)
 
-Creating: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/docstring-formatter/SKILL.md"
+Creating: ${CLAUDE_SKILLS_PATH}/docstring-formatter/SKILL.md"
 
 [Creates skill file]
 
@@ -273,8 +273,8 @@ User: [selects No]
 
 Skill Creator:
 "Created:
-- /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/docstring-formatter/SKILL.md (main skill)
-- /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/docstring-converter.md (bulk conversion agent)
+- ${CLAUDE_SKILLS_PATH}/docstring-formatter/SKILL.md (main skill)
+- ${CLAUDE_AGENTS_PATH}/docstring-converter.md (bulk conversion agent)
 
 To use:
 1. Skill: Auto-activates when working with Python files and mentioning docstrings
@@ -298,9 +298,9 @@ After completion, provide summary:
 
 | File | Type | Path |
 |------|------|------|
-| {skill-name} | Skill | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/{name}/SKILL.md |
-| {agent-name} | Agent | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/{name}.md |
-| {command-name} | Command | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/{name}.md |
+| {skill-name} | Skill | ${CLAUDE_SKILLS_PATH}/{name}/SKILL.md |
+| {agent-name} | Agent | ${CLAUDE_AGENTS_PATH}/{name}.md |
+| {command-name} | Command | ${CLAUDE_PATH}/commands/{name}.md |
 
 ## Usage
 

@@ -1,0 +1,64 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  claude:git:trivial:
+    aliases:
+      - trivial
+    desc: Create a trivial commit and push
+    vars:
+      MSG: '{{.MSG | default "(chore) trivial update"}}'
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - pwsh -NoProfile -File scripts/trivial-commit.ps1 -Message "{{.MSG}}"
+    silent: true
+
+  claude:git:fetch:
+    aliases:
+      - fetch
+    desc: Fetch and reset .claude submodule to origin/main
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - pwsh -NoProfile -File scripts/fetch-submodule.ps1
+    silent: true
+
+  claude:git:remove-submodule:
+    aliases:
+      - remove-submodule
+    desc: Completely remove .claude submodule from parent repository
+    prompt: This will permanently remove the .claude submodule. Continue?
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - pwsh -NoProfile -File .claude/scripts/remove-submodule.ps1
+    silent: true
+
+  claude:git:update:
+    aliases:
+      - update
+    desc: Smart commit .claude changes with auto-generated message, update parent submodule
+    vars:
+      MSG: '{{.MSG | default ""}}'
+      BRANCH: '{{.BRANCH | default "main"}}'
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - pwsh -NoProfile -File scripts/update-submodule.ps1 {{if .MSG}}-Message "{{.MSG}}"{{end}} -Branch "{{.BRANCH}}"
+    silent: true
+
+  claude:github:auth:
+    aliases:
+      - gha
+      - gh-auth
+      - github-auth
+    cmds:
+      - echo | gh auth login --git-protocol https --web
+    silent: false
+
+  claude:gitlab:auth:
+    aliases:
+      - gla
+      - gl-auth
+      - gitlab-auth
+    cmds:
+      - glab auth login --hostname gitlab.com --git-protocol https
+    silent: false

@@ -11,7 +11,7 @@ Where `session_type` is one of: `startup`, `resume`, `clear`, `compact`
 ## Usage
 
 ```bash
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/session-context python -m src [session_type] [--json]
+uv run --directory ${CLAUDE_SKILLS_PATH}/session-context python -m src [session_type] [--json]
 ```
 
 ## Arguments

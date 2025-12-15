@@ -20,7 +20,7 @@ outputFiles:
 
 ```go
 # CORRECT - Fails if VAR is unset (enforced)
-{{ .Env.CLAUDE_PROJECT_SLUG }}
+{{ .Env.CLAUDE_WORKSPACE_PATH }}
 {{ .Env.CONTEXT7_API_KEY }}
 
 # WRONG - Silent empty string if unset
@@ -123,7 +123,7 @@ All gomplate configurations MUST pass:
 
 ```bash
 # Container entrypoint pattern
-gomplate --config /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config/gomplate.yaml
+gomplate --config ${CLAUDE_PATH}/config/gomplate.yaml
 
 # Config file location
 .claude/config/gomplate.yaml

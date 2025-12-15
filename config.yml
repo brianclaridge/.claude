@@ -1,5 +1,5 @@
 # Global configuration for Claude Code custom features
-# Location: /workspace/${SLUG}/.claude/config.yml (project root)
+# Location: ${CLAUDE_PATH}/config.yml (project root)
 
 # Cloud provider authentication settings
 cloud_providers:

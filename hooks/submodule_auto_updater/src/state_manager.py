@@ -13,9 +13,8 @@ from .updater import UpdateResult
 
 log = structlog.get_logger()
 
-WORKSPACE_PATH = os.environ.get("WORKSPACE_PATH", "/workspace")
-CLAUDE_PROJECT_SLUG = os.environ.get("CLAUDE_PROJECT_SLUG", "")
-DATA_DIR = Path(f"{WORKSPACE_PATH}{CLAUDE_PROJECT_SLUG}/.claude/.data")
+WORKSPACE_PATH = os.environ.get("CLAUDE_WORKSPACE_PATH")
+DATA_DIR = os.environ.get("CLAUDE_DATA_PATH")
 
 CHECK_STATE_FILE = DATA_DIR / "submodule_check_state.json"
 NOTIFY_STATE_FILE = DATA_DIR / "submodule_notify_state.json"

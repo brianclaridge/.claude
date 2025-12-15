@@ -1,22 +1,34 @@
 #!/usr/bin/env pwsh
-param(
-  [switch]$debug_claude,
 
-  [Parameter(ValueFromRemainingArguments = $true)]
-  [string[]]$RemainingArgs
+param(
+  [switch]$Debug
 )
 
-Set-Location "/workspace${env:CLAUDE_PROJECT_SLUG}"
+$ErrorActionPreference = "Stop"
 
-_attn "Checking for latest claude code version..."
+Set-Location "${env:CLAUDE_WORKSPACE_PATH}"
 
-claude update
+# Clean up cache and logs
+Remove-Item -Recurse -Force "${HOME}/.claude/cache" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "${HOME}/.claude/logs" -ErrorAction SilentlyContinue
 
-_attn "Starting claude code in '/workspace${env:CLAUDE_PROJECT_SLUG}'..."
-
-if ($debug_claude) {
-  claude --continue --debug 2>$null || claude --debug
+# Update claude via npm
+npm update -g @anthropic-ai/claude-code 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  throw "npm update @anthropic-ai/claude-code failed"
 }
-else {
+
+# Update claude internal
+$updateOutput = claude update 2>&1
+if ($LASTEXITCODE -ne 0) {
+  throw "Claude update failed: $updateOutput"
+}
+
+# Start claude
+if ($Debug) {
+  claude --continue --debug 2>$null || claude --debug
+} else {
   claude --continue 2>$null || claude
 }
+
+exit $LASTEXITCODE

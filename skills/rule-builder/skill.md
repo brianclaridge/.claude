@@ -22,7 +22,7 @@ Scan existing rules to determine next number:
 
 ```bash
 # Find highest existing rule number
-ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/rules/*.md | grep -oP '\d{3}' | sort -n | tail -1
+ls ${CLAUDE_PATH}/rules/*.md | grep -oP '\d{3}' | sort -n | tail -1
 ```
 
 Increment by 10:
@@ -52,7 +52,7 @@ Use AskUserQuestion to collect:
 
 ### Step 3: Generate Rule Template
 
-Create rule file at `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/rules/{NNN}-{topic}.md`:
+Create rule file at `${CLAUDE_PATH}/rules/{NNN}-{topic}.md`:
 
 ```markdown
 # RULE: {NNN} {topic}

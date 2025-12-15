@@ -9,7 +9,7 @@ A Claude Code hook that loads markdown directive files and injects them as addit
 
 ## Purpose
 
-Scans the `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/directives/` directory for markdown files (`.md`) and combines their content into a single context injection. This allows you to define persistent instructions, guidelines, or context that Claude should follow throughout a session.
+Scans the `${CLAUDE_PATH}/directives/` directory for markdown files (`.md`) and combines their content into a single context injection. This allows you to define persistent instructions, guidelines, or context that Claude should follow throughout a session.
 
 ## Directory Structure
 
@@ -37,8 +37,8 @@ Edit `config.json` to customize behavior:
 
 ```json
 {
-  "log_base_path": "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/directive_loader",
-  "directives_path": "/workspace/${CLAUDE_PROJECT_SLUG}/.claude/directives",
+  "log_base_path": "${CLAUDE_PATH}/.data/logs/directive_loader",
+  "directives_path": "${CLAUDE_PATH}/directives",
   "log_enabled": true,
   "log_level": "INFO"
 }
@@ -88,7 +88,7 @@ The hook outputs JSON to stdout:
 
 Logs are written to:
 ```
-/workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs/directive_loader/{session_id}/{hook_event_name}/{timestamp}.json
+${CLAUDE_PATH}/.data/logs/directive_loader/{session_id}/{hook_event_name}/{timestamp}.json
 ```
 
 Log entries include:
@@ -113,12 +113,12 @@ The hook runs automatically when configured in `.claude/settings.json`:
   "hooks": {
     "UserPromptSubmit": [
       {
-        "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/directive_loader python -m src"
+        "command": "uv run --directory ${CLAUDE_PATH}/hooks/directive_loader python -m src"
       }
     ],
     "SessionStart": [
       {
-        "command": "uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/directive_loader python -m src"
+        "command": "uv run --directory ${CLAUDE_PATH}/hooks/directive_loader python -m src"
       }
     ]
   }
@@ -130,16 +130,16 @@ The hook runs automatically when configured in `.claude/settings.json`:
 ```bash
 # Test with sample input
 echo '{"hook_event_name": "UserPromptSubmit", "session_id": "test123"}' | \
-  uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/directive_loader python -m src
+  uv run --directory ${CLAUDE_PATH}/hooks/directive_loader python -m src
 
 # With debug logging
 echo '{"hook_event_name": "UserPromptSubmit", "session_id": "test123"}' | \
-  uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks/directive_loader python -m src --debug
+  uv run --directory ${CLAUDE_PATH}/hooks/directive_loader python -m src --debug
 ```
 
 ## Creating Directives
 
-Add markdown files to `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/directives/`:
+Add markdown files to `${CLAUDE_PATH}/directives/`:
 
 ```markdown
 # DIRECTIVE: 010 example

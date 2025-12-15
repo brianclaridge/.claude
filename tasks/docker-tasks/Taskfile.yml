@@ -1,0 +1,114 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  claude:docker:ensure-docker:
+    desc: Determines if running in a container
+    aliases:
+      - ensure-docker
+    preconditions:
+      - sh: test -f /.dockerenv
+        msg: "This task can only be run inside a Docker container"
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - echo "/.dockerenv exists"
+    silent: true
+
+  claude:docker:ensure-stack-network:
+    desc: Ensures the claude-stack external network is available
+    aliases:
+      - ensure-stack-network
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - cmd: pwsh -c "docker network create --subnet=10.233.0.0/24 claude-stack &> /dev/null || true"
+        platforms: [linux, darwin]
+      - cmd: pwsh -c "docker network create --subnet=10.234.0.0/24 claude-stack *> \$null; exit 0;"
+        platforms: [windows]
+        ignore_error: false
+    silent: true
+
+  claude:docker:clean-docker:
+    desc: Kills and removes all running containers on the host
+    aliases:
+      - clean
+    deps:
+      - ensure-env
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - task: info
+        vars: { MSG: "cleaning docker..." }
+      # Kill running containers
+      - cmd: docker kill $(docker ps -q) 2>/dev/null || true
+        platforms: [linux, darwin]
+      - cmd: pwsh -NoProfile -Command "docker ps -q | ForEach-Object { docker kill \$_ } 2>\$null"
+        platforms: [windows]
+        ignore_error: true
+      # Remove all containers
+      - cmd: docker rm -f $(docker ps -aq) 2>/dev/null || true
+        platforms: [linux, darwin]
+      - cmd: pwsh -NoProfile -Command "docker ps -aq | ForEach-Object { docker rm -f \$_ } 2>\$null"
+        platforms: [windows]
+        ignore_error: true
+      # Prune networks
+      - cmd: docker network prune -f 2>/dev/null || true
+        platforms: [linux, darwin]
+      - cmd: pwsh -NoProfile -Command "docker network prune -f 2>\$null"
+        platforms: [windows]
+        ignore_error: true
+      # Prune images
+      - cmd: docker image prune -f
+        ignore_error: true
+      - task: delete-logs-folder
+    silent: true
+
+  claude:docker:purge-docker:
+    desc: clean + volume cleanup
+    aliases:
+      - purge
+    deps:
+      - ensure-env
+      - clean
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - task: info
+        vars: { MSG: "purging docker..." }
+      - cmd: docker volume rm $(docker volume ls -q) 2>/dev/null || true
+        platforms: [linux, darwin]
+      - cmd: pwsh -NoProfile -Command "docker volume ls -q | ForEach-Object { docker volume rm \$_ } 2>\$null"
+        platforms: [windows]
+        ignore_error: true
+      - task: delete-data-folder
+    silent: true
+
+  claude:docker:nuke-docker:
+    desc: Nukes docker. Beware.
+    aliases:
+      - nuke
+    deps:
+      - ensure-env
+      - purge
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - task: info
+        vars: { MSG: "nuking docker..." }
+      # System prune
+      - cmd: docker system prune -f -a --volumes 2>/dev/null || true
+        platforms: [linux, darwin]
+      - cmd: pwsh -NoProfile -Command "docker system prune -f -a --volumes 2>\$null"
+        platforms: [windows]
+        ignore_error: true
+      # Remove networks
+      - cmd: docker network rm $(docker network ls -q) 2>/dev/null || true
+        platforms: [linux, darwin]
+      - cmd: pwsh -NoProfile -Command "docker network ls -q | ForEach-Object { docker network rm \$_ } 2>\$null"
+        platforms: [windows]
+        ignore_error: true
+      # Remove images
+      - cmd: docker rmi -f $(docker images -aq) 2>/dev/null || true
+        platforms: [linux, darwin]
+      - cmd: pwsh -NoProfile -Command "docker images -aq | ForEach-Object { docker rmi -f \$_ } 2>\$null"
+        platforms: [windows]
+        ignore_error: true
+      - task: delete-home-claude-config
+    silent: true

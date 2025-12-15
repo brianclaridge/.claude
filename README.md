@@ -16,12 +16,20 @@
 ```yaml
     volumes:
       # dind stuff
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_SOCK_PATH}:/var/run/docker.sock
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       # bind folder mounts
-      - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
-      - ${HOME:-${USERPROFILE}}/.claudebox/root_homes/${SLUG}:/root:delegated
-      - ../:/workspace/${SLUG}:delegated
+      - ${HOME_DIR}/.ssh:/ssh:ro
+      - ${HOME_CLAUDE_DOCKER_PATH}/claude_data:/root/.claude:delegated
+      - ../:/${CLAUDE_WORKSPACE_PATH}:delegated
+      # misc volumes
+      - shared-root:/root:delegated
+      - minikube-data:/root/.minikube
+      - kube-data:/root/.kube
+      - maven-data:/root/.m2
+    networks:
+      - claude-stack
+      - default
 ```
 
 ## Quick Start

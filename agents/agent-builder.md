@@ -68,10 +68,10 @@ Create the agent file:
 
 ```bash
 # Check for existing agents to avoid name conflicts
-ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/ 2>/dev/null
+ls ${CLAUDE_AGENTS_PATH}/ 2>/dev/null
 
 # Create agent file
-# Location: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/{name}.md (personal)
+# Location: ${CLAUDE_AGENTS_PATH}/{name}.md (personal)
 #       or: .claude/agents/{name}.md (project-specific)
 ```
 
@@ -108,7 +108,7 @@ Options:
 
 ### Phase 5: Generate Complementary Files (if accepted)
 
-**Skill Format** (`/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/{name}/SKILL.md`):
+**Skill Format** (`${CLAUDE_SKILLS_PATH}/{name}/SKILL.md`):
 ```yaml
 ---
 name: skill-name
@@ -130,7 +130,7 @@ Step-by-step instructions
 How this skill complements the agent
 ```
 
-**Slash Command Format** (`/workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/{name}.md`):
+**Slash Command Format** (`${CLAUDE_PATH}/commands/{name}.md`):
 ```markdown
 ---
 description: Short description for /help
@@ -152,7 +152,7 @@ Before generating any file:
 
 ```bash
 # Check for conflicts
-ls /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/ /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/ /workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/ 2>/dev/null | grep -i "proposed-name"
+ls ${CLAUDE_AGENTS_PATH}/ ${CLAUDE_SKILLS_PATH}/ ${CLAUDE_PATH}/commands/ 2>/dev/null | grep -i "proposed-name"
 ```
 
 ## Extension Type Reference
@@ -161,9 +161,9 @@ Understand when to recommend each type:
 
 | Type | Location | Invocation | Best For |
 |------|----------|------------|----------|
-| **Agent** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/` | Explicit Task tool | Complex delegated analysis, subprocess isolation |
-| **Skill** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/` | Model-triggered | File-type automation, progressive loading |
-| **Command** | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/` | User types `/name` | Quick shortcuts, template expansion |
+| **Agent** | `${CLAUDE_AGENTS_PATH}/` | Explicit Task tool | Complex delegated analysis, subprocess isolation |
+| **Skill** | `${CLAUDE_SKILLS_PATH}/` | Model-triggered | File-type automation, progressive loading |
+| **Command** | `${CLAUDE_PATH}/commands/` | User types `/name` | Quick shortcuts, template expansion |
 
 ## Example Interaction
 
@@ -185,7 +185,7 @@ Agent Creator:
 - Model: opus (complex analysis)
 - Color: red (security theme)
 
-Writing to: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/security-reviewer.md"
+Writing to: ${CLAUDE_AGENTS_PATH}/security-reviewer.md"
 
 [Creates agent file]
 
@@ -203,9 +203,9 @@ User: [selects Yes]
 
 Agent Creator:
 "Created:
-- /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/security-reviewer.md (main agent)
-- /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/security-scanner/SKILL.md (auto-activation skill)
-- /workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/security-review.md (quick command)
+- ${CLAUDE_AGENTS_PATH}/security-reviewer.md (main agent)
+- ${CLAUDE_SKILLS_PATH}/security-scanner/SKILL.md (auto-activation skill)
+- ${CLAUDE_PATH}/commands/security-review.md (quick command)
 
 To use:
 1. Agent: Will be invoked when you ask about security review
@@ -229,9 +229,9 @@ After completion, provide summary:
 
 | File | Type | Path |
 |------|------|------|
-| {agent-name} | Agent | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/{name}.md |
-| {skill-name} | Skill | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/{name}/SKILL.md |
-| {command-name} | Command | /workspace/${CLAUDE_PROJECT_SLUG}/.claude/commands/{name}.md |
+| {agent-name} | Agent | ${CLAUDE_AGENTS_PATH}/{name}.md |
+| {skill-name} | Skill | ${CLAUDE_SKILLS_PATH}/{name}/SKILL.md |
+| {command-name} | Command | ${CLAUDE_PATH}/commands/{name}.md |
 
 ## Usage
 

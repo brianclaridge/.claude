@@ -11,4 +11,5 @@ alias glog='git log --oneline --graph --color --all --decorate'
 alias ll='ls -hal'
 alias lt='tree --dirsfirst -h -C'
 
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 eval "$(oh-my-posh init bash --config ${POSH_THEMES_PATH}/${POSH_THEME}.omp.json)"

@@ -34,7 +34,7 @@ The skill will use AskUserQuestion to gather:
 
 ### Step 3: Generate Rule
 
-Create rule file at `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/rules/{NNN}-{topic}.md`:
+Create rule file at `${CLAUDE_PATH}/rules/{NNN}-{topic}.md`:
 - Auto-increment rule number (find highest + 10)
 - Apply template based on constraint type
 - Include examples if requested

@@ -6,8 +6,8 @@ Skills are model-invoked capability packages that extend Claude's abilities for 
 
 ```bash
 # Create a skill
-mkdir -p /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/my-skill
-cat > /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/my-skill/SKILL.md << 'EOF'
+mkdir -p ${CLAUDE_SKILLS_PATH}/my-skill
+cat > ${CLAUDE_SKILLS_PATH}/my-skill/SKILL.md << 'EOF'
 ---
 name: my-skill
 description: What this does AND when Claude should use it
@@ -74,7 +74,7 @@ Concrete usage examples.
 
 | Location | Path | Scope |
 |----------|------|-------|
-| Personal | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/skill-name/SKILL.md` | Your projects only |
+| Personal | `${CLAUDE_SKILLS_PATH}/skill-name/SKILL.md` | Your projects only |
 | Project | `.claude/skills/skill-name/SKILL.md` | Team via git |
 | Plugin | Bundled with installed plugins | Plugin-specific |
 
@@ -171,7 +171,7 @@ claude --debug
 
 | Aspect | Skills | Agents |
 |--------|--------|--------|
-| Location | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/` | `/workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents/` |
+| Location | `${CLAUDE_SKILLS_PATH}/` | `${CLAUDE_AGENTS_PATH}/` |
 | Invocation | Model-invoked (automatic) | Task tool (explicit) |
 | Context | Same conversation | Separate subprocess |
 | Output | Progressive file loading | Final report only |

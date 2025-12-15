@@ -23,7 +23,7 @@ Orchestrate authentication to multiple cloud providers (AWS, GCP) with interacti
 Check enabled providers from config.yml:
 
 ```bash
-cat /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config.yml | grep -A 20 "cloud_providers:"
+cat ${CLAUDE_PATH}/config.yml | grep -A 20 "cloud_providers:"
 ```
 
 ### Step 2: Provider Selection

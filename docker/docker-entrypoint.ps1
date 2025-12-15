@@ -1,49 +1,144 @@
 #!/usr/bin/env pwsh
 
+$PSNativeCommandUseErrorActionPreference = $true
+$ErrorActionPreference = "Stop"
+
 New-Module -ScriptBlock {
+  function _run {
+    param(
+      [string]$Message,
+      [scriptblock]$Command,
+      [string]$CountSuffix = $null
+    )
+
+    Write-Host " " -NoNewline
+    Write-Host "○" -ForegroundColor DarkGray -NoNewline
+    Write-Host " $Message..." -NoNewline
+
+    try {
+      $ErrorActionPreference = "Stop"
+
+      if ($CountSuffix) {
+        $result = & $Command 2>&1
+      } else {
+        & $Command *> $null
+        $result = $null
+      }
+
+      if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+        throw "Exit code: $LASTEXITCODE"
+      }
+
+      Write-Host "`r " -NoNewline
+      Write-Host "✓" -ForegroundColor Green -NoNewline
+      Write-Host " $Message" -NoNewline
+
+      if ($CountSuffix -and $result -and $result -gt 0) {
+        Write-Host " ($result $CountSuffix)" -ForegroundColor DarkGray
+      } else {
+        Write-Host "   "
+      }
+    }
+    catch {
+      $errorMsg = if ($_.Exception.Message) { $_.Exception.Message } else { $_.ToString() }
+
+      Write-Host "`r " -NoNewline
+      Write-Host "✗" -ForegroundColor Red -NoNewline
+      Write-Host " $Message" -ForegroundColor Red -NoNewline
+      Write-Host " - $errorMsg" -ForegroundColor DarkRed
+      Write-Host ""
+
+      [Console]::Out.Flush()
+      [Console]::Error.Flush()
+
+      [Environment]::Exit(1)
+    }
+  }
+
+  function _exec {
+    param([string]$Cmd)
+    Invoke-Expression $Cmd
+    if ($LASTEXITCODE -ne 0) {
+      throw "Command failed: $Cmd"
+    }
+  }
+
+  function _ok {
+    param([string]$Message)
+    Write-Host " " -NoNewline
+    Write-Host "✓" -ForegroundColor Green -NoNewline
+    Write-Host " $Message"
+  }
+
+  function _fail {
+    param([string]$Message)
+    Write-Host " " -NoNewline
+    Write-Host "✗" -ForegroundColor Red -NoNewline
+    Write-Host " $Message" -ForegroundColor Red
+  }
+
   function _attn {
-    Write-Host -ForegroundColor "Cyan" $args
+    Write-Host -ForegroundColor Cyan " → $args"
   }
 
   function _info {
-    Write-Host -ForegroundColor "Green" $args
+    Write-Host -ForegroundColor Green $args
   }
 
   function _msg {
-    Write-Host -ForegroundColor "White" $args
+    Write-Host -ForegroundColor White $args
   }
 
   function _warn {
-    Write-Host -ForegroundColor "Yellow" $args
+    Write-Host " " -NoNewline
+    Write-Host "⚠" -ForegroundColor Yellow -NoNewline
+    Write-Host " $args" -ForegroundColor Yellow
   }
 
   function _err {
-    Write-Host -ForegroundColor "Red" $args
+    Write-Host " " -NoNewline
+    Write-Host "✗" -ForegroundColor Red -NoNewline
+    Write-Host " $args" -ForegroundColor Red
+  }
+
+  function _header {
+    param([string]$Message)
+    Write-Host ""
+    Write-Host " $Message" -ForegroundColor White
+    Write-Host " $("-" * $Message.Length)" -ForegroundColor DarkGray
   }
 
   function _value {
-    Write-Host -ForegroundColor "Magenta" -NoNewLine "$($args[0]): "
-    Write-Host -ForegroundColor "Cyan" "$($args[1..($args.length-1)]) "
+    param(
+      [string]$Name,
+      [string]$Value
+    )
+    $padding = 24
+    $paddedName = $Name.PadRight($padding)
+    Write-Host "   " -NoNewline
+    Write-Host $paddedName -ForegroundColor DarkGray -NoNewline
+    if ($Value) {
+      Write-Host $Value -ForegroundColor Cyan
+    } else {
+      Write-Host "(not set)" -ForegroundColor DarkYellow
+    }
   }
 
   function _ll {
-    ls -hal --color=auto ${args}
+    ls -hal --color=auto @args
   }
   Set-Alias -Name ll -Value _ll
 
   function _lt {
-    tree --dirsfirst -h -C
+    tree --dirsfirst -h -C @args
   }
   Set-Alias -Name lt -Value _lt
 
   function _link_scripts {
-    # link baked scripts
-    if (Test-Path -Path "/workspace/${env:CLAUDE_PROJECT_SLUG}/.claude/scripts") {
-      Get-ChildItem "/workspace/${env:CLAUDE_PROJECT_SLUG}/.claude/scripts" -Filter *.ps1 |
-      Foreach-Object {
-        New-Alias `
-          -Name $_.BaseName `
-          -Value $_.FullName -Force -Scope Global
+    if (Test-Path -Path "${env:CLAUDE_SCRIPTS_PATH}") {
+      Get-ChildItem "${env:CLAUDE_SCRIPTS_PATH}" -Filter *.ps1 |
+      ForEach-Object {
+        New-Alias -Name $_.BaseName -Value $_.FullName -Force -Scope Global
       }
     }
   }
@@ -52,29 +147,67 @@ New-Module -ScriptBlock {
   Export-ModuleMember -Function * -Alias * -Variable * | Out-Null
 } | Out-Null
 
-_info "Linking shared scripts..."
-link_scripts
+# --- Initialization ---
+_run ".ps1 scripts linked" { link_scripts }
+_run "gomplate templates rendered" { run-gomplate }
+_run "~/.ssh environment copied & configured" { run-ssh-setup }
+_run "playwright cleanup" { run-cleanup-playwright } -CountSuffix "removed"
 
-# setup ssh
-setup-ssh-env
+# --- Environment ---
+_header "Environment"
+_value "CLAUDE_PROJECT_SLUG" $env:CLAUDE_PROJECT_SLUG
+_value "CLAUDE_WORKSPACE_PATH" $env:CLAUDE_WORKSPACE_PATH
+_value "CLAUDE_PATH" $env:CLAUDE_PATH
+_value "CLAUDE_DATA_PATH" $env:CLAUDE_DATA_PATH
+_value "CLAUDE_LOGS_PATH" $env:CLAUDE_LOGS_PATH
+_value "CLAUDE_AGENTS_PATH" $env:CLAUDE_AGENTS_PATH
+_value "CLAUDE_HOOKS_PATH" $env:CLAUDE_HOOKS_PATH
+_value "CLAUDE_SCRIPTS_PATH" $env:CLAUDE_SCRIPTS_PATH
+_value "CLAUDE_SKILLS_PATH" $env:CLAUDE_SKILLS_PATH
+_value "HOME_CLAUDE_DOCKER_PATH" $env:HOME_CLAUDE_DOCKER_PATH
+_value "HOME_OS" $env:HOME_OS
+_value "HOME_DIR" $env:HOME_DIR
+_value "DOCKER_SOCK_PATH" $env:DOCKER_SOCK_PATH
+_value "AWS_CONFIG_FILE" $env:AWS_CONFIG_FILE
+Write-Host ""
 
-_value "CLAUDE_PROJECT_SLUG" ${env:CLAUDE_PROJECT_SLUG}
-_value "HOST_HOME" ${env:HOST_HOME}
-_value "HOST_PWD" ${env:HOST_PWD}
-_value "PARENT_PATH" ${env:PARENT_PATH}
+# --- Execute command if provided ---
+if ($args.Length -gt 0) {
+  $cmd = $args[0].ToLower()
+  $claudeAliases = @("cc", "claude", "vibe", "ai", "code")
 
-# run any commands
-$exit_code = 0
-try {
-  if ($args.length -gt 0) {
-    _attn "Running ``$($args -join ' ')``"
+  if ($cmd -in $claudeAliases) {
+    $debug = $args -contains "--debug" -or $args -contains "-d"
+
+    _run "Claude cache cleanup" {
+      Remove-Item -Recurse -Force "${HOME}/.claude/cache" -ErrorAction SilentlyContinue
+      Remove-Item -Recurse -Force "${HOME}/.claude/logs" -ErrorAction SilentlyContinue
+    }
+    _run "Claude npm update" { npm update -g @anthropic-ai/claude-code 2>&1 | Out-Null }
+    _run "Claude internal update" { claude update 2>&1 | Out-Null }
+
+    Write-Host ""
+    _attn "Starting Claude in '${env:CLAUDE_WORKSPACE_PATH}'..."
+    Write-Host ""
+
+    Set-Location "${env:CLAUDE_WORKSPACE_PATH}"
+
+    if ($debug) {
+      claude --continue --debug 2>$null || claude --debug
+    } else {
+      claude --continue 2>$null || claude
+    }
+
+    exit $LASTEXITCODE
+  }
+  # Default: run arbitrary command
+  _attn "Running: $($args -join ' ')"
+  try {
     Invoke-Expression "$($args -join ' ')"
-    $exit_code = $LASTEXITCODE
+    exit $LASTEXITCODE
+  }
+  catch {
+    _err "Command failed: $_"
+    exit 1
   }
 }
-catch {
-  _err "error: $_"
-  $exit_code = 1
-}
-
-exit $exit_code

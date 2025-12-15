@@ -2,43 +2,195 @@
 
 version: '3'
 
+includes:
+  internal:
+    taskfile: "tasks/internal-tasks/Taskfile.yml"
+    internal: true
+    flatten: true
+  docker:
+    taskfile: "tasks/docker-tasks"
+    internal: false
+    flatten: true
+  git:
+    taskfile: "tasks/git-tasks"
+    internal: false
+    flatten: true
+  playwright:
+    taskfile: "tasks/playwright-tasks"
+    internal: false
+    flatten: true
+  rules:
+    taskfile: "tasks/rules-tasks"
+    internal: false
+    flatten: true
+
 vars:
-  LOG_DIR: "{{.TASKFILE_DIR}}/.data/logs"
-  DOCKERFILE_PATH: '{{.DOCKERFILE_PATH | default "{{.TASKFILE_DIR}}/docker/Dockerfile"}}'
-  PARENT_PATH:
+  DOCKER_SOCK_PATH:
     sh: |
-      pwsh -NoProfile -Command "
-        \$parent = (Resolve-Path '{{.TASKFILE_DIR}}/..').Path
-        Write-Output \$parent.ToLower()
-      "
-  SLUG:
+      OS_TYPE=$(docker version --format '{{.Server.Os}}' 2>/dev/null)
+      case "$OS_TYPE" in
+        windows|Windows|Windows_NT|WINDOWS)
+          echo "//./pipe/docker_engine"
+          ;;
+        *)
+          if [ -S "/var/run/docker.sock" ]; then
+            echo "/var/run/docker.sock"
+          elif [ -S "$HOME/.docker/run/docker.sock" ]; then
+            echo "$HOME/.docker/run/docker.sock"
+          else
+            echo "/var/run/docker.sock"
+          fi
+          ;;
+      esac
+
+  TASKFILE_PARENT:
     sh: |
-      pwsh -NoProfile -Command "
-        \$slug = '{{.PARENT_PATH}}' -replace '^([A-Za-z]):', '/\$1' -replace '\\\\', '/'
-        Write-Output \$slug.ToLower()
-      "
-  CLAUDE_HOME_ROOT_DIRS: '{{env "HOME" | default (env "USERPROFILE") | replace "\\" "/"}}/.claudebox/root_homes'
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "Split-Path -Parent '{{.TASKFILE_DIR}}'"
+      {{else}}
+        dirname "{{.TASKFILE_DIR}}"
+      {{end}}
+  HOME_DIR:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "
+          \$winhome = \$env:USERPROFILE -replace '^([A-Za-z]):', '/\$1' -replace '\\\\', '/'
+          Write-Output \$winhome.ToLower()
+        "
+      {{else}}
+        echo "$HOME"
+      {{end}}
+  CLAUDE_DIR:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "
+          \$dir = '{{.TASKFILE_DIR}}' -replace '^([A-Za-z]):', '/\$1' -replace '\\\\', '/'
+          Write-Output \$dir.ToLower()
+        "
+      {{else}}
+        echo "{{.TASKFILE_DIR}}" | tr '[:upper:]' '[:lower:]'
+      {{end}}
+  CLAUDE_PARENT_DIR:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "
+          \$dir = '{{.TASKFILE_PARENT}}' -replace '^([A-Za-z]):', '/\$1' -replace '\\\\', '/'
+          Write-Output \$dir.ToLower()
+        "
+      {{else}}
+        dirname "{{.CLAUDE_DIR}}"
+      {{end}}
+  CLAUDE_PROJECT_PATH: "{{.CLAUDE_PARENT_DIR}}"
+  CLAUDE_PROJECT_SLUG:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "
+          \$slug = '{{.CLAUDE_PROJECT_PATH}}'.TrimStart('/') -replace '/', '-'
+          Write-Output \$slug.ToLower()
+        "
+      {{else}}
+        echo "{{.CLAUDE_PROJECT_PATH}}" | sed 's|^/||' | tr '/' '-' | tr '[:upper:]' '[:lower:]'
+      {{end}}
+  HOME_CLAUDE_DOCKER_PATH: '{{.HOME_DIR}}/.claude/_docker/{{.CLAUDE_PROJECT_SLUG}}'
+  LOG_DIR: "{{.CLAUDE_DIR}}/.data/logs"
+  DOCKERFILE_PATH: '{{.CLAUDE_DIR}}/docker/Dockerfile'
+  TASKFILE_PARENT_UNIX:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "Write-Output ('{{.TASKFILE_PARENT}}' -replace '\\\\', '/')"
+      {{else}}
+        echo "{{.TASKFILE_PARENT}}"
+      {{end}}
 
 env:
-  PARENT_PATH: "{{.PARENT_PATH}}"
-  SLUG: "{{.SLUG}}"
+  DOCKER_SOCK_PATH: "{{.DOCKER_SOCK_PATH}}"
+  # Taskfile Native
+  OS: "{{.OS}}"
+  TASK_VERSION: "{{.TASK_VERSION}}"
+  TASK: "{{.TASK}}"
+  TASKFILE: "{{.TASKFILE}}"
+  TASKFILE_DIR: "{{.TASKFILE_DIR}}"
+  TASKFILE_PARENT: "{{.TASKFILE_PARENT}}"
+  ROOT_DIR: "{{.ROOT_DIR}}"
+  USER_WORKING_DIR: "{{.USER_WORKING_DIR}}"
+  # Custom Vars
+  HOME_DIR: "{{.HOME_DIR}}"
+  CLAUDE_DIR: "{{.CLAUDE_DIR}}"
+  CLAUDE_PARENT_DIR: "{{.CLAUDE_PARENT_DIR}}"
+  CLAUDE_PROJECT_PATH: "{{.CLAUDE_PROJECT_PATH}}"
+  CLAUDE_PROJECT_SLUG: "{{.CLAUDE_PROJECT_SLUG}}"
+  HOME_CLAUDE_DOCKER_PATH: "{{.HOME_CLAUDE_DOCKER_PATH}}"
+  LOG_DIR: "{{.LOG_DIR}}"
+  DOCKERFILE_PATH: "{{.DOCKERFILE_PATH}}"
 
 tasks:
   claude:default:
     aliases:
       - default
     cmds:
-      - cmd: "echo 'TASKFILE_DIR: {{.TASKFILE_DIR}}'"
-      - cmd: "echo 'LOG_DIR: {{.LOG_DIR}}'"
-      - cmd: "echo 'DOCKERFILE_PATH: {{.DOCKERFILE_PATH}}'"
-      - cmd: "echo 'PARENT_PATH: {{.PARENT_PATH}}'"
-      - cmd: "echo 'SLUG: {{.SLUG}}'"
-      - cmd: "echo 'CLAUDE_HOME_ROOT_DIRS: {{.CLAUDE_HOME_ROOT_DIRS}}'"
-      - cmd: "echo '---'"
       - cmd: task --list-all
+
+  claude:clear:
+    aliases:
+      - clear
+    cmds:
+      - cmd: clear
+        platforms: [linux, darwin]
+      - cmd: 'pwsh -NoProfile -Command "[Console]::Clear()"'
+        platforms: [windows]
     silent: true
 
-  claude:ensure-env:
+  claude:env:
+    aliases:
+      - env
+    cmds:
+      - task: clear
+      - cmd: "echo"
+      - task: info
+        vars: { MSG: "----- TASKFILE NATIVE -----" }
+      - task: print-var
+        vars: { K: "DOCKER_SOCK_PATH", V: "{{.DOCKER_SOCK_PATH}}" }
+      - task: print-var
+        vars: { K: "OS", V: "{{.OS}}" }
+      - task: print-var
+        vars: { K: "TASK_VERSION", V: "{{.TASK_VERSION}}" }
+      - task: print-var
+        vars: { K: "TASK", V: "{{.TASK}}" }
+      - task: print-var
+        vars: { K: "TASKFILE", V: "{{.TASKFILE}}" }
+      - task: print-var
+        vars: { K: "TASKFILE_DIR", V: "{{.TASKFILE_DIR}}" }
+      - task: print-var
+        vars: { K: "TASKFILE_PARENT", V: "{{.TASKFILE_PARENT}}" }
+      - task: print-var
+        vars: { K: "ROOT_DIR", V: "{{.ROOT_DIR}}" }
+      - task: print-var
+        vars: { K: "USER_WORKING_DIR", V: "{{.USER_WORKING_DIR}}" }
+      - cmd: "echo"
+      - task: info
+        vars: { MSG: "----- CUSTOM VARS -----" }
+      - task: print-var
+        vars: { K: "HOME_DIR", V: "{{.HOME_DIR}}" }
+      - task: print-var
+        vars: { K: "CLAUDE_DIR", V: "{{.CLAUDE_DIR}}" }
+      - task: print-var
+        vars: { K: "CLAUDE_PARENT_DIR", V: "{{.CLAUDE_PARENT_DIR}}" }
+      - task: print-var
+        vars: { K: "CLAUDE_PROJECT_PATH", V: "{{.CLAUDE_PROJECT_PATH}}" }
+      - task: print-var
+        vars: { K: "CLAUDE_PROJECT_SLUG", V: "{{.CLAUDE_PROJECT_SLUG}}" }
+      - task: print-var
+        vars: { K: "HOME_CLAUDE_DOCKER_PATH", V: "{{.HOME_CLAUDE_DOCKER_PATH}}" }
+      - task: print-var
+        vars: { K: "LOG_DIR", V: "{{.LOG_DIR}}" }
+      - task: print-var
+        vars: { K: "DOCKERFILE_PATH", V: "{{.DOCKERFILE_PATH}}" }
+      - cmd: "echo"
+      - task: wait
+        vars: { SECONDS: 2 }
+    silent: true
+
+  ensure-env:
     desc: Ensures a .env is present, even if empty
     aliases:
       - ensure-env
@@ -46,18 +198,44 @@ tasks:
     cmds:
       - cmd: >-
           pwsh -c "
-          if (!(Test-Path .env)) {
-            cp .env.sample .env
+          if (!(Test-Path '.env')) {
+            cp '.env.example' '.env'
           }"
     silent: true
 
-  claude:ensure-stack-network:
-    desc: Ensures the claude-stack external network is available
+  claude:ensure-host:
+    desc: Determines if running in on the host
     aliases:
-      - ensure-stack-network
+      - ensure-host
+    preconditions:
+      - sh: test ! -f /.dockerenv
+        msg: "This task can only be run on the host"
+    dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - cmd: pwsh -c "docker network create --subnet=10.234.0.0/24 claude-stack *> \$null"
-        ignore_error: true
+      - echo "Running on the host"
+    silent: true
+
+  claude:build:
+    desc: Builds the claude image
+    aliases:
+      - build
+    deps:
+      - ensure-env
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - docker compose build
+    silent: true
+
+  claude:shell:
+    desc: Runs the claude container in shell mode
+    aliases:
+      - shell
+    deps:
+      - ensure-env
+      - ensure-stack-network
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - docker compose run --remove-orphans claude shell
     silent: true
 
   claude:claude:
@@ -66,15 +244,16 @@ tasks:
       - claude
       - ai
       - start
+      - vibe
     deps:
-      - claude:ensure-env
-      - claude:ensure-stack-network
+      - ensure-env
+      - ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location {{.TASKFILE_DIR}}/{{.SLUG}}
+          Set-Location {{.TASKFILE_DIR}}/{{.CLAUDE_PROJECT_SLUG}}
           claude update
           claude --continue 2> \$null || claude
         } else {
@@ -88,8 +267,8 @@ tasks:
     aliases:
       - stream-json
     deps:
-      - claude:ensure-env
-      - claude:ensure-stack-network
+      - ensure-env
+      - ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
@@ -109,14 +288,14 @@ tasks:
     aliases:
       - debug
     deps:
-      - claude:ensure-env
-      - claude:ensure-stack-network
+      - ensure-env
+      - ensure-stack-network
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location {{.TASKFILE_DIR}}/{{.SLUG}}
+          Set-Location {{.TASKFILE_DIR}}/{{.CLAUDE_PROJECT_SLUG}}
           claude update
           claude --continue --debug 2>\$null || claude --debug
         } else {
@@ -125,99 +304,22 @@ tasks:
         }"
     silent: true
 
-  claude:build:
-    desc: Builds the claude image
-    aliases:
-      - build
-    deps:
-      - claude:ensure-env
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - docker compose build
-    silent: true
-
-  claude:shell:
-    desc: Runs the claude container in shell mode
-    aliases:
-      - shell
-    deps:
-      - claude:ensure-env
-      - claude:build
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - docker compose run --remove-orphans claude shell
-    silent: true
-
-  claude:trivial:
-    aliases:
-      - trivial
-    desc: Create a trivial commit and push
-    vars:
-      MSG: '{{.MSG | default "(chore) trivial update"}}'
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - pwsh -NoProfile -File scripts/trivial-commit.ps1 -Message "{{.MSG}}"
-    silent: true
-
-  claude:fetch:
-    aliases:
-      - fetch
-    desc: Fetch and reset .claude submodule to origin/main
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - pwsh -NoProfile -File scripts/fetch-submodule.ps1
-    silent: true
-
-  claude:remove-submodule:
-    aliases:
-      - remove-submodule
-    desc: Completely remove .claude submodule from parent repository
-    prompt: This will permanently remove the .claude submodule. Continue?
-    dir: "{{.TASKFILE_DIR}}/.."
-    cmds:
-      - pwsh -NoProfile -File .claude/scripts/remove-submodule.ps1
-    silent: true
-
-  claude:update:
-    aliases:
-      - update
-    desc: Smart commit .claude changes with auto-generated message, update parent submodule
-    vars:
-      MSG: '{{.MSG | default ""}}'
-      BRANCH: '{{.BRANCH | default "main"}}'
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - pwsh -NoProfile -File scripts/update-submodule.ps1 {{if .MSG}}-Message "{{.MSG}}"{{end}} -Branch "{{.BRANCH}}"
-    silent: true
-
   claude:config:
     desc: docker-compose config
     aliases:
       - config
     deps:
-      - claude:ensure-env
+      - ensure-env
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose config claude
-    silent: true
-
-  claude:ensure-host:
-    desc: Determines if running in on the host
-    aliases:
-      - ensure-host
-    preconditions:
-      - sh: test ! -f /.dockerenv
-        msg: "This task can only be run on the host"
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - echo "Running on the host"
     silent: true
 
   claude:delete-logs-folder:
     aliases:
       - delete-logs-folder
     deps:
-      - claude:ensure-host
+      - ensure-host
     vars:
       TARGET_PATH: '.data/logs'
     desc: Remove the {{.TARGET_PATH}} folder from the current directory
@@ -234,7 +336,7 @@ tasks:
     aliases:
       - delete-data-folder
     deps:
-      - claude:ensure-host
+      - ensure-host
     vars:
       TARGET_PATH: '.data/'
     desc: Remove the {{.TARGET_PATH}} folder from the current directory
@@ -248,13 +350,13 @@ tasks:
       - cmd: echo "deleted data folder..."
     silent: true
 
-  claude:delete-claude-root-homes:
+  claude:delete-home-claude-config:
     aliases:
-      - delete-claude-root-homes
+      - delete-home-claude-config
     deps:
-      - claude:ensure-host
+      - ensure-host
     vars:
-      TARGET_PATH: "{{.CLAUDE_HOME_ROOT_DIRS}}"
+      TARGET_PATH: "{{.HOME_CLAUDE_DOCKER_PATH}}"
     desc: Remove the {{.TARGET_PATH}} folder from the current directory
     prompt: This will delete the {{.TARGET_PATH}} folder. Continue?
     dir: "{{.TASKFILE_DIR}}"
@@ -265,136 +367,3 @@ tasks:
         platforms: [windows]
       - cmd: echo "deleted {{.TARGET_PATH}} folder..."
     silent: true
-
-  claude:clean-docker:
-    desc: Kills and removes all running containers on the host
-    aliases:
-      - clean
-    deps:
-      - claude:ensure-env
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - docker kill $(docker ps -q) 2>/dev/null || true
-      - docker rm -f $(docker ps -aq) 2>/dev/null || true
-      - docker network prune -f 2>/dev/null || true
-      - docker image prune -f
-      - task: delete-logs-folder
-    silent: true
-
-  claude:purge-docker:
-    desc: clean + volume cleanup
-    aliases:
-      - purge
-    deps:
-      - claude:ensure-env
-      - claude:clean-docker
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - cmd: docker volume rm $(docker volume ls -q) 2>/dev/null || true
-        platforms: [linux, darwin, windows]
-      - task: delete-data-folder
-      - task: delete-claude-root-homes
-    silent: true
-
-  claude:nuke-docker:
-    desc: Nukes docker. Beware.
-    aliases:
-      - nuke
-    deps:
-      - claude:ensure-env
-      - claude:purge-docker
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - cmd: docker system prune -f -a --volumes 2>/dev/null || true
-        platforms: [linux, darwin, windows]
-      - cmd: docker network rm $(docker network ls -q) 2>/dev/null || true
-        platforms: [linux, darwin, windows]
-      - cmd: docker rmi -f $(docker images -aq) 2>/dev/null || true
-        platforms: [linux, darwin, windows]
-    silent: true
-
-  claude:ensure-docker:
-    desc: Determines if running in a container
-    aliases:
-      - ensure-docker
-    preconditions:
-      - sh: test -f /.dockerenv
-        msg: "This task can only be run inside a Docker container"
-    cmds:
-      - echo "/.dockerenv exists"
-    silent: true
-
-  playwright:record:
-    desc: Record video of a URL
-    vars:
-      URL: '{{.URL}}'
-      DURATION: '{{.DURATION | default "10"}}'
-      OUTPUT: '{{.OUTPUT | default ""}}'
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - uv run --directory {{.TASKFILE_DIR}}/skills/playwright-automation python scripts/video_recorder.py "{{.URL}}" --duration {{.DURATION}} {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
-    silent: true
-
-  playwright:screenshot:
-    desc: Take screenshot of a URL
-    vars:
-      URL: '{{.URL}}'
-      OUTPUT: '{{.OUTPUT | default ""}}'
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - uv run --directory {{.TASKFILE_DIR}}/skills/playwright-automation python scripts/screenshot.py "{{.URL}}" {{if .OUTPUT}}--output "{{.OUTPUT}}"{{end}}
-    silent: true
-
-  playwright:test-twitch:
-    desc: uses the playwright to test recording twitch navigation
-    deps:
-      - claude:ensure-docker
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - |
-        uv run --directory {{.TASKFILE_DIR}}/skills/playwright-automation \
-          python scripts/test_twitch_navigation.py
-    silent: true
-
-  rules-loader:test:
-    desc: Run rules_loader hook test suite
-    aliases:
-      - rl:test
-    dir: "{{.TASKFILE_DIR}}/hooks/rules_loader"
-    cmds:
-      - uv run --extra test pytest -v
-    silent: false
-
-  rules-loader:test-cov:
-    desc: Run rules_loader tests with coverage report
-    aliases:
-      - rl:test-cov
-    dir: "{{.TASKFILE_DIR}}/hooks/rules_loader"
-    cmds:
-      - uv run --extra test pytest --cov=src --cov-report=term-missing
-    silent: false
-
-  rules-loader:test-unit:
-    desc: Run only rules_loader unit tests
-    aliases:
-      - rl:test-unit
-    dir: "{{.TASKFILE_DIR}}/hooks/rules_loader"
-    cmds:
-      - uv run --extra test pytest tests/unit/ -v
-    silent: false
-
-  rules-loader:test-integration:
-    desc: Run only rules_loader integration tests
-    aliases:
-      - rl:test-integration
-    dir: "{{.TASKFILE_DIR}}/hooks/rules_loader"
-    cmds:
-      - uv run --extra test pytest tests/integration/ -v
-    silent: false
-
-  claude:gh:login:
-    aliases:
-      - gh-login
-    cmds:
-      - echo | gh auth login --git-protocol https --web
-    silent: false

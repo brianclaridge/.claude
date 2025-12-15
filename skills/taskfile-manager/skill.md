@@ -165,13 +165,13 @@ For automated validation, use the Python validator script:
 
 ```bash
 # Run validation (text output)
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/taskfile-manager python -m scripts ./Taskfile.yml
+uv run --directory ${CLAUDE_SKILLS_PATH}/taskfile-manager python -m scripts ./Taskfile.yml
 
 # Run validation (JSON output for programmatic use)
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/taskfile-manager python -m scripts ./Taskfile.yml --format json
+uv run --directory ${CLAUDE_SKILLS_PATH}/taskfile-manager python -m scripts ./Taskfile.yml --format json
 
 # Strict mode (treat warnings as errors)
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/taskfile-manager python -m scripts ./Taskfile.yml --strict
+uv run --directory ${CLAUDE_SKILLS_PATH}/taskfile-manager python -m scripts ./Taskfile.yml --strict
 ```
 
 The Python script provides:

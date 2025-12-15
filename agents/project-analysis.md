@@ -19,7 +19,7 @@ You are a specialized project analysis agent focused on understanding what a cod
 **FIRST STEP**: Before performing analysis, invoke the `session-context` skill to gather contextual data:
 
 ```bash
-uv run --directory /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills/session-context python -m src [session_type] --json
+uv run --directory ${CLAUDE_SKILLS_PATH}/session-context python -m src [session_type] --json
 ```
 
 Where `[session_type]` is provided in your invocation context (`startup`, `resume`, `clear`, or `compact`).

@@ -16,8 +16,10 @@ services:
         nodeVersion: 24
         powershellVersion: 7.5.4
         sqlProxyVersion: 2.19.0
+        glabVersion: 1.78.3
+        pythonVersion: 3.12
         buildDate: 20251213.2
-        claudeCodeDate: 20251213.2
+        claudeCodeDate: 20251215.1
     init: true
     privileged: true
     ulimits:
@@ -29,30 +31,40 @@ services:
       - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
-    working_dir: /workspace/${SLUG}
+    working_dir: /workspace/${CLAUDE_PROJECT_SLUG}
     env_file:
       - .env
     environment:
-      HOST_HOME: ${HOME:-${USERPROFILE}}
-      HOST_PWD: ${SLUG}
-      PARENT_PATH: ${PARENT_PATH}
+      CLAUDE_PROJECT_SLUG: ${CLAUDE_PROJECT_SLUG}
+      CLAUDE_WORKSPACE_PATH: /workspace/${CLAUDE_PROJECT_SLUG}
+      CLAUDE_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude
+      CLAUDE_DATA_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data
+      CLAUDE_LOGS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs
+      CLAUDE_AGENTS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents
+      CLAUDE_HOOKS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks
+      CLAUDE_SCRIPTS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/scripts
+      CLAUDE_SKILLS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills
+      HOME_CLAUDE_DOCKER_PATH: ${HOME_CLAUDE_DOCKER_PATH}
+      HOME_OS: ${OS}
+      HOME_DIR: ${HOME_DIR}
+      DOCKER_SOCK_PATH: ${DOCKER_SOCK_PATH}
+      # misc vars
       AWS_CONFIG_FILE: /root/.aws/config
       OLLAMA_API_BASE: http://ollama:11434
       OLLAMA_API_KEY: ollama
       USERPROFILE: /root
       UV_LINK_MODE: copy
       CDK_DISABLE_CLI_TELEMETRY: true
-      SLUG: ${SLUG}
-      CLAUDE_PROJECT_SLUG: ${SLUG}
     volumes:
       # dind stuff
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_SOCK_PATH}:/var/run/docker.sock
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       # bind folder mounts
-      - ${HOME:-${USERPROFILE}}/.ssh:/ssh:ro
-      - ${HOME:-${USERPROFILE}}/.claudebox/root_homes${SLUG}:/root:delegated
-      - ../:/workspace${SLUG}:delegated
+      - ${HOME_DIR}/.ssh:/ssh:ro
+      - ${HOME_CLAUDE_DOCKER_PATH}/claude_data:/root/.claude:delegated
+      - ../:/workspace/${CLAUDE_PROJECT_SLUG}:delegated
       # misc volumes
+      - shared-root:/root:delegated
       - minikube-data:/root/.minikube
       - kube-data:/root/.kube
       - maven-data:/root/.m2
@@ -67,6 +79,8 @@ networks:
     driver: bridge
 
 volumes:
+  shared-root:
+    name: claude-shared-root
   minikube-data: {}
   kube-data: {}
   maven-data: {}

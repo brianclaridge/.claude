@@ -1,0 +1,230 @@
+{
+  "model": "Opus",
+  "forceLoginMethod": "claudeai",
+  "outputStyle": "Default",
+  "alwaysThinkingEnabled": true,
+  "companyAnnouncements": [
+    "An intelligence that only reflects your beliefs back to you is not thinking, it is polishing your blindness until it shines."
+  ],
+  "env": {
+    "MAX_THINKING_TOKENS": "29999",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
+  "includeCoAuthoredBy": false,
+  "enableAllProjectMcpServers": true,
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Write",
+      "Skill(git-manager)",
+      "Skill(project-metadata-builder)",
+      "Skill(aws-login)",
+      "Skill(gcp-login)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
+    ],
+    "deny": [],
+    "ask": ["Bash(rm:*)"],
+    "additionalDirectories": [
+      "/tmp",
+      "/workspace",
+      "/root",
+      "/root/.claude"
+    ],
+    "defaultMode": "plan"
+  },
+  "enabledMcpjsonServers": [
+    "context7",
+    "playwright"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"SessionStart\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/rules_loader python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/cloud_auth_prompt python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/session_context_injector python -m src"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"UserPromptSubmit\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/rules_loader python -m src"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/submodule_auto_updater python -m src"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"Stop\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"Notification\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"PreToolUse\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__playwright__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/playwright_healer python -m src"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"PostToolUse\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"SubagentStop\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"PreCompact\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"SessionEnd\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq '.' >&2; echo '{\"hook_event_name\":\"PermissionRequest\"}'"
+          },
+          {
+            "type": "command",
+            "command": "uv run --directory /workspace/z-projects-personal-claude-sandbox/.claude/hooks/logger python -m src"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  }
+}
