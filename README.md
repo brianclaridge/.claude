@@ -21,15 +21,12 @@
       # bind folder mounts
       - ${HOME_DIR}/.ssh:/ssh:ro
       - ${HOME_CLAUDE_DOCKER_PATH}/claude_data:/root/.claude:delegated
-      - ../:/${CLAUDE_WORKSPACE_PATH}:delegated
+      - ../:/workspace/${CLAUDE_PROJECT_SLUG}:delegated
       # misc volumes
       - shared-root:/root:delegated
       - minikube-data:/root/.minikube
       - kube-data:/root/.kube
       - maven-data:/root/.m2
-    networks:
-      - claude-stack
-      - default
 ```
 
 ## Quick Start
