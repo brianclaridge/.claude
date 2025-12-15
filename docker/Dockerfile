@@ -95,7 +95,9 @@ ARG pythonVersion
 ENV PYTHON_VERSION=${pythonVersion}
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
-RUN uv python install ${PYTHON_VERSION}
+RUN \
+  uv python install ${PYTHON_VERSION} && \
+    ln -s /root/.local/share/uv/python/cpython-*/bin/python /usr/local/bin/python
 
 # install python packages
 RUN uv pip install --python ${PYTHON_VERSION} \
