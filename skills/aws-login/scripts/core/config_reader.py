@@ -196,20 +196,75 @@ def get_account_region(account_alias: str) -> str:
 
 def get_sso_start_url() -> str:
     """
-    Get AWS SSO start URL from config.
+    Get AWS SSO start URL from environment variable.
+
+    Environment variable: AWS_SSO_START_URL
 
     Returns:
         str: SSO start URL
+
+    Raises:
+        ValueError: If AWS_SSO_START_URL not set
     """
-    config = load_config()
-    sso_config = config.get('sso_config', {})
-    start_url = sso_config.get('start_url', '')
+    start_url = os.environ.get('AWS_SSO_START_URL', '')
+
+    if not start_url:
+        raise ValueError(
+            "AWS_SSO_START_URL environment variable not set.\n"
+            "Add to .env: AWS_SSO_START_URL=\"https://your-org.awsapps.com/start\""
+        )
 
     # Ensure https:// prefix
-    if start_url and not start_url.startswith('http'):
+    if not start_url.startswith('http'):
         start_url = f"https://{start_url}"
 
     return start_url
+
+
+def get_root_account_id() -> str:
+    """
+    Get AWS root/management account ID from environment variable.
+
+    Environment variable: AWS_ROOT_ACCOUNT_ID
+
+    Returns:
+        str: 12-digit AWS account ID
+
+    Raises:
+        ValueError: If AWS_ROOT_ACCOUNT_ID not set
+    """
+    account_id = os.environ.get('AWS_ROOT_ACCOUNT_ID', '')
+
+    if not account_id:
+        raise ValueError(
+            "AWS_ROOT_ACCOUNT_ID environment variable not set.\n"
+            "Add to .env: AWS_ROOT_ACCOUNT_ID=\"123456789012\""
+        )
+
+    return account_id
+
+
+def get_root_account_name() -> str:
+    """
+    Get AWS root/management account name from environment variable.
+
+    Environment variable: AWS_ROOT_ACCOUNT_NAME
+
+    Returns:
+        str: Account name/alias
+
+    Raises:
+        ValueError: If AWS_ROOT_ACCOUNT_NAME not set
+    """
+    account_name = os.environ.get('AWS_ROOT_ACCOUNT_NAME', '')
+
+    if not account_name:
+        raise ValueError(
+            "AWS_ROOT_ACCOUNT_NAME environment variable not set.\n"
+            "Add to .env: AWS_ROOT_ACCOUNT_NAME=\"your-org-name\""
+        )
+
+    return account_name
 
 
 def get_sso_region() -> str:

@@ -17,7 +17,10 @@ Authenticate to AWS using SSO (Single Sign-On) with interactive account selectio
 ## Prerequisites
 
 - AWS CLI v2 installed with SSO support
-- SSO configuration in `.aws.yml`
+- Environment variables set in `.env`:
+  - `AWS_SSO_START_URL` - Your AWS SSO portal URL
+  - `AWS_ROOT_ACCOUNT_ID` - Root/management account ID
+  - `AWS_ROOT_ACCOUNT_NAME` - Root account alias
 - Valid SSO session or ability to authenticate via browser
 
 ## Workflow
@@ -103,27 +106,35 @@ Report to user:
 - ARN (identity)
 - User/Role name
 
+## Environment Variables
+
+SSO settings are configured via environment variables in `.env`:
+
+```bash
+# Required - AWS SSO configuration
+AWS_SSO_START_URL="https://mycompany.awsapps.com/start"
+AWS_ROOT_ACCOUNT_ID="123456789012"
+AWS_ROOT_ACCOUNT_NAME="my-org"
+```
+
 ## Configuration File (.aws.yml)
 
-Located at `${CLAUDE_DATA_PATH}/.aws.yml` (persistent across sessions):
+Located at `${CLAUDE_DATA_PATH}/.aws.yml` - stores discovered accounts (auto-generated):
 
 ```yaml
 schema_version: "2.0"
-sso:
-  start_url: https://mycompany.awsapps.com/start
-  region: us-east-1
-  role_name: AdministratorAccess
-
-defaults:
-  region: us-east-1
+default_region: us-east-1
 
 accounts:
   root:
     account_number: "123456789012"
-    role_name: AdministratorAccess
+    account_name: "Management Account"
   sandbox:
     account_number: "234567890123"
+    account_name: "Development"
 ```
+
+**Note**: SSO URL comes from `AWS_SSO_START_URL` env var, not this file.
 
 ## Error Handling
 

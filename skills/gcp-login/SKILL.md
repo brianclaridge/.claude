@@ -17,7 +17,9 @@ Authenticate to Google Cloud Platform using `gcloud auth login --update-adc`.
 ## Prerequisites
 
 - `gcloud` CLI installed and in PATH
-- Environment variable `GOOGLE_CLOUD_PROJECT` set (optional, for quota project)
+- Environment variables in `.env` (optional):
+  - `GOOGLE_CLOUD_PROJECT` - GCP project ID for quota project
+  - `GCLOUD_EMAIL_ADDRESS` - Email for bucket policy bindings
 
 ## Workflow
 

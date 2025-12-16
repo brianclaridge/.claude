@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "pyyaml",
-#     "loguru",
-#     "boto3",
-#     "InquirerPy>=0.3.4",
-#     "rich>=13.0.0",
-# ]
-# ///
 """
 AWS SSO login handler.
 
