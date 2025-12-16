@@ -10,7 +10,7 @@ Authenticate to Google Cloud Platform using `gcloud auth login --update-adc`.
 
 ## Activation Triggers
 
-- cloud-auth agent invokes this skill after user selects GCP
+- `/auth-gcp` slash command invokes this skill
 - User says: "login to GCP", "gcloud auth", "authenticate to GCP"
 - User explicitly invokes: "use the gcp-login skill"
 
@@ -53,13 +53,18 @@ If not set:
 Run authentication with device code flow (no browser launch in container):
 
 ```bash
-gcloud auth login --update-adc --no-launch-browser
+uv run --directory ${CLAUDE_SKILLS_PATH}/gcp-login python scripts/auth.py
 ```
 
-This will output a URL and device code. Inform user:
+**Auth URL Detection**: The skill automatically detects and presents the authentication URL:
+
+| Field | Value |
+|-------|-------|
+| URL | https://accounts.google.com/o/oauth2/auth?... |
+
+User actions:
 1. Open the URL in a browser
-2. Enter the device code shown
-3. Complete authentication in browser
+2. Complete authentication in browser
 
 Wait for authentication to complete (command will block until done).
 

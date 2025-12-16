@@ -3,5 +3,4 @@ settings.local.json
 __pycache__
 .mcp.json
 .env
-.aws.yml
 .venv

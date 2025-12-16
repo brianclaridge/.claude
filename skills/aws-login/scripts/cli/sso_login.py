@@ -17,9 +17,14 @@ Supports interactive account selection when no account specified.
 """
 
 import argparse
+import re
 import sys
 from pathlib import Path
 import subprocess
+
+# Regex patterns for SSO URL and device code detection
+SSO_URL_PATTERN = re.compile(r"(https://[\w.-]+\.awsapps\.com/start[^\s]*)")
+DEVICE_CODE_PATTERN = re.compile(r"\b([A-Z]{4}-[A-Z]{4})\b")
 
 # Add parent directories to path for imports
 aws_dir = Path(__file__).parent.parent
@@ -73,6 +78,79 @@ def check_credentials_valid(profile_name: str) -> bool:
     else:
         logger.debug(f"Credentials invalid or expired: {result.stderr.strip()}")
         return False
+
+
+def run_sso_login(profile_name: str) -> dict:
+    """
+    Run AWS SSO login and capture URL/device code for presentation.
+
+    Args:
+        profile_name: AWS CLI profile name
+
+    Returns:
+        dict: Result with keys:
+            - success: bool
+            - sso_url: str | None
+            - device_code: str | None
+            - output: str (full output)
+    """
+    process = subprocess.Popen(
+        ['aws', 'sso', 'login', '--profile', profile_name, '--no-browser'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1
+    )
+
+    output_lines = []
+    sso_url = None
+    device_code = None
+
+    for line in process.stdout:
+        output_lines.append(line)
+        print(line, end='', flush=True)  # Show to user in real-time
+
+        # Detect SSO URL
+        url_match = SSO_URL_PATTERN.search(line)
+        if url_match:
+            sso_url = url_match.group(1)
+
+        # Detect device code (4 letters - 4 letters pattern)
+        code_match = DEVICE_CODE_PATTERN.search(line)
+        if code_match:
+            device_code = code_match.group(1)
+
+    process.wait()
+
+    return {
+        "success": process.returncode == 0,
+        "sso_url": sso_url,
+        "device_code": device_code,
+        "output": "".join(output_lines)
+    }
+
+
+def format_sso_prompt(sso_url: str, device_code: str) -> str:
+    """
+    Format SSO URL and device code for user presentation.
+
+    Args:
+        sso_url: AWS SSO URL
+        device_code: Device verification code
+
+    Returns:
+        str: Formatted markdown table for display
+    """
+    return f"""
+**AWS SSO Authentication Required**
+
+| Field | Value |
+|-------|-------|
+| URL | {sso_url} |
+| Code | **{device_code}** |
+
+Open the URL in your browser and enter the code to authenticate.
+"""
 
 
 def main() -> int:
@@ -204,16 +282,17 @@ def main() -> int:
             log_info("Credentials expired or missing - initiating login")
 
         log_info("Initiating AWS SSO login (no-browser mode)...")
-        log_info("Please visit the URL displayed below to complete authentication.")
         log_info("")
 
-        # Execute AWS SSO login with --no-browser flag
-        result = subprocess.run(
-            ['aws', 'sso', 'login', '--profile', profile_name, '--no-browser'],
-            check=False
-        )
+        # Execute AWS SSO login with output capture for URL/code detection
+        result = run_sso_login(profile_name)
 
-        if result.returncode == 0:
+        # Present detected SSO URL and code if found
+        if result.get("sso_url") and result.get("device_code"):
+            log_info("")
+            log_info(format_sso_prompt(result["sso_url"], result["device_code"]))
+
+        if result["success"]:
             log_success("SSO login successful")
             log_info(f"Credentials cached for profile: {profile_name}")
             log_info("Default profile updated - AWS CLI commands will use this account")

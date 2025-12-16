@@ -3,6 +3,7 @@
 Supports both v1.0 (flat) and v2.0 (nested OU hierarchy) schemas.
 """
 
+import os
 from pathlib import Path
 from typing import Any
 import yaml
@@ -12,7 +13,7 @@ def get_config_path() -> Path:
     """
     Get path to .aws.yml configuration file.
 
-    Location: .claude/.aws.yml (gitignored, user-specific)
+    Location: ${CLAUDE_DATA_PATH}/.aws.yml (user-specific, persistent across sessions)
 
     Returns:
         Path: Path to .aws.yml
@@ -20,23 +21,46 @@ def get_config_path() -> Path:
     Raises:
         FileNotFoundError: If .aws.yml not found
     """
-    # Path: skills/aws-login/scripts/core/config_reader.py
-    # Need to go up 4 levels to reach .claude/
-    core_dir = Path(__file__).parent  # core/
-    scripts_dir = core_dir.parent  # scripts/
-    skill_dir = scripts_dir.parent  # aws-login/
-    skills_dir = skill_dir.parent  # skills/
-    claude_dir = skills_dir.parent  # .claude/
+    # Use CLAUDE_DATA_PATH environment variable for persistent storage
+    claude_data_path = os.environ.get("CLAUDE_DATA_PATH")
 
-    config_path = claude_dir / ".aws.yml"
+    if claude_data_path:
+        config_path = Path(claude_data_path) / ".aws.yml"
+    else:
+        # Fallback to legacy location (.claude/.aws.yml)
+        core_dir = Path(__file__).parent  # core/
+        scripts_dir = core_dir.parent  # scripts/
+        skill_dir = scripts_dir.parent  # aws-login/
+        skills_dir = skill_dir.parent  # skills/
+        claude_dir = skills_dir.parent  # .claude/
+        config_path = claude_dir / ".aws.yml"
 
     if not config_path.exists():
         raise FileNotFoundError(
             f".aws.yml not found at {config_path}\n"
-            "Run sso_check to set up AWS SSO configuration."
+            "Run /auth-aws to set up AWS SSO configuration."
         )
 
     return config_path
+
+
+def get_config_dir() -> Path:
+    """
+    Get directory where config should be stored.
+
+    Returns:
+        Path: Directory for config storage
+    """
+    claude_data_path = os.environ.get("CLAUDE_DATA_PATH")
+    if claude_data_path:
+        return Path(claude_data_path)
+
+    # Fallback to legacy location
+    core_dir = Path(__file__).parent
+    scripts_dir = core_dir.parent
+    skill_dir = scripts_dir.parent
+    skills_dir = skill_dir.parent
+    return skills_dir.parent  # .claude/
 
 
 def config_exists() -> bool:

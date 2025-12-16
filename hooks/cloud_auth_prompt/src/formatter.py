@@ -23,14 +23,18 @@ def format_hook_output(providers: list[dict[str, Any]], event_name: str = "Sessi
             }
         })
 
-    # Build context that instructs Claude to invoke cloud-auth-agent
-    provider_list = ", ".join(p["display_name"] for p in providers)
+    # Build context that suggests slash commands for cloud auth
+    provider_commands = []
+    if any(p["name"] == "aws" for p in providers):
+        provider_commands.append("`/auth-aws` - AWS SSO authentication")
+    if any(p["name"] == "gcp" for p in providers):
+        provider_commands.append("`/auth-gcp` - GCP authentication")
 
-    context = f"""Cloud authentication is available for: {provider_list}
+    commands_list = "\n".join(f"- {cmd}" for cmd in provider_commands)
 
-To authenticate, invoke the cloud-auth-agent with: "Prompt user to select cloud providers for authentication."
+    context = f"""Cloud authentication available. Use these commands when needed:
 
-The agent will use AskUserQuestion to present provider options and invoke the appropriate login skills."""
+{commands_list}"""
 
     return json.dumps({
         "hookSpecificOutput": {

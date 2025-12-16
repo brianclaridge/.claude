@@ -2,19 +2,20 @@
 # Location: ${CLAUDE_PATH}/config.yml (project root)
 
 # Cloud provider authentication settings
+# Use /auth-aws or /auth-gcp slash commands to authenticate
 cloud_providers:
   aws:
     enabled: true
     display_name: "AWS"
     description: "Amazon Web Services SSO"
     config_file: .aws.yml
-    prompt_at_start: true
+    prompt_at_start: false  # Use /auth-aws command instead
 
   gcp:
     enabled: true
     display_name: "GCP"
     description: "Google Cloud Platform"
-    prompt_at_start: true
+    prompt_at_start: false  # Use /auth-gcp command instead
 
 project_metadata:
   # Session history settings

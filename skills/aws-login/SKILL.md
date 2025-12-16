@@ -10,7 +10,7 @@ Authenticate to AWS using SSO (Single Sign-On) with interactive account selectio
 
 ## Activation Triggers
 
-- cloud-auth agent invokes this skill after user selects AWS
+- `/auth-aws` slash command invokes this skill
 - User says: "login to AWS", "AWS SSO", "authenticate to AWS"
 - User explicitly invokes: "use the aws-login skill"
 
@@ -79,9 +79,16 @@ uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python scripts/cli/sso_login.
 ```
 
 This will:
-1. Open browser for SSO authentication (or provide device code URL)
+1. Capture and present the SSO URL and device code in a formatted table
 2. Wait for authentication to complete
 3. Cache credentials locally
+
+**SSO URL Detection**: The skill automatically detects and presents the SSO URL and device code:
+
+| Field | Value |
+|-------|-------|
+| URL | https://mycompany.awsapps.com/start/#/device |
+| Code | **XXXX-XXXX** |
 
 ### Step 5: Verify Authentication
 
@@ -98,7 +105,7 @@ Report to user:
 
 ## Configuration File (.aws.yml)
 
-Located at `${CLAUDE_PATH}/.aws.yml`:
+Located at `${CLAUDE_DATA_PATH}/.aws.yml` (persistent across sessions):
 
 ```yaml
 schema_version: "2.0"

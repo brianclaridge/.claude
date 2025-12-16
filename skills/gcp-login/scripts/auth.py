@@ -5,10 +5,15 @@ Provides programmatic interface to gcloud auth commands.
 """
 
 import os
+import re
 import subprocess
 import sys
 
 from loguru import logger
+
+# Regex patterns for GCP auth URL detection
+GCP_URL_PATTERN = re.compile(r"(https://accounts\.google\.com/o/oauth2/auth[^\s]*)")
+GCP_ALT_URL_PATTERN = re.compile(r"(https://[\w.-]+\.google\.com/[^\s]*)")
 
 
 def check_gcloud_installed() -> bool:
@@ -110,6 +115,76 @@ def set_quota_project(project_id: str) -> bool:
         return False
 
 
+def run_gcp_auth(no_browser: bool = True) -> dict:
+    """Run gcloud auth login and capture URL for presentation.
+
+    Args:
+        no_browser: If True, use device code flow (for containers)
+
+    Returns:
+        dict: Result with keys:
+            - success: bool
+            - auth_url: str | None
+            - output: str (full output)
+    """
+    cmd = ["gcloud", "auth", "login", "--update-adc"]
+    if no_browser:
+        cmd.append("--no-launch-browser")
+
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1
+    )
+
+    output_lines = []
+    auth_url = None
+
+    for line in process.stdout:
+        output_lines.append(line)
+        print(line, end='', flush=True)  # Show to user in real-time
+
+        # Detect GCP auth URL
+        url_match = GCP_URL_PATTERN.search(line)
+        if url_match:
+            auth_url = url_match.group(1)
+        else:
+            # Try alternative URL pattern
+            alt_match = GCP_ALT_URL_PATTERN.search(line)
+            if alt_match and "oauth" in line.lower():
+                auth_url = alt_match.group(1)
+
+    process.wait()
+
+    return {
+        "success": process.returncode == 0,
+        "auth_url": auth_url,
+        "output": "".join(output_lines)
+    }
+
+
+def format_gcp_prompt(auth_url: str) -> str:
+    """Format GCP auth URL for user presentation.
+
+    Args:
+        auth_url: GCP authentication URL
+
+    Returns:
+        str: Formatted markdown table for display
+    """
+    return f"""
+**GCP Authentication Required**
+
+| Field | Value |
+|-------|-------|
+| URL | {auth_url} |
+
+Open the URL in your browser to authenticate.
+"""
+
+
 def login_with_adc(no_browser: bool = True) -> bool:
     """Run gcloud auth login with ADC update.
 
@@ -119,17 +194,14 @@ def login_with_adc(no_browser: bool = True) -> bool:
     Returns:
         True if authentication succeeded
     """
-    cmd = ["gcloud", "auth", "login", "--update-adc"]
-    if no_browser:
-        cmd.append("--no-launch-browser")
+    result = run_gcp_auth(no_browser)
 
-    try:
-        # Run interactively so user can complete auth
-        result = subprocess.run(cmd)
-        return result.returncode == 0
-    except Exception as e:
-        logger.error(f"Authentication failed: {e}")
-        return False
+    # Present detected auth URL if found
+    if result.get("auth_url"):
+        logger.info("")
+        logger.info(format_gcp_prompt(result["auth_url"]))
+
+    return result["success"]
 
 
 def main():
