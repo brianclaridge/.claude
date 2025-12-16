@@ -22,7 +22,6 @@ from loguru import logger
 
 from .auth import (
     check_gcloud_installed,
-    format_auth_prompt,
     get_current_account,
     get_current_project,
     run_auth,
@@ -96,9 +95,6 @@ def main() -> int:
     # Run authentication
     logger.info("Starting authentication...")
     result = run_auth()
-
-    if result.auth_url:
-        logger.info(format_auth_prompt(result))
 
     if result.success:
         logger.success("Authentication successful")
