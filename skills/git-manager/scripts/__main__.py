@@ -12,6 +12,7 @@ from .identity import detect_identity
 from .message import generate_message
 from .auth import check_auth
 from .sensitive import scan_sensitive
+from .lockfile import clean_locks
 from .output import format_output
 
 structlog.configure(
@@ -57,6 +58,17 @@ def cmd_auth_check(args: argparse.Namespace) -> int:
 def cmd_sensitive_scan(args: argparse.Namespace) -> int:
     """Handle sensitive-scan subcommand."""
     result = scan_sensitive(repo_path=args.repo_path)
+    print(format_output(result.to_dict(), args.format))
+    return result.exit_code
+
+
+def cmd_clean_locks(args: argparse.Namespace) -> int:
+    """Handle clean-locks subcommand."""
+    result = clean_locks(
+        repo_path=args.repo_path,
+        force=args.force,
+        dry_run=args.dry_run,
+    )
     print(format_output(result.to_dict(), args.format))
     return result.exit_code
 
@@ -147,6 +159,29 @@ def main() -> int:
         help="Path to git repository",
     )
     p_sensitive.set_defaults(func=cmd_sensitive_scan)
+
+    # clean-locks subcommand
+    p_locks = subparsers.add_parser(
+        "clean-locks",
+        help="Remove stale git lock files",
+    )
+    p_locks.add_argument(
+        "--repo-path",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to git repository",
+    )
+    p_locks.add_argument(
+        "--force",
+        action="store_true",
+        help="Remove all locks regardless of age",
+    )
+    p_locks.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report locks without removing",
+    )
+    p_locks.set_defaults(func=cmd_clean_locks)
 
     args = parser.parse_args()
     return args.func(args)

@@ -25,6 +25,7 @@ uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
 | `message` | Generate commit message from plans | 0=success, 1=no-changes |
 | `auth-check` | Check remote authentication | 0=authenticated, 1=needs-auth |
 | `sensitive-scan` | Scan for sensitive files | 0=clear, 1=found |
+| `clean-locks` | Remove stale git lock files | 0=cleaned, 1=error |
 
 ### Example: Identity Detection
 
@@ -63,6 +64,20 @@ SENSITIVE=$(uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
   python -m scripts --format json sensitive-scan)
 
 # If found=true, files[] contains detected sensitive files
+```
+
+### Example: Lock File Cleanup
+
+```bash
+# Clean stale locks (>5 seconds old) - run before git operations
+uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
+  python -m scripts --format json clean-locks
+
+# Force remove all locks regardless of age
+uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
+  python -m scripts --format json clean-locks --force
+
+# Returns: cleaned, files_removed[], files_skipped[], error
 ```
 
 ## Activation Triggers
@@ -289,6 +304,20 @@ Use AskUserQuestion to confirm or edit:
 - Edit message (I'll ask for new text)
 - Cancel commit
 
+### Step 4.6: Lock Cleanup (Automatic)
+
+Before staging, clean any stale git lock files to prevent "index.lock exists" errors:
+
+```bash
+uv run --directory ${CLAUDE_SKILLS_PATH}/git-manager \
+  python -m scripts clean-locks --force
+```
+
+This handles:
+- Crashed git processes that left stale locks
+- Submodule lock files (`.git/modules/*/index.lock`)
+- Prevents common "Another git process seems to be running" errors
+
 ### Step 5: Stage and Commit
 
 1. Stage all changes: `git add -A`
@@ -399,6 +428,7 @@ Use AskUserQuestion:
 - **Conflicts detected**: Inform user about conflicts, provide guidance, exit workflow
 - **Command failure**: Display error message, do not retry automatically
 - **No remote**: Report error, commit preserved locally
+- **Lock file exists**: Run `clean-locks --force` and retry the operation
 - **HTTPS auth failure**:
   - Inform user: "GitHub CLI not authenticated for HTTPS push"
   - Provide guidance: "Run `gh auth login` to authenticate"
