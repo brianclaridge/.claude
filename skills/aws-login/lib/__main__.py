@@ -149,6 +149,70 @@ def first_run_setup(skip_vpc: bool = False) -> bool:
         return False
 
 
+def rebuild_config(skip_vpc: bool = False) -> bool:
+    """Rebuild .aws.yml and profiles without forcing re-auth.
+
+    Checks if root credentials are still valid. If so, skips SSO login.
+    If expired, runs SSO login first.
+
+    Args:
+        skip_vpc: If True, skip VPC discovery for faster rebuild
+
+    Returns:
+        True if rebuild succeeded
+    """
+    logger.info("=== AWS Config Rebuild ===")
+    logger.info("")
+
+    # Check if root credentials still valid
+    if check_credentials_valid("root"):
+        logger.info("Root credentials valid, skipping SSO login")
+    else:
+        logger.info("Root credentials expired, running SSO login...")
+        result = run_sso_login("root")
+        if not result.success:
+            logger.error("SSO login failed")
+            return False
+        logger.success("Root account authenticated")
+
+    logger.info("")
+
+    # Clear existing config for full replacement
+    clear_aws_config()
+
+    # Recreate root profile first
+    try:
+        root_id = get_root_account_id()
+        root_name = get_root_account_name()
+        ensure_profile(profile_name="root", account_id=root_id, account_name=root_name)
+        set_default_profile("root")
+    except ValueError as e:
+        logger.error(str(e))
+        return False
+
+    # Discover organization
+    try:
+        logger.info("Discovering organization hierarchy...")
+        tree = discover_accounts(profile_name="root", force_refresh=True)
+
+        if skip_vpc:
+            logger.info("Skipping VPC discovery (--skip-vpc)")
+            create_profiles_from_tree(tree)
+        else:
+            logger.info("")
+            enrich_tree_with_vpc(tree, profile_creator=ensure_profile)
+
+        save_config(tree)
+
+        total = count_accounts(tree)
+        logger.success(f"Rebuilt {total} accounts in .aws.yml")
+        return True
+
+    except Exception as e:
+        logger.error(f"Rebuild failed: {e}")
+        return False
+
+
 def select_account_interactive() -> str | None:
     """Show interactive account selection menu.
 
@@ -179,15 +243,16 @@ def select_account_interactive() -> str | None:
     table.add_column("Alias", style="cyan")
     table.add_column("Name", style="magenta")
     table.add_column("OU Path", style="dim")
-    table.add_column("VPC", style="green")
+    table.add_column("VPCs", style="green")
 
     for acc in accounts:
-        vpc = acc.get("vpc_id", "-") or "-"
+        vpcs = acc.get("vpcs", [])
+        vpc_count = str(len(vpcs)) if vpcs else "-"
         table.add_row(
             acc["alias"],
             acc.get("name", "-"),
             acc.get("ou_path", "-"),
-            vpc,
+            vpc_count,
         )
 
     console.print(table)
@@ -287,11 +352,20 @@ def main() -> int:
     parser.add_argument(
         "--skip-vpc",
         action="store_true",
-        help="Skip VPC discovery for faster setup",
+        help="Skip VPC discovery for faster setup/rebuild",
+    )
+    parser.add_argument(
+        "--rebuild",
+        action="store_true",
+        help="Rebuild .aws.yml and profiles (re-auth only if needed)",
     )
 
     args = parser.parse_args()
     setup_logging(args.verbose)
+
+    # Rebuild mode (smart re-auth)
+    if args.rebuild:
+        return 0 if rebuild_config(skip_vpc=args.skip_vpc) else 1
 
     # First-run detection
     if args.setup or not config_exists():

@@ -1,4 +1,4 @@
-"""AWS SSO configuration from environment variables and .aws.yml (v3.0 schema)."""
+"""AWS SSO configuration from environment variables and .aws.yml (v3.1 schema)."""
 
 import os
 from pathlib import Path
@@ -131,7 +131,7 @@ def get_sso_role_name() -> str:
 
 
 # =============================================================================
-# Tree Flattening (v3.0 schema)
+# Tree Flattening (v3.1 schema)
 # =============================================================================
 
 
@@ -164,7 +164,7 @@ def flatten_tree(node: dict[str, Any], path: str = "Root") -> dict[str, dict[str
 
 
 # =============================================================================
-# .aws.yml File Operations (v3.0 schema)
+# .aws.yml File Operations (v3.1 schema)
 # =============================================================================
 
 
@@ -197,9 +197,10 @@ def load_config() -> dict[str, Any]:
 
 
 def save_config(organization: dict[str, Any]) -> None:
-    """Save organization tree to .aws.yml (v3.0 schema).
+    """Save organization tree to .aws.yml (v3.1 schema).
 
     Only saves the tree - flat index is generated at load time.
+    v3.1 schema stores VPCs in a vpcs: array per account.
 
     Args:
         organization: Organization tree with accounts/children
@@ -208,7 +209,7 @@ def save_config(organization: dict[str, Any]) -> None:
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
     config = {
-        "schema_version": "3.0",
+        "schema_version": "3.1",
         "default_region": get_default_region(),
         "organization": organization,
     }

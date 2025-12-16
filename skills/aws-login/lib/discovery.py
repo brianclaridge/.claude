@@ -251,65 +251,63 @@ def _get_public_subnet_ids(ec2, vpc_id: str) -> set[str]:
 
 
 def discover_account_vpc(profile_name: str, region: str | None = None) -> dict[str, Any]:
-    """Discover VPC and subnets for an account.
+    """Discover ALL VPCs and subnets for an account.
 
     Args:
         profile_name: AWS CLI profile name
         region: Region to query (defaults to AWS_DEFAULT_REGION)
 
     Returns:
-        Dictionary with region, vpc_id, vpc_cidr, subnets
+        Dictionary with region and vpcs array (only VPCs with subnets)
     """
     region = region or get_default_region()
-    empty_result = {"region": region, "vpc_id": None, "vpc_cidr": None, "subnets": []}
+    empty_result = {"region": region, "vpcs": []}
 
     try:
         session = boto3.Session(profile_name=profile_name, region_name=region)
         ec2 = session.client("ec2")
 
-        # Find non-default VPC first (custom VPCs are preferred)
-        vpcs = ec2.describe_vpcs(
-            Filters=[{"Name": "isDefault", "Values": ["false"]}]
-        ).get("Vpcs", [])
+        # Get ALL VPCs in the account
+        all_vpcs = ec2.describe_vpcs().get("Vpcs", [])
 
-        # Fall back to default VPC
-        if not vpcs:
-            vpcs = ec2.describe_vpcs(
-                Filters=[{"Name": "isDefault", "Values": ["true"]}]
-            ).get("Vpcs", [])
-
-        # No VPCs at all
-        if not vpcs:
+        if not all_vpcs:
             return empty_result
 
-        vpc = vpcs[0]
-        vpc_id = vpc["VpcId"]
-        vpc_cidr = vpc.get("CidrBlock", "")
+        vpcs = []
+        for vpc in all_vpcs:
+            vpc_id = vpc["VpcId"]
+            is_default = vpc.get("IsDefault", False)
 
-        # Get subnets for this VPC
-        subnets_resp = ec2.describe_subnets(
-            Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
-        ).get("Subnets", [])
+            # Get subnets for this VPC
+            subnets_resp = ec2.describe_subnets(
+                Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
+            ).get("Subnets", [])
 
-        # Determine which subnets are public
-        public_subnet_ids = _get_public_subnet_ids(ec2, vpc_id)
+            # Skip VPCs with no subnets
+            if not subnets_resp:
+                continue
 
-        subnets = [
-            {
-                "id": s["SubnetId"],
-                "cidr": s["CidrBlock"],
-                "az": s["AvailabilityZone"],
-                "type": "public" if s["SubnetId"] in public_subnet_ids else "private",
-            }
-            for s in subnets_resp
-        ]
+            # Determine which subnets are public
+            public_subnet_ids = _get_public_subnet_ids(ec2, vpc_id)
 
-        return {
-            "region": region,
-            "vpc_id": vpc_id,
-            "vpc_cidr": vpc_cidr,
-            "subnets": subnets,
-        }
+            subnets = [
+                {
+                    "id": s["SubnetId"],
+                    "cidr": s["CidrBlock"],
+                    "az": s["AvailabilityZone"],
+                    "type": "public" if s["SubnetId"] in public_subnet_ids else "private",
+                }
+                for s in subnets_resp
+            ]
+
+            vpcs.append({
+                "id": vpc_id,
+                "cidr": vpc.get("CidrBlock", ""),
+                "is_default": is_default,
+                "subnets": subnets,
+            })
+
+        return {"region": region, "vpcs": vpcs}
 
     except ClientError as e:
         error_code = e.response.get("Error", {}).get("Code", "")
@@ -389,24 +387,22 @@ def enrich_tree_with_vpc(
             try:
                 vpc_info = future.result()
                 account["region"] = vpc_info["region"]
-                account["vpc_id"] = vpc_info["vpc_id"]
-                account["vpc_cidr"] = vpc_info["vpc_cidr"]
-                account["subnets"] = vpc_info.get("subnets", [])
+                account["vpcs"] = vpc_info.get("vpcs", [])
 
-                if vpc_info["vpc_id"]:
-                    subnet_count = len(vpc_info.get("subnets", []))
+                vpc_count = len(account["vpcs"])
+                subnet_count = sum(len(v.get("subnets", [])) for v in account["vpcs"])
+
+                if vpc_count:
                     logger.debug(
                         f"  [{completed}/{total}] {alias}: "
-                        f"{vpc_info['vpc_id']} ({subnet_count} subnets)"
+                        f"{vpc_count} VPC(s), {subnet_count} subnets"
                     )
                 else:
-                    logger.debug(f"  [{completed}/{total}] {alias}: no VPC")
+                    logger.debug(f"  [{completed}/{total}] {alias}: no VPCs with subnets")
 
             except Exception as e:
                 logger.warning(f"VPC discovery failed for {alias}: {e}")
                 account["region"] = get_default_region()
-                account["vpc_id"] = None
-                account["vpc_cidr"] = None
-                account["subnets"] = []
+                account["vpcs"] = []
 
     logger.info(f"VPC discovery complete for {total} accounts")
