@@ -169,6 +169,7 @@ Use AskUserQuestion to present commit mode options:
   "question": "How would you like to commit?",
   "header": "Mode",
   "options": [
+    {"label": "Commit & Plan (Recommended)", "description": "Commit to current branch, skip push, enter plan mode"},
     {"label": "Auto commit & push", "description": "Generate message, commit to current branch, push immediately"},
     {"label": "Interactive", "description": "Review changes, confirm branch, edit message"},
     {"label": "Cancel", "description": "Exit without committing"}
@@ -176,6 +177,21 @@ Use AskUserQuestion to present commit mode options:
   "multiSelect": false
 }
 ```
+
+#### Commit & Plan Mode
+
+When "Commit & Plan (Recommended)" selected:
+
+1. Run lock cleanup (Step 4.6)
+2. Run sensitive file detection - if found, fall back to Interactive mode
+3. Auto-generate commit message using conventional commit format
+4. Display summary: show `git diff --stat` and generated message
+5. Stage all changes: `git add -A`
+6. Commit with generated message
+7. Skip push confirmation entirely
+8. Invoke `EnterPlanMode` immediately
+
+This is the recommended workflow for iterative development - commit your work and immediately plan the next task.
 
 #### Auto Mode
 
