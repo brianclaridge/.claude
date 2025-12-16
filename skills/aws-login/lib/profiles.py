@@ -58,7 +58,7 @@ def ensure_profile(
     """Ensure AWS SSO profile exists.
 
     Args:
-        profile_name: Profile name (e.g., 'root', 'sandbox')
+        profile_name: Profile name (alias, e.g., 'root', 'sandbox')
         account_id: 12-digit AWS account ID
         account_name: Human-readable account name (for logging)
         region: AWS region (defaults to env var or us-east-1)
@@ -100,53 +100,28 @@ def ensure_profile(
     return True
 
 
-def set_default_profile(
-    account_id: str,
-    region: str | None = None,
-    sso_url: str | None = None,
-    sso_role: str | None = None,
-) -> None:
-    """Set the default AWS profile.
+def set_default_profile(alias: str) -> None:
+    """Set the default AWS profile to point to a named profile.
+
+    Copies all settings from the named profile (by alias) to the default section.
 
     Args:
-        account_id: 12-digit AWS account ID
-        region: AWS region
-        sso_url: SSO start URL
-        sso_role: SSO role name
+        alias: Profile alias to set as default (e.g., 'root', 'sandbox')
     """
     config = load_aws_config()
+    source_section = f"profile {alias}"
 
-    sso_url = sso_url or get_sso_start_url()
-    region = region or get_default_region()
-    sso_role = sso_role or get_sso_role_name()
+    if not config.has_section(source_section):
+        logger.warning(f"Profile not found: {alias}")
+        return
 
-    if not sso_url.startswith("http"):
-        sso_url = f"https://{sso_url}"
-
+    # Ensure default section exists
     if not config.has_section("default"):
         config.add_section("default")
 
-    config.set("default", "sso_start_url", sso_url)
-    config.set("default", "sso_region", region)
-    config.set("default", "sso_account_id", str(account_id))
-    config.set("default", "sso_role_name", sso_role)
-    config.set("default", "region", region)
+    # Copy all settings from named profile to default
+    for key, value in config.items(source_section):
+        config.set("default", key, value)
 
     save_aws_config(config)
-    logger.debug("Updated default profile")
-
-
-def ensure_profile_from_config(alias: str, account: dict[str, Any]) -> None:
-    """Create profile from account config dictionary.
-
-    Args:
-        alias: Account alias to use as profile name
-        account: Account data with account_number, account_name, etc.
-    """
-    ensure_profile(
-        profile_name=alias,
-        account_id=account["account_number"],
-        account_name=account.get("account_name"),
-        sso_role=account.get("sso_role_name"),
-    )
-    set_default_profile(account_id=account["account_number"])
+    logger.debug(f"Default profile set to: {alias}")

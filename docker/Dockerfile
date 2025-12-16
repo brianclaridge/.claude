@@ -381,6 +381,10 @@ ENV PATH="${PATH}:/usr/local/cargo/bin"
 ENV PATH="${PATH}:/opt/microsoft/powershell/7"
 ENV PATH="${PATH}:${VIRTUAL_ENV}/bin"
 
+# unset VIRTUAL_ENV to prevent uv warning about mismatched venv at runtime
+# (PATH and CLOUDSDK_PYTHON already expanded, no longer need the env var)
+ENV VIRTUAL_ENV=
+
 # copy assets
 COPY ./docker-entrypoint.sh /docker-entrypoint
 COPY ./docker-entrypoint.ps1 /docker-entrypoint.ps1

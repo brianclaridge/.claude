@@ -76,9 +76,10 @@ def run_sso_login(profile_name: str, no_browser: bool = True) -> SSOResult:
         sso_url = None
         device_code = None
 
+        url_shown = False
+
         for line in process.stdout:
             output_lines.append(line)
-            print(line, end="", flush=True)
 
             # Detect SSO URL
             url_match = SSO_URL_PATTERN.search(line)
@@ -89,6 +90,15 @@ def run_sso_login(profile_name: str, no_browser: bool = True) -> SSOResult:
             code_match = DEVICE_CODE_PATTERN.search(line)
             if code_match:
                 device_code = code_match.group(1)
+
+            # Show formatted table as soon as we have both URL and code
+            if sso_url and device_code and not url_shown:
+                url_shown = True
+                print(f"\n| Field | Value |")
+                print(f"|-------|-------|")
+                print(f"| URL   | {sso_url} |")
+                print(f"| Code  | {device_code} |")
+                print(f"\nOpen URL in browser and enter code to authenticate.\n", flush=True)
 
         process.wait()
 
@@ -126,7 +136,7 @@ def format_sso_prompt(result: SSOResult) -> str:
     ]
 
     if result.device_code:
-        lines.append(f"| Code | **{result.device_code}** |")
+        lines.append(f"| Code | {result.device_code} |")
 
     lines.extend([
         "",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AWS SSO authentication entry point.
+"""AWS SSO authentication entry point (v3.0 schema).
 
 Universal entry point for both Claude agent and human CLI usage.
 
@@ -26,11 +26,11 @@ from .config import (
     get_root_account_name,
     get_sso_start_url,
     list_accounts,
-    save_accounts,
+    save_config,
 )
-from .discovery import accounts_to_config, discover_accounts
+from .discovery import discover_accounts, enrich_tree_with_vpc
 from .profiles import ensure_profile, set_default_profile
-from .sso import check_credentials_valid, format_sso_prompt, run_sso_login
+from .sso import check_credentials_valid, run_sso_login
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -45,14 +45,23 @@ def setup_logging(verbose: bool = False) -> None:
     )
 
 
+def count_accounts(node: dict) -> int:
+    """Count total accounts in tree."""
+    total = len(node.get("accounts", {}))
+    for child in node.get("children", {}).values():
+        total += count_accounts(child)
+    return total
+
+
 def first_run_setup() -> bool:
     """Run first-time setup flow.
 
     1. Use env vars for root account
     2. Create root profile
     3. SSO login for root
-    4. Discover accounts from Organizations
-    5. Save .aws.yml
+    4. Discover accounts from Organizations (with OU hierarchy)
+    5. Enrich with VPC info
+    6. Save .aws.yml
 
     Returns:
         True if setup succeeded
@@ -78,14 +87,11 @@ def first_run_setup() -> bool:
         account_id=root_id,
         account_name=root_name,
     )
-    set_default_profile(account_id=root_id)
+    set_default_profile("root")
 
     # SSO login for root
     logger.info("Authenticating to root account...")
     result = run_sso_login("root")
-
-    if result.sso_url:
-        logger.info(format_sso_prompt(result))
 
     if not result.success:
         logger.error("SSO login failed")
@@ -94,13 +100,21 @@ def first_run_setup() -> bool:
     logger.success("Root account authenticated")
     logger.info("")
 
-    # Discover and save accounts
+    # Discover organization with OU hierarchy
     try:
-        logger.info("Discovering accounts from Organizations...")
-        accounts = discover_accounts(profile_name="root")
-        config_accounts = accounts_to_config(accounts)
-        save_accounts(config_accounts)
-        logger.success(f"Saved {len(config_accounts)} accounts to .aws.yml")
+        logger.info("Discovering organization hierarchy...")
+        tree = discover_accounts(profile_name="root", force_refresh=True)
+
+        # Enrich with VPC info (creates profiles for each account)
+        logger.info("")
+        logger.info("Discovering VPCs for accounts...")
+        enrich_tree_with_vpc(tree, profile_creator=ensure_profile)
+
+        # Save tree to .aws.yml (v3.0 schema)
+        save_config(tree)
+
+        total = count_accounts(tree)
+        logger.success(f"Saved {total} accounts to .aws.yml")
         return True
 
     except Exception as e:
@@ -137,17 +151,24 @@ def select_account_interactive() -> str | None:
     table = Table(title="AWS Accounts")
     table.add_column("Alias", style="cyan")
     table.add_column("Name", style="magenta")
-    table.add_column("ID", style="dim")
+    table.add_column("OU Path", style="dim")
+    table.add_column("VPC", style="green")
 
     for acc in accounts:
-        table.add_row(acc["alias"], acc.get("account_name", "-"), acc["account_number"])
+        vpc = acc.get("vpc_id", "-") or "-"
+        table.add_row(
+            acc["alias"],
+            acc.get("name", "-"),
+            acc.get("ou_path", "-"),
+            vpc,
+        )
 
     console.print(table)
     console.print()
 
     # Selection prompt
     choices = [
-        {"name": f"{acc['alias']} - {acc.get('account_name', acc['account_number'])}", "value": acc["alias"]}
+        {"name": f"{acc['alias']} - {acc.get('name', acc.get('id', ''))}", "value": acc["alias"]}
         for acc in accounts
     ]
 
@@ -176,19 +197,21 @@ def login_to_account(alias: str, force: bool = False) -> bool:
         logger.error(str(e))
         return False
 
-    account_name = account.get("account_name", alias)
-    account_id = account["account_number"]
+    account_name = account.get("name", alias)
+    account_id = account.get("id") or account.get("account_number", "")
 
     logger.info(f"Account: {account_name} ({account_id})")
+    if account.get("ou_path"):
+        logger.info(f"OU Path: {account['ou_path']}")
 
     # Ensure profile exists
     ensure_profile(
         profile_name=alias,
         account_id=account_id,
         account_name=account_name,
-        sso_role=account.get("sso_role_name"),
+        sso_role=account.get("sso_role"),
     )
-    set_default_profile(account_id=account_id)
+    set_default_profile(alias)
 
     # Check existing credentials
     if not force and check_credentials_valid(alias):
@@ -198,9 +221,6 @@ def login_to_account(alias: str, force: bool = False) -> bool:
     # Run SSO login
     logger.info("Initiating SSO login...")
     result = run_sso_login(alias)
-
-    if result.sso_url:
-        logger.info(format_sso_prompt(result))
 
     if result.success:
         logger.success("Login successful")

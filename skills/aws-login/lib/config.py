@@ -1,4 +1,4 @@
-"""AWS SSO configuration from environment variables and .aws.yml."""
+"""AWS SSO configuration from environment variables and .aws.yml (v3.0 schema)."""
 
 import os
 from pathlib import Path
@@ -22,6 +22,11 @@ def get_config_dir() -> Path:
 def get_config_path() -> Path:
     """Get path to .aws.yml configuration file."""
     return get_config_dir() / ".aws.yml"
+
+
+def get_cache_path() -> Path:
+    """Get path to accounts cache file."""
+    return get_config_dir() / ".data" / "accounts_cache.json"
 
 
 def config_exists() -> bool:
@@ -126,15 +131,48 @@ def get_sso_role_name() -> str:
 
 
 # =============================================================================
-# .aws.yml File Operations
+# Tree Flattening (v3.0 schema)
+# =============================================================================
+
+
+def flatten_tree(node: dict[str, Any], path: str = "Root") -> dict[str, dict[str, Any]]:
+    """Recursively flatten organization tree into alias → account dict.
+
+    Args:
+        node: Organization tree node with accounts/children
+        path: Current OU path (e.g., "Root/Workloads/Production")
+
+    Returns:
+        Flat dictionary of alias → account data with ou_path added
+    """
+    flat: dict[str, dict[str, Any]] = {}
+
+    # Add accounts at this level
+    for alias, account in node.get("accounts", {}).items():
+        flat[alias] = {
+            **account,
+            "ou_path": path,
+            "account_number": account.get("id", ""),  # Alias for compatibility
+        }
+
+    # Recurse into children
+    for child_name, child_node in node.get("children", {}).items():
+        child_path = f"{path}/{child_name}"
+        flat.update(flatten_tree(child_node, child_path))
+
+    return flat
+
+
+# =============================================================================
+# .aws.yml File Operations (v3.0 schema)
 # =============================================================================
 
 
 def load_config() -> dict[str, Any]:
-    """Load .aws.yml configuration.
+    """Load .aws.yml configuration with generated flat index.
 
     Returns:
-        Configuration dictionary
+        Configuration with tree and generated accounts index
 
     Raises:
         FileNotFoundError: If config doesn't exist
@@ -145,53 +183,51 @@ def load_config() -> dict[str, Any]:
         raise FileNotFoundError(f"Config not found: {config_path}")
 
     with open(config_path) as f:
-        return yaml.safe_load(f) or {}
+        raw = yaml.safe_load(f) or {}
+
+    tree = raw.get("organization", {})
+    flat = flatten_tree(tree)
+
+    return {
+        "schema_version": raw.get("schema_version", "3.0"),
+        "default_region": raw.get("default_region", get_default_region()),
+        "organization": tree,
+        "accounts": flat,  # Generated at load time
+    }
 
 
-def save_config(config: dict[str, Any]) -> None:
-    """Save configuration to .aws.yml.
+def save_config(organization: dict[str, Any]) -> None:
+    """Save organization tree to .aws.yml (v3.0 schema).
+
+    Only saves the tree - flat index is generated at load time.
 
     Args:
-        config: Configuration dictionary
+        organization: Organization tree with accounts/children
     """
     config_path = get_config_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
+
+    config = {
+        "schema_version": "3.0",
+        "default_region": get_default_region(),
+        "organization": organization,
+    }
 
     with open(config_path, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
 
 def load_accounts() -> dict[str, dict[str, Any]]:
-    """Load accounts from .aws.yml.
+    """Load flat accounts index from .aws.yml.
 
     Returns:
-        Dictionary of account_alias -> account_data
+        Dictionary of account_alias -> account_data (generated from tree)
     """
     if not config_exists():
         return {}
 
     config = load_config()
     return config.get("accounts", {})
-
-
-def save_accounts(accounts: dict[str, dict[str, Any]]) -> None:
-    """Save accounts to .aws.yml.
-
-    Creates new config if none exists.
-
-    Args:
-        accounts: Dictionary of account_alias -> account_data
-    """
-    if config_exists():
-        config = load_config()
-    else:
-        config = {
-            "schema_version": "1.0",
-            "default_region": get_default_region(),
-        }
-
-    config["accounts"] = accounts
-    save_config(config)
 
 
 def get_account(alias: str) -> dict[str, Any]:
@@ -201,7 +237,7 @@ def get_account(alias: str) -> dict[str, Any]:
         alias: Account alias (e.g., 'root', 'sandbox')
 
     Returns:
-        Account data dictionary
+        Account data dictionary with ou_path
 
     Raises:
         ValueError: If account not found
@@ -209,7 +245,7 @@ def get_account(alias: str) -> dict[str, Any]:
     accounts = load_accounts()
 
     if alias not in accounts:
-        available = ", ".join(accounts.keys()) if accounts else "none"
+        available = ", ".join(sorted(accounts.keys())) if accounts else "none"
         raise ValueError(f"Account '{alias}' not found. Available: {available}")
 
     return accounts[alias]
@@ -224,5 +260,5 @@ def list_accounts() -> list[dict[str, Any]]:
     accounts = load_accounts()
     return [
         {**data, "alias": alias}
-        for alias, data in accounts.items()
+        for alias, data in sorted(accounts.items())
     ]
