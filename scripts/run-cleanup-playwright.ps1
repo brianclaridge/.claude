@@ -21,7 +21,7 @@ foreach ($item in $paths) {
   Where-Object { ($now - $_.LastWriteTime).TotalMinutes -gt $maxAgeMinutes } |
   ForEach-Object {
     try {
-      Remove-Item -Recurse -Force $_.FullName -ErrorAction Stop
+      _rmrf $_.FullName
       $cleaned++
     }
     catch {

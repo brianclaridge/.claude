@@ -10,7 +10,6 @@
       "/root/.claude",
       "/tmp",
       "/workspace",
-      "{{ .Env.HOME_CLAUDE_ROOT_PATH }}",
       "{{ .Env.CLAUDE_WORKSPACE_PATH }}",
       "{{ .Env.CLAUDE_PATH }}",
       "{{ .Env.CLAUDE_DATA_PATH }}",
@@ -210,7 +209,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "npx -y ccstatusline@latest",
+    "command": "bunx -y ccstatusline@latest",
     "padding": 0
   }
 }

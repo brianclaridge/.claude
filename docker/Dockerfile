@@ -93,27 +93,39 @@ RUN \
   npm install -g npm@latest
 
 # install uv and python
-ENV PATH="/root/.local/bin:${PATH}"
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
+ENV PATH="${PATH}:/usr/local/bin"
 RUN \
-  curl -LsSf https://astral.sh/uv/install.sh | bash && \
-    ls -la /root/.local/bin/ && \
-    uv --version
+  curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="/usr/local/bin" bash && \
+  uv --version
 
-# use uv to install pythong
+# use uv to install python
 ARG pythonVersion
 ENV PYTHON_VERSION=${pythonVersion}
 RUN \
+  set -x && \
+  cd /tmp && \
   uv python install ${PYTHON_VERSION} && \
   python --version
 
 # create venv and install packages
 ENV VIRTUAL_ENV=/opt/venv
-RUN uv venv --python ${PYTHON_VERSION} ${VIRTUAL_ENV}
+RUN \
+  set -x && \
+  cd /tmp && \
+  uv venv --python ${PYTHON_VERSION} ${VIRTUAL_ENV}
+
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
-RUN uv pip install playwright numpy
+RUN  \
+  set -x && \
+  cd /tmp && \
+  uv pip install playwright numpy
 
 # install cli tools (goes to ~/.local/bin)
-RUN uv tool install black
+RUN \
+  set -x && \
+  cd /tmp && \
+  uv tool install black
 
 # install gomplate
 COPY --from=hairyhenderson/gomplate:stable /gomplate /bin/gomplate
@@ -210,6 +222,7 @@ RUN \
 
 # install go
 ARG goVersion
+ENV GOBIN=/usr/local/bin
 ENV GO_VERSION=${goVersion}
 ENV GO_TARBALL=go${GO_VERSION}.linux-amd64.tar.gz
 ENV GO_URL=https://go.dev/dl/${GO_TARBALL}
@@ -297,7 +310,8 @@ RUN \
 RUN \
   set -x && \
   cd /tmp && \
-  curl -fsSL https://get.pulumi.com | sh
+  curl -fsSL https://get.pulumi.com | sh && \
+    mv /root/.pulumi/bin/pulumi /usr/local/bin/
 
 # aws powershell tools
 RUN \
@@ -337,7 +351,7 @@ RUN \
   rm /tmp/glab.deb
 
 # install bunx
-RUN curl -fsSL https://bun.sh/install | bash
+RUN curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
 
 # install claude-code
 ARG claudeCodeDate
@@ -360,13 +374,10 @@ ENV PATH="${PATH}:/usr/local/bin"
 ENV PATH="${PATH}:/usr/local/sbin"
 ENV PATH="${PATH}:/usr/sbin"
 ENV PATH="${PATH}:/usr/bin"
-ENV PATH="${PATH}:/root/.local/bin"
 ENV PATH="${PATH}:/root/go/bin"
 ENV PATH="${PATH}:/usr/local/go/bin"
 ENV PATH="${PATH}:/usr/local/cargo/bin"
 ENV PATH="${PATH}:/opt/microsoft/powershell/7"
-ENV PATH="${PATH}:/root/.bun/bin"
-ENV PATH="${PATH}:/root/.pulumi/bin"
 ENV PATH="${PATH}:${VIRTUAL_ENV}/bin"
 
 # copy assets

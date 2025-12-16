@@ -21,7 +21,7 @@ tasks:
       - ensure-stack-network
     dir: "{{.TASKFILE_DIR}}/../.."
     cmds:
-      - cmd: pwsh -c "docker network create --subnet=10.233.0.0/24 claude-stack &> /dev/null || true"
+      - cmd: docker network create --subnet=10.233.0.0/24 claude-stack &> /dev/null || true
         platforms: [linux, darwin]
       - cmd: pwsh -c "docker network create --subnet=10.234.0.0/24 claude-stack *> \$null; exit 0;"
         platforms: [windows]

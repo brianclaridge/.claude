@@ -291,12 +291,12 @@ tasks:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location {{.TASKFILE_DIR}}/{{.CLAUDE_PROJECT_SLUG}}
+          Set-Location {{.CLAUDE_PROJECT_PATH}}
           claude update
           claude --continue 2> \$null || claude
         } else {
           docker compose build
-          docker compose run --remove-orphans claude run-claude
+          docker compose run --remove-orphans claude run-claude '{{.CLI_ARGS}}'
         }"
     interactive: true
     silent: true
@@ -304,7 +304,7 @@ tasks:
   claude:stream:
     desc: A no persistence query to claude
     aliases:
-      - stream-json
+      - stream
     deps:
       - ensure-env
       - ensure-stack-network
@@ -313,7 +313,7 @@ tasks:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location {{.TASKFILE_DIR}}
+          Set-Location {{.CLAUDE_PROJECT_PATH}}
           claude update
           echo {{.CLI_ARGS}} | claude --print --fork-session --input-format stream-json --output-format stream-json --verbose
         } else {
@@ -334,9 +334,9 @@ tasks:
       - >-
         pwsh -c "
         if (Test-Path /.dockerenv) {
-          Set-Location {{.TASKFILE_DIR}}/{{.CLAUDE_PROJECT_SLUG}}
+          Set-Location {{.CLAUDE_PROJECT_PATH}}
           claude update
-          claude --continue --debug 2>\$null || claude --debug
+          claude --continue --debug 2> \$null || claude --debug
         } else {
           docker compose build
           docker compose run --remove-orphans claude 'run-claude -debug_claude'

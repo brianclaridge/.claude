@@ -1,11 +1,11 @@
 {
   "mcpServers": {
     "context7": {
-      "command": "npx",
+      "command": "bunx",
       "args": ["-y", "@upstash/context7-mcp", "--api-key", "{{ .Env.CONTEXT7_API_KEY }}"]
     },
     "playwright": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
         "@playwright/mcp@latest",
         "--headless",

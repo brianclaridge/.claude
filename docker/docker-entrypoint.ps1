@@ -64,6 +64,12 @@ New-Module -ScriptBlock {
     }
   }
 
+  function _rmrf {
+    param([string]$Path)
+    $global:ProgressPreference = 'SilentlyContinue'
+    Remove-Item -Recurse -Force $Path -ErrorAction SilentlyContinue *> $null
+  }
+
   function _ok {
     param([string]$Message)
     Write-Host " " -NoNewline
@@ -180,22 +186,6 @@ oh-my-posh init pwsh --config "${env:POSH_THEMES_PATH}/${env:POSH_THEME}.omp.jso
 
 # --- Execute command if provided ---
 if ($args.Length -gt 0) {
-  $cmd = $args[0].ToLower()
-  $claudeAliases = @("cc", "claude", "vibe", "ai", "code")
-
-  if ($cmd -in $claudeAliases) {
-    $debug = $args -contains "--debug" -or $args -contains "-d"
-
-    if ($debug) {
-      & "${env:CLAUDE_SCRIPTS_PATH}/run-claude.ps1" -Debug
-    }
-    else {
-      & "${env:CLAUDE_SCRIPTS_PATH}/run-claude.ps1"
-    }
-
-    exit $LASTEXITCODE
-  }
-
   # Default: run arbitrary command
   _attn "Running: $($args -join ' ')"
   try {

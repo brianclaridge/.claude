@@ -7,60 +7,6 @@
         "type": "model",
         "color": "brightRed",
         "rawValue": true
-      },
-      {
-        "id": "2",
-        "type": "separator"
-      },
-      {
-        "id": "5",
-        "type": "context-percentage",
-        "color": "brightYellow"
-      },
-      {
-        "id": "28ac1ee9-4e79-4497-9de8-02b70799a074",
-        "type": "separator",
-        "character": "-"
-      },
-      {
-        "id": "574477df-899f-4e1e-9fe2-47bade5ce075",
-        "type": "context-percentage-usable"
-      },
-      {
-        "id": "0a3fdf4d-1c9d-4981-a919-d04dfd4d747e",
-        "type": "separator",
-        "character": "-"
-      },
-      {
-        "id": "186874e7-fd55-42a0-b2ae-8a021c0e61e0",
-        "type": "context-length"
-      },
-      {
-        "id": "6",
-        "type": "separator",
-        "character": "-"
-      },
-      {
-        "id": "d36b517f-cd9a-4278-9077-3a39dca55749",
-        "type": "tokens-input"
-      },
-      {
-        "id": "7bd71882-666b-4a08-b814-3d6305bf7822",
-        "type": "separator",
-        "character": "-"
-      },
-      {
-        "id": "7678206c-dc9e-4519-bcc3-19cc49cb0671",
-        "type": "tokens-output"
-      },
-      {
-        "id": "2d7fd33d-bf37-408b-93e5-a4a70fc5570f",
-        "type": "separator",
-        "character": "-"
-      },
-      {
-        "id": "46c1a3c2-c6c8-4bb5-b010-e9ab4f8795c4",
-        "type": "tokens-total"
       }
     ],
     [
@@ -98,6 +44,52 @@
       {
         "id": "ab538108-8a13-47da-a3cb-6c99f7cad4a6",
         "type": "session-clock"
+      }
+    ],
+    [
+      {
+        "id": "548cabac-2e9e-4b90-969e-153e90c7fad5",
+        "type": "tokens-input"
+      },
+      {
+        "id": "437ef989-fdae-4640-95d5-8c62f8277d62",
+        "type": "separator"
+      },
+      {
+        "id": "e6ad0cc0-0c01-49a6-9dac-592d34908d65",
+        "type": "tokens-output"
+      },
+      {
+        "id": "48b996dd-9928-4137-9f90-e4779df19aa9",
+        "type": "separator"
+      },
+      {
+        "id": "5bb759f4-95f0-411e-9acf-c26a89e541f6",
+        "type": "tokens-cached"
+      },
+      {
+        "id": "09ca9698-d34b-423a-8cbd-103a040e4839",
+        "type": "separator"
+      },
+      {
+        "id": "5781c181-46f9-4394-a555-d5fc7568d68b",
+        "type": "tokens-total"
+      },
+      {
+        "id": "b87089f4-7926-401f-846a-10c1ec7e29be",
+        "type": "separator"
+      },
+      {
+        "id": "4931307a-890d-4520-b528-ee74ad3ff125",
+        "type": "context-length"
+      },
+      {
+        "id": "9495c91f-3a67-4b7c-95f9-dd57b8d4f9dd",
+        "type": "separator"
+      },
+      {
+        "id": "3153c2ee-4101-475c-bb8e-22b4aba4a5ef",
+        "type": "context-percentage-usable"
       }
     ]
   ],

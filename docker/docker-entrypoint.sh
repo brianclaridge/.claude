@@ -19,9 +19,9 @@ _run() {
 }
 
 # --- Initialization ---
-_run "CA certificates updated" update-ca-certificates
+_run "ca certificates updated" update-ca-certificates
 
-_run "Directories created" mkdir -p \
+_run "directories created" mkdir -p \
   ${HOME}/.claude \
   ${HOME}/.ssh \
   ${HOME}/.aws \
@@ -35,7 +35,7 @@ _run "Directories created" mkdir -p \
   ${CLAUDE_DATA_PATH}/playwright/data \
   ${CLAUDE_LOGS_PATH}/playwright
 
-_run "SSH config permissions set" bash -c "touch /root/.ssh/config && chmod 0600 /root/.ssh/config"
+_run "ssh config permissions set" bash -c "touch /root/.ssh/config && chmod 0600 /root/.ssh/config"
 
 _run "htop defaults configured" bash -c 'echo "tree_view=1" > ${HOME}/.config/htop/htoprc'
 
@@ -51,7 +51,7 @@ case "${1}" in
     ;;
 
   *)
-    pwsh -Interactive -NoExit -NoLogo -NoProfile -File /docker-entrypoint.ps1 "$@"
+    pwsh -NoLogo -NoProfile -File /docker-entrypoint.ps1 "$@"
     exit $?
     ;;
 esac

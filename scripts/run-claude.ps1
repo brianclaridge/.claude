@@ -1,52 +1,53 @@
 #!/usr/bin/env pwsh
 
 param(
-  [switch]$Debug
+  [switch]$stream,
+  [switch]$debug_claude,
+  [Parameter(ValueFromRemainingArguments)]
+  [string[]]$remaining_args
 )
 
-Set-Location "${env:CLAUDE_WORKSPACE_PATH}"
-
-_run "Claude cache cleanup" {
-  Remove-Item -Recurse -Force "${HOME}/.claude/cache" -ErrorAction SilentlyContinue
-  Remove-Item -Recurse -Force "${HOME}/.claude/logs" -ErrorAction SilentlyContinue
+_run "claude data cleanup" {
+  _rmrf "${HOME}/.claude/debug"
+  _rmrf "${HOME}/.claude/cache"
+  _rmrf "${HOME}/.claude/logs"
 }
 
-_run "Claude npm update" {
+_run "claude npm update" {
   npm update -g @anthropic-ai/claude-code *> $null
   if ($LASTEXITCODE -ne 0) { throw "npm update failed" }
 }
 
-_run "Claude update" {
+_run "claude update" {
   claude update *> $null
   if ($LASTEXITCODE -ne 0) { throw "claude update failed" }
 }
 
-Write-Host ""
 _attn "Starting Claude in '${env:CLAUDE_WORKSPACE_PATH}'..."
-Write-Host ""
+Set-Location "${env:CLAUDE_WORKSPACE_PATH}"
 
-$debugLog = "/root/.claude/debug/latest"
-$logFile = "${env:CLAUDE_LOGS_PATH}/claude.log"
+if ($debug_claude) {
+  $debugLog = "/root/.claude/debug/latest"
+  $logFile = "${env:CLAUDE_LOGS_PATH}/claude.log"
+  & claude --continue --debug --verbose 2> $null || claude --debug
+}
+elseif ($stream) {
+  $msg = @{
+    type = "user"
+    message = @{
+      role = "user"
+      content = ($remaining_args -join ' ')
+    }
+    session_id = "default"
+    parent_tool_use_id = $null
+  } | ConvertTo-Json -Compress
 
-# Start background tail to stream debug log to mounted path
-$tailJob = Start-Job -ScriptBlock {
-  param($src, $dst)
-  # Wait for log file to exist
-  while (-Not (Test-Path $src)) { Start-Sleep -Milliseconds 500 }
-  & tail -f $src >> $dst
-} -ArgumentList $debugLog, $logFile
-
-if ($Debug) {
-  & claude --continue --debug
+  $msg | & claude --print --fork-session --input-format stream-json --output-format stream-json --verbose
 }
 else {
-  & claude --continue
+  & claude --continue 2> $null || claude
 }
 
 $exitCode = $LASTEXITCODE
-
-# Stop the tail job
-Stop-Job -Job $tailJob -ErrorAction SilentlyContinue
-Remove-Job -Job $tailJob -ErrorAction SilentlyContinue
 
 exit $exitCode
