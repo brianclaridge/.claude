@@ -50,20 +50,30 @@
       {
         "id": "5781c181-46f9-4394-a555-d5fc7568d68b",
         "type": "tokens-total"
+      }
+    ],
+    [
+      {
+        "id": "9891cd93-6f70-4544-b396-689be9de2cdf",
+        "type": "context-length",
+        "backgroundColor": "bgCyan"
       },
       {
-        "id": "4931307a-890d-4520-b528-ee74ad3ff125",
-        "type": "context-length"
+        "id": "e2f9a713-cfda-40ed-b961-0ac7f3833cf4",
+        "type": "context-percentage",
+        "backgroundColor": "bgBrightYellow"
       },
       {
-        "id": "3153c2ee-4101-475c-bb8e-22b4aba4a5ef",
-        "type": "context-percentage-usable"
+        "id": "5f452cb0-0d5c-40b5-8c49-000e0f5948bf",
+        "type": "context-percentage-usable",
+        "backgroundColor": "bgBrightRed"
       }
     ]
   ],
   "flexMode": "full-minus-40",
   "compactThreshold": 60,
   "colorLevel": 2,
+  "defaultPadding": " ",
   "inheritSeparatorColors": false,
   "globalBold": false,
   "powerline": {
@@ -80,8 +90,7 @@
     "endCaps": [
       ""
     ],
-    "autoAlign": false,
-    "theme": "nord"
-  },
-  "defaultPadding": " "
+    "theme": "nord",
+    "autoAlign": false
+  }
 }
