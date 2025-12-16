@@ -101,6 +101,25 @@ def check_and_update() -> UpdateResult:
         log.info("submodule_up_to_date", commit=local_commit[:8])
         return result
 
+    # CRITICAL: Check for unpushed local commits before resetting
+    # Count commits that exist locally but not on origin/main
+    success, ahead_count_str = run_git_command(
+        ["rev-list", "--count", "origin/main..HEAD"], submodule_path
+    )
+    commits_ahead = int(ahead_count_str) if success and ahead_count_str else 0
+
+    if commits_ahead > 0:
+        # LOCAL COMMITS EXIST - DO NOT RESET
+        # This would destroy unpushed work
+        log.warning(
+            "skipping_update_local_commits_exist",
+            commits_ahead=commits_ahead,
+            local=local_commit[:8],
+            remote=remote_commit[:8],
+        )
+        result.error = f"Skipped: {commits_ahead} unpushed local commit(s) would be lost"
+        return result
+
     # Get commits behind count
     success, count_str = run_git_command(
         ["rev-list", "--count", "HEAD..origin/main"], submodule_path
@@ -122,7 +141,7 @@ def check_and_update() -> UpdateResult:
         behind=result.commits_behind,
     )
 
-    # Reset to origin/main
+    # Safe to reset - no local commits to lose
     success, output = run_git_command(
         ["reset", "--hard", "origin/main"], submodule_path
     )
