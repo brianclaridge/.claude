@@ -1,6 +1,7 @@
 """AWS Organizations account discovery with OU hierarchy (v3.0 schema)."""
 
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable
@@ -217,46 +218,98 @@ def discover_accounts(
     return tree
 
 
+def _get_public_subnet_ids(ec2, vpc_id: str) -> set[str]:
+    """Identify public subnets by checking for IGW routes.
+
+    Args:
+        ec2: boto3 EC2 client
+        vpc_id: VPC ID to query
+
+    Returns:
+        Set of subnet IDs that have IGW routes (public)
+    """
+    public_ids: set[str] = set()
+
+    try:
+        route_tables = ec2.describe_route_tables(
+            Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
+        )["RouteTables"]
+
+        for rt in route_tables:
+            has_igw = any(
+                r.get("GatewayId", "").startswith("igw-")
+                for r in rt.get("Routes", [])
+            )
+            if has_igw:
+                for assoc in rt.get("Associations", []):
+                    if assoc.get("SubnetId"):
+                        public_ids.add(assoc["SubnetId"])
+    except Exception as e:
+        logger.debug(f"Failed to get route tables for {vpc_id}: {e}")
+
+    return public_ids
+
+
 def discover_account_vpc(profile_name: str, region: str | None = None) -> dict[str, Any]:
-    """Discover default VPC for an account.
+    """Discover VPC and subnets for an account.
 
     Args:
         profile_name: AWS CLI profile name
         region: Region to query (defaults to AWS_DEFAULT_REGION)
 
     Returns:
-        Dictionary with region, vpc_id, vpc_cidr
+        Dictionary with region, vpc_id, vpc_cidr, subnets
     """
     region = region or get_default_region()
+    empty_result = {"region": region, "vpc_id": None, "vpc_cidr": None, "subnets": []}
 
     try:
         session = boto3.Session(profile_name=profile_name, region_name=region)
         ec2 = session.client("ec2")
 
-        # Find default VPC
+        # Find non-default VPC first (custom VPCs are preferred)
         vpcs = ec2.describe_vpcs(
-            Filters=[{"Name": "is-default", "Values": ["true"]}]
+            Filters=[{"Name": "isDefault", "Values": ["false"]}]
         ).get("Vpcs", [])
 
-        if vpcs:
-            vpc = vpcs[0]
-            return {
-                "region": region,
-                "vpc_id": vpc["VpcId"],
-                "vpc_cidr": vpc.get("CidrBlock", ""),
-            }
+        # Fall back to default VPC
+        if not vpcs:
+            vpcs = ec2.describe_vpcs(
+                Filters=[{"Name": "isDefault", "Values": ["true"]}]
+            ).get("Vpcs", [])
 
-        # No default VPC, try to get any VPC
-        vpcs = ec2.describe_vpcs().get("Vpcs", [])
-        if vpcs:
-            vpc = vpcs[0]
-            return {
-                "region": region,
-                "vpc_id": vpc["VpcId"],
-                "vpc_cidr": vpc.get("CidrBlock", ""),
-            }
+        # No VPCs at all
+        if not vpcs:
+            return empty_result
 
-        return {"region": region, "vpc_id": None, "vpc_cidr": None}
+        vpc = vpcs[0]
+        vpc_id = vpc["VpcId"]
+        vpc_cidr = vpc.get("CidrBlock", "")
+
+        # Get subnets for this VPC
+        subnets_resp = ec2.describe_subnets(
+            Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
+        ).get("Subnets", [])
+
+        # Determine which subnets are public
+        public_subnet_ids = _get_public_subnet_ids(ec2, vpc_id)
+
+        subnets = [
+            {
+                "id": s["SubnetId"],
+                "cidr": s["CidrBlock"],
+                "az": s["AvailabilityZone"],
+                "type": "public" if s["SubnetId"] in public_subnet_ids else "private",
+            }
+            for s in subnets_resp
+        ]
+
+        return {
+            "region": region,
+            "vpc_id": vpc_id,
+            "vpc_cidr": vpc_cidr,
+            "subnets": subnets,
+        }
 
     except ClientError as e:
         error_code = e.response.get("Error", {}).get("Code", "")
@@ -264,39 +317,96 @@ def discover_account_vpc(profile_name: str, region: str | None = None) -> dict[s
             logger.debug(f"No access to {profile_name}: {error_code}")
         else:
             logger.warning(f"VPC discovery failed for {profile_name}: {e}")
-        return {"region": region, "vpc_id": None, "vpc_cidr": None}
+        return empty_result
     except Exception as e:
         logger.warning(f"VPC discovery error for {profile_name}: {e}")
-        return {"region": region, "vpc_id": None, "vpc_cidr": None}
+        return empty_result
+
+
+def collect_all_accounts(node: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    """Flatten tree to list of (alias, account_dict) tuples.
+
+    Args:
+        node: Organization tree node
+
+    Returns:
+        List of (alias, account) tuples from entire tree
+    """
+    accounts: list[tuple[str, dict[str, Any]]] = []
+
+    for alias, account in node.get("accounts", {}).items():
+        accounts.append((alias, account))
+
+    for child in node.get("children", {}).values():
+        accounts.extend(collect_all_accounts(child))
+
+    return accounts
 
 
 def enrich_tree_with_vpc(
     node: dict[str, Any],
     profile_creator: Callable | None = None,
+    max_workers: int = 8,
 ) -> None:
-    """Add VPC info to all accounts in tree (mutates in place).
+    """Add VPC info to all accounts in tree using parallel discovery.
 
     Args:
-        node: Organization tree node
+        node: Organization tree node (mutated in place)
         profile_creator: Function to create AWS CLI profiles
+        max_workers: Max parallel VPC discovery threads (default 8)
     """
-    # Enrich accounts at this level
-    for alias, account in node.get("accounts", {}).items():
-        if profile_creator:
+    # Collect all accounts from tree
+    accounts = collect_all_accounts(node)
+    total = len(accounts)
+
+    if not accounts:
+        return
+
+    # Create profiles first (sequential - fast, ~150ms each)
+    if profile_creator:
+        logger.info(f"Creating {total} AWS CLI profiles...")
+        for alias, account in accounts:
             profile_creator(
                 profile_name=alias,
                 account_id=account["id"],
                 account_name=account.get("name"),
             )
 
-        vpc_info = discover_account_vpc(alias)
-        account["region"] = vpc_info["region"]
-        account["vpc_id"] = vpc_info["vpc_id"]
-        account["vpc_cidr"] = vpc_info["vpc_cidr"]
+    # Parallel VPC discovery
+    logger.info(f"Discovering VPCs for {total} accounts (parallel, {max_workers} workers)...")
+    completed = 0
 
-        if vpc_info["vpc_id"]:
-            logger.debug(f"  {alias}: {vpc_info['vpc_id']} ({vpc_info['region']})")
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(discover_account_vpc, alias): (alias, account)
+            for alias, account in accounts
+        }
 
-    # Recurse into children
-    for child_node in node.get("children", {}).values():
-        enrich_tree_with_vpc(child_node, profile_creator)
+        for future in as_completed(futures):
+            alias, account = futures[future]
+            completed += 1
+
+            try:
+                vpc_info = future.result()
+                account["region"] = vpc_info["region"]
+                account["vpc_id"] = vpc_info["vpc_id"]
+                account["vpc_cidr"] = vpc_info["vpc_cidr"]
+                account["subnets"] = vpc_info.get("subnets", [])
+
+                if vpc_info["vpc_id"]:
+                    subnet_count = len(vpc_info.get("subnets", []))
+                    logger.debug(
+                        f"  [{completed}/{total}] {alias}: "
+                        f"{vpc_info['vpc_id']} ({subnet_count} subnets)"
+                    )
+                else:
+                    logger.debug(f"  [{completed}/{total}] {alias}: no VPC")
+
+            except Exception as e:
+                logger.warning(f"VPC discovery failed for {alias}: {e}")
+                account["region"] = get_default_region()
+                account["vpc_id"] = None
+                account["vpc_cidr"] = None
+                account["subnets"] = []
+
+    logger.info(f"VPC discovery complete for {total} accounts")

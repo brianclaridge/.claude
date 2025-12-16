@@ -15,13 +15,14 @@ from .config import (
     save_config,
 )
 from .discovery import (
+    collect_all_accounts,
     discover_accounts,
     discover_account_vpc,
     discover_organization,
     enrich_tree_with_vpc,
     generate_alias,
 )
-from .profiles import ensure_profile, set_default_profile
+from .profiles import clear_aws_config, ensure_profile, set_default_profile
 from .sso import check_credentials_valid, run_sso_login
 
 __all__ = [
@@ -39,12 +40,14 @@ __all__ = [
     "load_config",
     "save_config",
     # Discovery
+    "collect_all_accounts",
     "discover_accounts",
     "discover_account_vpc",
     "discover_organization",
     "enrich_tree_with_vpc",
     "generate_alias",
     # Profiles
+    "clear_aws_config",
     "ensure_profile",
     "set_default_profile",
     # SSO

@@ -47,6 +47,17 @@ def save_aws_config(config: ConfigParser) -> None:
         config.write(f)
 
 
+def clear_aws_config() -> None:
+    """Remove existing ~/.aws/config for full replacement.
+
+    Used during setup to ensure clean state without leftover profiles.
+    """
+    config_path = get_aws_config_path()
+    if config_path.exists():
+        config_path.unlink()
+        logger.debug("Cleared existing AWS config")
+
+
 def ensure_profile(
     profile_name: str,
     account_id: str,

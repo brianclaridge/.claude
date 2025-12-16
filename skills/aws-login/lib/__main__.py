@@ -28,8 +28,8 @@ from .config import (
     list_accounts,
     save_config,
 )
-from .discovery import discover_accounts, enrich_tree_with_vpc
-from .profiles import ensure_profile, set_default_profile
+from .discovery import collect_all_accounts, discover_accounts, enrich_tree_with_vpc
+from .profiles import clear_aws_config, ensure_profile, set_default_profile
 from .sso import check_credentials_valid, run_sso_login
 
 
@@ -53,21 +53,45 @@ def count_accounts(node: dict) -> int:
     return total
 
 
-def first_run_setup() -> bool:
+def create_profiles_from_tree(tree: dict) -> None:
+    """Create AWS CLI profiles for all accounts in tree (no VPC discovery).
+
+    Args:
+        tree: Organization tree with accounts
+    """
+    accounts = collect_all_accounts(tree)
+    logger.info(f"Creating {len(accounts)} AWS CLI profiles...")
+
+    for alias, account in accounts:
+        ensure_profile(
+            profile_name=alias,
+            account_id=account["id"],
+            account_name=account.get("name"),
+        )
+
+
+def first_run_setup(skip_vpc: bool = False) -> bool:
     """Run first-time setup flow.
 
-    1. Use env vars for root account
-    2. Create root profile
-    3. SSO login for root
-    4. Discover accounts from Organizations (with OU hierarchy)
-    5. Enrich with VPC info
-    6. Save .aws.yml
+    1. Clear existing ~/.aws/config
+    2. Use env vars for root account
+    3. Create root profile
+    4. SSO login for root
+    5. Discover accounts from Organizations (with OU hierarchy)
+    6. Enrich with VPC info (unless skip_vpc)
+    7. Save .aws.yml
+
+    Args:
+        skip_vpc: If True, skip VPC discovery for faster setup
 
     Returns:
         True if setup succeeded
     """
     logger.info("=== AWS SSO First-Run Setup ===")
     logger.info("")
+
+    # Clear existing config for full replacement
+    clear_aws_config()
 
     try:
         sso_url = get_sso_start_url()
@@ -105,10 +129,13 @@ def first_run_setup() -> bool:
         logger.info("Discovering organization hierarchy...")
         tree = discover_accounts(profile_name="root", force_refresh=True)
 
-        # Enrich with VPC info (creates profiles for each account)
-        logger.info("")
-        logger.info("Discovering VPCs for accounts...")
-        enrich_tree_with_vpc(tree, profile_creator=ensure_profile)
+        if skip_vpc:
+            logger.info("Skipping VPC discovery (--skip-vpc)")
+            create_profiles_from_tree(tree)
+        else:
+            # Enrich with VPC info (creates profiles for each account)
+            logger.info("")
+            enrich_tree_with_vpc(tree, profile_creator=ensure_profile)
 
         # Save tree to .aws.yml (v3.0 schema)
         save_config(tree)
@@ -257,6 +284,11 @@ def main() -> int:
         action="store_true",
         help="Run first-time setup (discover accounts)",
     )
+    parser.add_argument(
+        "--skip-vpc",
+        action="store_true",
+        help="Skip VPC discovery for faster setup",
+    )
 
     args = parser.parse_args()
     setup_logging(args.verbose)
@@ -265,7 +297,7 @@ def main() -> int:
     if args.setup or not config_exists():
         if not config_exists():
             logger.info("No configuration found. Starting first-run setup...")
-        return 0 if first_run_setup() else 1
+        return 0 if first_run_setup(skip_vpc=args.skip_vpc) else 1
 
     # Account selection
     account = args.account
