@@ -40,6 +40,7 @@ RUN \
     ffmpeg \
     file \
     fonts-liberation \
+    fonts-powerline \
     git \
     gnupg \
     gnupg2 \

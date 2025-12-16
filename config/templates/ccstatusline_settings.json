@@ -15,16 +15,8 @@
         "type": "git-branch"
       },
       {
-        "id": "301f46af-dfd3-4e15-878b-2a3a3c4637a8",
-        "type": "separator"
-      },
-      {
         "id": "eba2d9b0-d614-4c82-bca9-ef3f958b6d7e",
         "type": "git-changes"
-      },
-      {
-        "id": "b7f16753-acfe-48db-85d1-a1a7f3a58f10",
-        "type": "separator"
       },
       {
         "id": "f48d6452-c7cc-4f04-b899-ca5459cc2663",
@@ -38,10 +30,6 @@
         "type": "claude-session-id"
       },
       {
-        "id": "be5c30c1-7784-46f2-8e1a-b06ef923e4d9",
-        "type": "separator"
-      },
-      {
         "id": "ab538108-8a13-47da-a3cb-6c99f7cad4a6",
         "type": "session-clock"
       }
@@ -52,40 +40,20 @@
         "type": "tokens-input"
       },
       {
-        "id": "437ef989-fdae-4640-95d5-8c62f8277d62",
-        "type": "separator"
-      },
-      {
         "id": "e6ad0cc0-0c01-49a6-9dac-592d34908d65",
         "type": "tokens-output"
-      },
-      {
-        "id": "48b996dd-9928-4137-9f90-e4779df19aa9",
-        "type": "separator"
       },
       {
         "id": "5bb759f4-95f0-411e-9acf-c26a89e541f6",
         "type": "tokens-cached"
       },
       {
-        "id": "09ca9698-d34b-423a-8cbd-103a040e4839",
-        "type": "separator"
-      },
-      {
         "id": "5781c181-46f9-4394-a555-d5fc7568d68b",
         "type": "tokens-total"
       },
       {
-        "id": "b87089f4-7926-401f-846a-10c1ec7e29be",
-        "type": "separator"
-      },
-      {
         "id": "4931307a-890d-4520-b528-ee74ad3ff125",
         "type": "context-length"
-      },
-      {
-        "id": "9495c91f-3a67-4b7c-95f9-dd57b8d4f9dd",
-        "type": "separator"
       },
       {
         "id": "3153c2ee-4101-475c-bb8e-22b4aba4a5ef",
@@ -99,15 +67,21 @@
   "inheritSeparatorColors": false,
   "globalBold": false,
   "powerline": {
-    "enabled": false,
+    "enabled": true,
     "separators": [
       ""
     ],
     "separatorInvertBackground": [
       false
     ],
-    "startCaps": [],
-    "endCaps": [],
-    "autoAlign": false
-  }
+    "startCaps": [
+      ""
+    ],
+    "endCaps": [
+      ""
+    ],
+    "autoAlign": false,
+    "theme": "nord"
+  },
+  "defaultPadding": " "
 }
