@@ -264,6 +264,18 @@ tasks:
       - docker compose run --remove-orphans claude shell
     silent: true
 
+  claude:test:
+    desc: Runs the claude container in test mode
+    aliases:
+      - test
+    deps:
+      - ensure-env
+      - ensure-stack-network
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - docker compose run --remove-orphans claude 'echo "test"'
+    silent: true
+
   claude:claude:
     desc: Runs claude in a container
     aliases:

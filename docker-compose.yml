@@ -51,8 +51,8 @@ services:
       LOG_PATH: ${LOG_PATH}
       DATA_PATH: ${DATA_PATH}
       HOME_CLAUDE_ROOT_PATH: ${HOME_CLAUDE_ROOT_PATH}
-      PROJECTS_YML_PATH: ${PROJECTS_YML_PATH}
-      CONFIG_YML_PATH: ${CONFIG_YML_PATH}
+      PROJECTS_YML_PATH: ${HOME_CLAUDE_ROOT_PATH}/projects.yml
+      CONFIG_YML_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config.yml
       DOCKER_SOCK_PATH: ${DOCKER_SOCK_PATH}
       # misc vars
       AWS_CONFIG_FILE: /root/.aws/config
