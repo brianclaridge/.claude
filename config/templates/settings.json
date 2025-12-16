@@ -1,10 +1,20 @@
 {
-  "forceLoginMethod": "claudeai",
-  "outputStyle": "Default",
-  "alwaysThinkingEnabled": true,
   "includeCoAuthoredBy": false,
-  "enableAllProjectMcpServers": true,
   "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Write",
+      "Skill(git-manager)",
+      "Skill(project-metadata-builder)",
+      "Skill(aws-login)",
+      "Skill(gcp-login)",
+      "mcp__context7__*",
+      "mcp__playwright__*"
+    ],
+    "deny": [],
+    "ask": ["Bash(rm:*)"],
+    "defaultMode": "plan",
     "additionalDirectories": [
       "/root",
       "/root/.claude",
@@ -19,13 +29,10 @@
       "{{ .Env.CLAUDE_PLANS_PATH }}",
       "{{ .Env.CLAUDE_SCRIPTS_PATH }}",
       "{{ .Env.CLAUDE_SKILLS_PATH }}"
-    ],
-    "defaultMode": "plan"
+    ]
   },
-  "enabledMcpjsonServers": [
-    "context7",
-    "playwright"
-  ],
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["context7", "playwright"],
   "hooks": {
     "SessionStart": [
       {
@@ -211,5 +218,7 @@
     "type": "command",
     "command": "bunx -y ccstatusline@latest",
     "padding": 0
-  }
+  },
+  "forceLoginMethod": "claudeai",
+  "outputStyle": "Default"
 }

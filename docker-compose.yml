@@ -54,7 +54,7 @@ services:
       PROJECTS_YML_PATH: ${HOME_CLAUDE_ROOT_PATH}/projects.yml
       CONFIG_YML_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config.yml
       DOCKER_SOCK_PATH: ${DOCKER_SOCK_PATH}
-      # misc vars
+      COLORTERM: truecolor
       AWS_CONFIG_FILE: /root/.aws/config
       OLLAMA_API_BASE: http://ollama:11434
       OLLAMA_API_KEY: ollama

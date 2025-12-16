@@ -11,18 +11,8 @@
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
   },
   "permissions": {
-    "allow": [
-      "Bash",
-      "Read",
-      "Write",
-      "Skill(git-manager)",
-      "Skill(project-metadata-builder)",
-      "Skill(aws-login)",
-      "Skill(gcp-login)",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
-    ],
+    "allow": [],
     "deny": [],
-    "ask": ["Bash(rm:*)"]
+    "ask": []
   }
 }
