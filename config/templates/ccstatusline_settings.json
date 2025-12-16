@@ -3,6 +3,12 @@
   "lines": [
     [
       {
+        "id": "ee940828-9aa6-4f92-9df4-b24f19fb6c43",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightYellow",
+        "customText": "model:"
+      },
+      {
         "id": "1",
         "type": "model",
         "color": "brightRed",
@@ -10,6 +16,164 @@
       }
     ],
     [
+      {
+        "id": "00017fb2-a8c9-4936-84c2-dc8ea572f3de",
+        "type": "custom-text",
+        "customText": "session:"
+      },
+      {
+        "id": "ad1fb1bf-158a-45c3-a1de-e078c987e98d",
+        "type": "claude-session-id",
+        "backgroundColor": "bgBrightMagenta",
+        "rawValue": true
+      },
+      {
+        "id": "ab538108-8a13-47da-a3cb-6c99f7cad4a6",
+        "type": "custom-text",
+        "rawValue": true,
+        "customText": "length:"
+      },
+      {
+        "id": "5baac3f6-661e-49de-a708-9e6ea024dc5a",
+        "type": "session-clock",
+        "backgroundColor": "bgCyan",
+        "rawValue": true
+      }
+    ],
+    [
+      {
+        "id": "bd860424-116e-48be-939d-9c0d2b9ce6a4",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightMagenta",
+        "customText": "tokens:"
+      },
+      {
+        "id": "8481163f-7c58-4e42-8548-70a8c09f31e2",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightMagenta",
+        "customText": "in:"
+      },
+      {
+        "id": "548cabac-2e9e-4b90-969e-153e90c7fad5",
+        "type": "tokens-input",
+        "rawValue": true
+      },
+      {
+        "id": "ca8493bd-f786-4ba9-916b-bd6aaf9e1188",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightBlack",
+        "customText": "out:"
+      },
+      {
+        "id": "e6ad0cc0-0c01-49a6-9dac-592d34908d65",
+        "type": "tokens-output",
+        "rawValue": true
+      },
+      {
+        "id": "2624dc08-65d6-4707-9860-1c5486ef2e2e",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightYellow",
+        "customText": "cached:"
+      },
+      {
+        "id": "5bb759f4-95f0-411e-9acf-c26a89e541f6",
+        "type": "tokens-cached",
+        "rawValue": true
+      },
+      {
+        "id": "0e75c840-b2f6-421c-8a29-e8e1a1d92d6a",
+        "type": "custom-text",
+        "backgroundColor": "bgRed",
+        "customText": "total:"
+      },
+      {
+        "id": "5781c181-46f9-4394-a555-d5fc7568d68b",
+        "type": "tokens-total",
+        "rawValue": true
+      }
+    ],
+    [
+      {
+        "id": "d9fd6871-20fe-4c98-bc6e-7cfb5e00685d",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightRed",
+        "customText": "ctx:"
+      },
+      {
+        "id": "9891cd93-6f70-4544-b396-689be9de2cdf",
+        "type": "context-length",
+        "backgroundColor": "bgCyan",
+        "rawValue": true
+      },
+      {
+        "id": "e2f9a713-cfda-40ed-b961-0ac7f3833cf4",
+        "type": "context-percentage",
+        "backgroundColor": "bgBrightYellow",
+        "rawValue": true
+      },
+      {
+        "id": "9ea4cd34-3c14-4fc3-9f8b-270a1bee5c75",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightRed",
+        "customText": "useable:"
+      },
+      {
+        "id": "5f452cb0-0d5c-40b5-8c49-000e0f5948bf",
+        "type": "context-percentage-usable",
+        "backgroundColor": "bgBrightRed",
+        "rawValue": true
+      }
+    ],
+    [
+      {
+        "id": "cc6ed5bf-2bbe-4591-a355-0dfe049d2aa3",
+        "type": "custom-text",
+        "backgroundColor": "bgCyan",
+        "customText": "host:"
+      },
+      {
+        "id": "0c32395f-a12e-43ca-a5f4-03654fbc22a7",
+        "type": "custom-command",
+        "backgroundColor": "bgBrightCyan",
+        "commandPath": "echo \"${HOSTNAME}\""
+      }
+    ],
+    [
+      {
+        "id": "e6405f92-e72f-4bdb-9356-986e1f0c6fad",
+        "type": "custom-text",
+        "backgroundColor": "bgBlue",
+        "customText": "slug:"
+      },
+      {
+        "id": "277d8069-826e-4f47-90e4-4b2d39305327",
+        "type": "custom-command",
+        "backgroundColor": "bgWhite",
+        "rawValue": true,
+        "commandPath": "echo \"${CLAUDE_PROJECT_SLUG}\""
+      }
+    ],
+    [
+      {
+        "id": "269f28c5-ddb1-4e53-8fbd-e75920112ffd",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightYellow",
+        "customText": "cwd:"
+      },
+      {
+        "id": "c184ddbf-b76a-475c-8c3e-1b1bdbe4f546",
+        "type": "current-working-dir",
+        "backgroundColor": "bgBrightCyan",
+        "rawValue": true
+      }
+    ],
+    [
+      {
+        "id": "015fd4db-394d-4a8d-a9e8-c80a74f63dd1",
+        "type": "custom-text",
+        "backgroundColor": "bgBrightCyan",
+        "customText": "git:"
+      },
       {
         "id": "a5ddd126-7c93-47e3-aac3-50c8e63ea91f",
         "type": "git-branch"
@@ -20,62 +184,17 @@
       },
       {
         "id": "f48d6452-c7cc-4f04-b899-ca5459cc2663",
-        "type": "current-working-dir",
+        "type": "git-worktree",
         "color": "magenta"
-      }
-    ],
-    [
-      {
-        "id": "00017fb2-a8c9-4936-84c2-dc8ea572f3de",
-        "type": "claude-session-id"
-      },
-      {
-        "id": "ab538108-8a13-47da-a3cb-6c99f7cad4a6",
-        "type": "session-clock"
-      }
-    ],
-    [
-      {
-        "id": "548cabac-2e9e-4b90-969e-153e90c7fad5",
-        "type": "tokens-input"
-      },
-      {
-        "id": "e6ad0cc0-0c01-49a6-9dac-592d34908d65",
-        "type": "tokens-output"
-      },
-      {
-        "id": "5bb759f4-95f0-411e-9acf-c26a89e541f6",
-        "type": "tokens-cached"
-      },
-      {
-        "id": "5781c181-46f9-4394-a555-d5fc7568d68b",
-        "type": "tokens-total"
-      }
-    ],
-    [
-      {
-        "id": "9891cd93-6f70-4544-b396-689be9de2cdf",
-        "type": "context-length",
-        "backgroundColor": "bgCyan"
-      },
-      {
-        "id": "e2f9a713-cfda-40ed-b961-0ac7f3833cf4",
-        "type": "context-percentage",
-        "backgroundColor": "bgBrightYellow"
-      },
-      {
-        "id": "5f452cb0-0d5c-40b5-8c49-000e0f5948bf",
-        "type": "context-percentage-usable",
-        "backgroundColor": "bgBrightRed"
       }
     ]
   ],
   "flexMode": "full-minus-40",
   "compactThreshold": 60,
-  "colorLevel": 2,
+  "colorLevel": 3,
   "defaultPadding": " ",
   "inheritSeparatorColors": false,
-  "globalBold": false,
+  "globalBold": true,
   "powerline": {
     "enabled": true,
     "separators": [
@@ -85,7 +204,7 @@
       false
     ],
     "startCaps": [
-      ""
+      ""
     ],
     "endCaps": [
       ""
