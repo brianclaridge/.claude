@@ -22,6 +22,12 @@
 .PARAMETER Setup
     Force first-run setup (rediscover accounts).
 
+.PARAMETER Rebuild
+    Rebuild .aws.yml and profiles (re-auth only if needed).
+
+.PARAMETER SkipVpc
+    Skip VPC discovery for faster setup/rebuild.
+
 .EXAMPLE
     ./aws-auth.ps1
     # Interactive account selection
@@ -33,6 +39,14 @@
 .EXAMPLE
     ./aws-auth.ps1 sandbox -Force
     # Force re-login to sandbox
+
+.EXAMPLE
+    ./aws-auth.ps1 -Rebuild
+    # Rebuild config (skip SSO if credentials valid)
+
+.EXAMPLE
+    ./aws-auth.ps1 -Rebuild -SkipVpc
+    # Fast rebuild without VPC discovery
 #>
 
 param(
@@ -41,7 +55,11 @@ param(
 
     [switch]$Force,
 
-    [switch]$Setup
+    [switch]$Setup,
+
+    [switch]$Rebuild,
+
+    [switch]$SkipVpc
 )
 
 $ErrorActionPreference = "Stop"
@@ -66,6 +84,14 @@ if ($Force) {
 
 if ($Setup) {
     $args += "--setup"
+}
+
+if ($Rebuild) {
+    $args += "--rebuild"
+}
+
+if ($SkipVpc) {
+    $args += "--skip-vpc"
 }
 
 # Run via uv
