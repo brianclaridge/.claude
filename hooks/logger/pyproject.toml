@@ -3,7 +3,7 @@ name = "logger-hook"
 version = "0.1.0"
 description = "Log Claude Code hook events to structured JSON files"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["pyyaml>=6.0"]
 
 [build-system]
 requires = ["hatchling"]

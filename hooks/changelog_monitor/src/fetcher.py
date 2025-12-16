@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import json
+import sys
 import time
 import urllib.request
 from pathlib import Path
 
 import structlog
+
+# Add shared module to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+from shared.config import get_hook_config
 
 log = structlog.get_logger()
 
@@ -23,15 +28,9 @@ CHANGELOG_URL = "https://raw.githubusercontent.com/anthropics/claude-code/main/C
 def get_cache_ttl() -> int:
     """Get cache TTL from config or use default."""
     try:
-        import yaml
-
-        config_path = Path("/workspace/.claude/config.yml")
-        if config_path.exists():
-            with config_path.open() as f:
-                config = yaml.safe_load(f)
-            if config and "changelog_monitor" in config:
-                hours = config["changelog_monitor"].get("cache_ttl_hours", 24)
-                return hours * 3600
+        hook_config = get_hook_config("changelog_monitor")
+        hours = hook_config.get("cache_ttl_hours", 24)
+        return hours * 3600
     except Exception:
         pass
     return DEFAULT_TTL

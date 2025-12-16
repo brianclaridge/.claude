@@ -49,7 +49,7 @@ def read_rule(file_path: Path) -> Optional[Dict[str, str]]:
 
 def filter_rules_for_reinforcement(
     rules: List[Dict[str, str]],
-    config: Dict,
+    hook_config: Dict,
     event_name: str
 ) -> List[Dict[str, str]]:
     """
@@ -57,15 +57,19 @@ def filter_rules_for_reinforcement(
 
     For SessionStart: return all rules
     For UserPromptSubmit: return only rules with reinforcement enabled
+
+    Args:
+        rules: List of rule dictionaries
+        hook_config: The rules_loader hook config (from hooks.rules_loader)
+        event_name: The hook event name
     """
     if event_name == "SessionStart":
         # Always load all rules on session start
         return rules
 
     # For UserPromptSubmit, check per-rule reinforcement settings
-    rules_config = config.get("rules_loader", {})
-    global_reinforce = rules_config.get("reinforcement_enabled", False)
-    per_rule_config = rules_config.get("rules", {})
+    global_reinforce = hook_config.get("reinforcement_enabled", False)
+    per_rule_config = hook_config.get("rules", {})
 
     filtered = []
     for rule in rules:

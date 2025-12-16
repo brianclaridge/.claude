@@ -57,6 +57,7 @@ RUN \
     openssh-client \
     postgresql-client \
     procps \
+    python-is-python3 \
     software-properties-common \
     sudo \
     tar \
@@ -64,6 +65,7 @@ RUN \
     unzip \
     vim \
     wget \
+    which \
     yq
 
 # install task
@@ -91,11 +93,18 @@ RUN \
   npm install -g npm@latest
 
 # install uv and python
+ENV PATH="/root/.local/bin:${PATH}"
+RUN \
+  curl -LsSf https://astral.sh/uv/install.sh | bash && \
+    ls -la /root/.local/bin/ && \
+    uv --version
+
+# use uv to install pythong
 ARG pythonVersion
 ENV PYTHON_VERSION=${pythonVersion}
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:${PATH}"
-RUN uv python install ${PYTHON_VERSION}
+RUN \
+  uv python install ${PYTHON_VERSION} && \
+  python --version
 
 # create venv and install packages
 ENV VIRTUAL_ENV=/opt/venv

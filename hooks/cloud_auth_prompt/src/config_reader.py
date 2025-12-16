@@ -1,19 +1,12 @@
 """Read cloud provider configuration from config.yml."""
 
+import sys
 from pathlib import Path
 from typing import Any
 
-import yaml
-
-
-def get_config_path() -> Path:
-    """Get path to config.yml.
-
-    Returns:
-        Path to .claude/config.yml
-    """
-    # Hook runs from .claude directory
-    return Path(__file__).parent.parent.parent.parent / "config.yml"
+# Add shared module to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+from shared.config import get_global_config
 
 
 def load_cloud_providers() -> dict[str, Any]:
@@ -22,14 +15,7 @@ def load_cloud_providers() -> dict[str, Any]:
     Returns:
         Dictionary of provider configurations, empty dict if not found
     """
-    config_path = get_config_path()
-
-    if not config_path.exists():
-        return {}
-
-    with open(config_path) as f:
-        config = yaml.safe_load(f) or {}
-
+    config = get_global_config()
     return config.get("cloud_providers", {})
 
 

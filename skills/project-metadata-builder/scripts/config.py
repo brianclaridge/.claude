@@ -2,11 +2,15 @@
 Configuration loading and defaults for project-metadata-builder.
 """
 import os
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import yaml
 from loguru import logger
+
+# Add shared module to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+from shared.config import get_global_config
 
 
 @dataclass
@@ -18,7 +22,7 @@ class ProjectMetadataConfig:
     periodic_refresh_hours: int = 24
     stale_project_days: int = 30
     activity_threshold_commits: int = 5
-    projects_file: str = "~/.claude/projects.yml"
+    projects_file: str = "${PROJECTS_YML_PATH}"
     log_level: str = "INFO"
 
 
@@ -29,36 +33,28 @@ class Config:
     project_metadata: ProjectMetadataConfig = field(default_factory=ProjectMetadataConfig)
 
 
-def get_config_path() -> Path:
-    """Get the config file path from .claude project root."""
-    return Path("/workspace/.claude/config.yml")
-
-
 def load_config() -> Config:
-    """Load configuration from /workspace/.claude/config.yml."""
-    config_path = get_config_path()
-
-    if not config_path.exists():
-        logger.warning(f"Config file not found at {config_path}, using defaults")
-        return Config()
-
+    """Load configuration from config.yml via shared module."""
     try:
-        with open(config_path) as f:
-            data = yaml.safe_load(f) or {}
+        global_config = get_global_config()
+        pm_data = global_config.get("project_metadata", {})
 
-        pm_data = data.get("project_metadata", {})
         pm_config = ProjectMetadataConfig(
             session_history_limit=pm_data.get("session_history_limit", 10),
             auto_update_on_session=pm_data.get("auto_update_on_session", True),
             periodic_refresh_hours=pm_data.get("periodic_refresh_hours", 24),
             stale_project_days=pm_data.get("stale_project_days", 30),
             activity_threshold_commits=pm_data.get("activity_threshold_commits", 5),
-            projects_file=pm_data.get("projects_file", "~/.claude/projects.yml"),
+            projects_file=pm_data.get("projects_file", "${PROJECTS_YML_PATH}"),
             log_level=pm_data.get("log_level", "INFO"),
         )
 
-        logger.info(f"Loaded config from {config_path}")
+        logger.info("Loaded config via shared module")
         return Config(project_metadata=pm_config)
+
+    except EnvironmentError as e:
+        logger.error(f"Config error: {e}, using defaults")
+        return Config()
 
     except Exception as e:
         logger.error(f"Error loading config: {e}, using defaults")

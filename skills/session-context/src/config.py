@@ -1,10 +1,14 @@
 """Configuration loading for session-context skill."""
 
+import sys
 from pathlib import Path
 from typing import Any
 
 import structlog
-import yaml
+
+# Add shared module to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+from shared.config import get_hook_config
 
 log = structlog.get_logger()
 
@@ -26,29 +30,20 @@ DEFAULT_CONFIG = {
     }
 }
 
-CONFIG_PATHS = [
-    Path("/workspace/.claude/config.yml"),
-    Path.home() / ".claude" / "config.yml",
-]
-
 
 def load_config() -> dict[str, Any]:
-    """Load session_context config from config.yml, with defaults."""
-    for config_path in CONFIG_PATHS:
-        if config_path.exists():
-            try:
-                with open(config_path) as f:
-                    full_config = yaml.safe_load(f) or {}
-                    session_config = full_config.get("session_context", {})
-                    merged = _deep_merge(DEFAULT_CONFIG["session_context"], session_config)
-                    log.debug("config_loaded", path=str(config_path))
-                    return merged
-            except Exception as e:
-                log.warning("config_load_failed", path=str(config_path), error=str(e))
-                continue
-
-    log.debug("using_default_config")
-    return DEFAULT_CONFIG["session_context"]
+    """Load session_context config from config.yml via shared module."""
+    try:
+        hook_config = get_hook_config("session_context")
+        merged = _deep_merge(DEFAULT_CONFIG["session_context"], hook_config)
+        log.debug("config_loaded_via_shared_module")
+        return merged
+    except EnvironmentError:
+        log.warning("CONFIG_YML_PATH not set, using defaults")
+        return DEFAULT_CONFIG["session_context"]
+    except Exception as e:
+        log.warning("config_load_failed", error=str(e))
+        return DEFAULT_CONFIG["session_context"]
 
 
 def get_session_behavior(config: dict[str, Any], session_type: str) -> str:

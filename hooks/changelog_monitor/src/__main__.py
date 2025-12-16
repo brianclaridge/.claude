@@ -9,6 +9,10 @@ from typing import Any
 
 import structlog
 
+# Add shared module to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+from shared.config import get_hook_config
+
 from .analyzer import AnalysisResult, analyze_versions, format_context_injection
 from .fetcher import fetch_changelog, get_last_known_version
 from .parser import get_versions_since, parse_changelog
@@ -32,14 +36,8 @@ log = structlog.get_logger()
 def is_enabled() -> bool:
     """Check if changelog monitor is enabled in config."""
     try:
-        import yaml
-
-        config_path = Path("/workspace/.claude/config.yml")
-        if config_path.exists():
-            with config_path.open() as f:
-                config = yaml.safe_load(f)
-            if config and "changelog_monitor" in config:
-                return config["changelog_monitor"].get("enabled", True)
+        hook_config = get_hook_config("changelog_monitor")
+        return hook_config.get("enabled", True)
     except Exception:
         pass
     return True  # Enabled by default

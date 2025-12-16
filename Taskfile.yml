@@ -42,13 +42,19 @@ vars:
           fi
           ;;
       esac
-
   TASKFILE_PARENT:
     sh: |
       {{if eq .OS "Windows_NT"}}
         pwsh -NoProfile -Command "Split-Path -Parent '{{.TASKFILE_DIR}}'"
       {{else}}
         dirname "{{.TASKFILE_DIR}}"
+      {{end}}
+  TASKFILE_PARENT_UNIX:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "Write-Output ('{{.TASKFILE_PARENT}}' -replace '\\\\', '/')"
+      {{else}}
+        echo "{{.TASKFILE_PARENT}}"
       {{end}}
   HOME_DIR:
     sh: |
@@ -91,16 +97,13 @@ vars:
       {{else}}
         echo "{{.CLAUDE_PROJECT_PATH}}" | sed 's|^/||' | tr '/' '-' | tr '[:upper:]' '[:lower:]'
       {{end}}
-  HOME_CLAUDE_DOCKER_PATH: '{{.HOME_DIR}}/.claude/_docker/{{.CLAUDE_PROJECT_SLUG}}'
-  LOG_DIR: "{{.CLAUDE_DIR}}/.data/logs"
-  DOCKERFILE_PATH: '{{.CLAUDE_DIR}}/docker/Dockerfile'
-  TASKFILE_PARENT_UNIX:
-    sh: |
-      {{if eq .OS "Windows_NT"}}
-        pwsh -NoProfile -Command "Write-Output ('{{.TASKFILE_PARENT}}' -replace '\\\\', '/')"
-      {{else}}
-        echo "{{.TASKFILE_PARENT}}"
-      {{end}}
+  DOCKERFILE_PATH: "{{.CLAUDE_DIR}}/docker/Dockerfile"
+  DATA_PATH: "{{.CLAUDE_DIR}}/.data"
+  LOG_PATH: "{{.CLAUDE_DIR}}/.data/logs"
+  HOME_SSH_PATH: "{{.HOME_DIR}}/.ssh"
+  HOME_CLAUDE_ROOT_PATH: "{{.HOME_DIR}}/.claude/_docker/{{.CLAUDE_PROJECT_SLUG}}"
+  PROJECTS_YML_PATH: "{{.HOME_CLAUDE_ROOT_PATH}}/projects.yml"
+  CONFIG_YML_PATH: "{{.CLAUDE_DIR}}/config.yml"
 
 env:
   DOCKER_SOCK_PATH: "{{.DOCKER_SOCK_PATH}}"
@@ -119,9 +122,13 @@ env:
   CLAUDE_PARENT_DIR: "{{.CLAUDE_PARENT_DIR}}"
   CLAUDE_PROJECT_PATH: "{{.CLAUDE_PROJECT_PATH}}"
   CLAUDE_PROJECT_SLUG: "{{.CLAUDE_PROJECT_SLUG}}"
-  HOME_CLAUDE_DOCKER_PATH: "{{.HOME_CLAUDE_DOCKER_PATH}}"
-  LOG_DIR: "{{.LOG_DIR}}"
   DOCKERFILE_PATH: "{{.DOCKERFILE_PATH}}"
+  DATA_PATH: "{{.DATA_PATH}}"
+  LOG_PATH: "{{.LOG_PATH}}"
+  HOME_SSH_PATH: "{{.HOME_SSH_PATH}}"
+  HOME_CLAUDE_ROOT_PATH: "{{.HOME_CLAUDE_ROOT_PATH}}"
+  PROJECTS_YML_PATH: "{{.PROJECTS_YML_PATH}}"
+  CONFIG_YML_PATH: "{{.CONFIG_YML_PATH}}"
 
 tasks:
   claude:default:
@@ -180,11 +187,19 @@ tasks:
       - task: print-var
         vars: { K: "CLAUDE_PROJECT_SLUG", V: "{{.CLAUDE_PROJECT_SLUG}}" }
       - task: print-var
-        vars: { K: "HOME_CLAUDE_DOCKER_PATH", V: "{{.HOME_CLAUDE_DOCKER_PATH}}" }
-      - task: print-var
-        vars: { K: "LOG_DIR", V: "{{.LOG_DIR}}" }
-      - task: print-var
         vars: { K: "DOCKERFILE_PATH", V: "{{.DOCKERFILE_PATH}}" }
+      - task: print-var
+        vars: { K: "DATA_PATH", V: "{{.DATA_PATH}}" }
+      - task: print-var
+        vars: { K: "LOG_PATH", V: "{{.LOG_PATH}}" }
+      - task: print-var
+        vars: { K: "HOME_SSH_PATH", V: "{{.HOME_SSH_PATH}}" }
+      - task: print-var
+        vars: { K: "HOME_CLAUDE_ROOT_PATH", V: "{{.HOME_CLAUDE_ROOT_PATH}}" }
+      - task: print-var
+        vars: { K: "PROJECTS_YML_PATH", V: "{{.PROJECTS_YML_PATH}}" }
+      - task: print-var
+        vars: { K: "CONFIG_YML_PATH", V: "{{.CONFIG_YML_PATH}}" }
       - cmd: "echo"
       - task: wait
         vars: { SECONDS: 2 }
@@ -271,6 +286,7 @@ tasks:
           docker compose build
           docker compose run --remove-orphans claude run-claude
         }"
+    interactive: true
     silent: true
 
   claude:stream:
@@ -367,7 +383,7 @@ tasks:
     deps:
       - ensure-host
     vars:
-      TARGET_PATH: "{{.HOME_CLAUDE_DOCKER_PATH}}"
+      TARGET_PATH: "{{.HOME_CLAUDE_ROOT_PATH}}"
     desc: Remove the {{.TARGET_PATH}} folder from the current directory
     prompt: This will delete the {{.TARGET_PATH}} folder. Continue?
     dir: "{{.TASKFILE_DIR}}"

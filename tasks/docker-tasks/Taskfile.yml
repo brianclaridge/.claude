@@ -79,6 +79,7 @@ tasks:
         platforms: [windows]
         ignore_error: true
       - task: delete-data-folder
+      - task: delete-home-claude-config
     silent: true
 
   claude:docker:nuke-docker:
@@ -110,5 +111,4 @@ tasks:
       - cmd: pwsh -NoProfile -Command "docker images -aq | ForEach-Object { docker rmi -f \$_ } 2>\$null"
         platforms: [windows]
         ignore_error: true
-      - task: delete-home-claude-config
     silent: true

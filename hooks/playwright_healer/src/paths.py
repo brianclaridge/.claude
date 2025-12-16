@@ -1,41 +1,41 @@
-import json
-from pathlib import Path
+"""Path utilities for playwright_healer hook."""
+
+import sys
 from datetime import datetime
-from typing import Dict, Any
+from pathlib import Path
+from typing import Any
+
+# Add shared module to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+from shared.config import get_hook_config, resolve_log_path
 
 
-def get_config() -> Dict[str, Any]:
-    """Load configuration from config.json."""
-    config_path = Path(__file__).parent.parent / "config.json"
+DEFAULT_CONFIG = {
+    "log_base_path": ".data/logs/playwright_healer",
+    "log_enabled": True,
+    "log_level": "INFO",
+    "max_recovery_attempts": 3,
+    "recovery_cooldown_seconds": 5,
+    "error_patterns": [
+        "Browser is already in use",
+        "browser context is closed",
+        "Target page, context or browser has been closed",
+    ],
+    "recoverable_tools": [],
+}
 
-    default_config = {
-        "log_base_path": "/workspace/.claude/.data/logs/playwright_healer",
-        "log_enabled": True,
-        "log_level": "INFO",
-        "max_recovery_attempts": 3,
-        "recovery_cooldown_seconds": 5,
-        "error_patterns": [
-            "Browser is already in use",
-            "browser context is closed",
-            "Target page, context or browser has been closed"
-        ]
-    }
 
-    try:
-        if config_path.exists():
-            with open(config_path, 'r') as f:
-                loaded = json.load(f)
-                default_config.update(loaded)
-    except Exception:
-        pass
-
-    return default_config
+def get_config() -> dict[str, Any]:
+    """Load hook configuration from global config.yml."""
+    config = DEFAULT_CONFIG.copy()
+    loaded = get_hook_config("playwright_healer")
+    config.update(loaded)
+    return config
 
 
 def get_log_base() -> Path:
     """Get the log base directory."""
-    config = get_config()
-    return Path(config["log_base_path"])
+    return resolve_log_path("playwright_healer")
 
 
 def get_log_path(session_id: str, event_type: str) -> Path:

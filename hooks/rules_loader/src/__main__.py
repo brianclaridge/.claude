@@ -5,7 +5,7 @@ from .reader import process_stdin
 from .loader import load_rules, filter_rules_for_reinforcement
 from .formatter import format_to_hook_json
 from .logger import log_directive_event, log_error, log_summary, setup_logger
-from .paths import get_rules_path, get_global_config
+from .paths import get_rules_path, get_config
 
 
 def main():
@@ -13,7 +13,7 @@ def main():
         setup_logger()
 
         rules_path = get_rules_path()
-        global_config = get_global_config()
+        hook_config = get_config()
 
         for hook_data in process_stdin():
             event_name = hook_data.get("hook_event_name", "Unknown")
@@ -25,7 +25,7 @@ def main():
             all_rules = load_rules(rules_path)
 
             # Filter rules based on event and reinforcement config
-            rules = filter_rules_for_reinforcement(all_rules, global_config, event_name)
+            rules = filter_rules_for_reinforcement(all_rules, hook_config, event_name)
 
             load_time_ms = (time.time() - start_time) * 1000
 

@@ -9,18 +9,15 @@ from typing import Any
 
 import structlog
 
+from .config import get_check_interval_seconds
 from .updater import UpdateResult
 
 log = structlog.get_logger()
 
-WORKSPACE_PATH = os.environ.get("CLAUDE_WORKSPACE_PATH")
-DATA_DIR = os.environ.get("CLAUDE_DATA_PATH")
+DATA_DIR = Path(os.environ.get("CLAUDE_DATA_PATH", "/workspace/.claude/.data"))
 
 CHECK_STATE_FILE = DATA_DIR / "submodule_check_state.json"
 NOTIFY_STATE_FILE = DATA_DIR / "submodule_notify_state.json"
-
-# Check interval in seconds (15 minutes)
-CHECK_INTERVAL_SECONDS = 15 * 60
 
 
 def ensure_data_dir() -> None:
@@ -69,11 +66,12 @@ def should_check() -> bool:
     last_check = state.get("last_check_time", 0)
     elapsed = time.time() - last_check
 
-    should = elapsed >= CHECK_INTERVAL_SECONDS
+    check_interval = get_check_interval_seconds()
+    should = elapsed >= check_interval
     log.debug(
         "check_interval_evaluation",
         elapsed_seconds=int(elapsed),
-        interval_seconds=CHECK_INTERVAL_SECONDS,
+        interval_seconds=check_interval,
         should_check=should,
     )
     return should

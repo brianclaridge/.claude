@@ -1,37 +1,32 @@
-import json
-from pathlib import Path
+"""Path utilities for logger hook."""
+
+import sys
 from datetime import datetime
-from typing import Dict, Any
+from pathlib import Path
+from typing import Any
+
+# Add shared module to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+from shared.config import get_hook_config, resolve_log_path
 
 
-def get_config() -> Dict[str, Any]:
-    config_path = Path(__file__).parent.parent / "config.json"
-
-    default_config = {
-        "log_base_path": "/workspace/.claude/.data/claude_logs"
-    }
-
-    try:
-        if config_path.exists():
-            with open(config_path, 'r') as f:
-                return json.load(f)
-    except Exception:
-        pass
-
-    return default_config
+DEFAULT_CONFIG = {
+    "log_base_path": ".data/logs/claude_hooks",
+    "log_enabled": True,
+    "log_level": "INFO",
+}
 
 
-def get_workspace_root() -> Path:
-    return Path(__file__).parent.parent.parent.parent.parent
+def get_config() -> dict[str, Any]:
+    """Load hook configuration from global config.yml."""
+    config = DEFAULT_CONFIG.copy()
+    config.update(get_hook_config("logger"))
+    return config
 
 
 def get_log_path(hook_event_name: str, session_id: str) -> Path:
-    config = get_config()
-    workspace = get_workspace_root()
-
+    """Get path for log file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    log_base = workspace / config["log_base_path"]
+    log_base = resolve_log_path("logger")
     log_dir = log_base / session_id / hook_event_name
-
     return log_dir / f"{timestamp}.json"

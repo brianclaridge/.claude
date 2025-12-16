@@ -25,11 +25,11 @@ from .schema import Activity, ProjectMetadata, Session, Structure
 from .utils import expand_path, load_projects_yaml, save_projects_yaml
 
 # Configure logging
-LOG_DIR = Path(os.path.expanduser("~/.claude/.data/logs/project-metadata-builder"))
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+LOG_PATH = Path(os.path.expanduser("~/.claude/.data/logs/project-metadata-builder"))
+LOG_PATH.mkdir(parents=True, exist_ok=True)
 
 logger.add(
-    LOG_DIR / "builder.log",
+    LOG_PATH / "builder.log",
     rotation="10 MB",
     retention="7 days",
     level="INFO",

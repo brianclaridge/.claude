@@ -130,6 +130,6 @@ After generating the functional report, update the global project registry:
 
 1. Invoke the `project-metadata-builder` skill
 2. Pass the analyzed project path to the skill
-3. The skill will update `~/.claude/projects.yml` with comprehensive metadata
+3. The skill will update `${PROJECTS_YML_PATH}` with comprehensive metadata
 
 This ensures all analyzed projects are tracked in the central registry for dashboard and context purposes.

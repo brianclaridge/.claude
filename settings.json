@@ -1,0 +1,28 @@
+{
+  "model": "Opus",
+  "forceLoginMethod": "claudeai",
+  "outputStyle": "Default",
+  "alwaysThinkingEnabled": true,
+  "env": {
+    "MAX_THINKING_TOKENS": "29999",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Write",
+      "Skill(git-manager)",
+      "Skill(project-metadata-builder)",
+      "Skill(aws-login)",
+      "Skill(gcp-login)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
+    ],
+    "deny": [],
+    "ask": ["Bash(rm:*)"]
+  }
+}

@@ -1,39 +1,25 @@
 {
-  "model": "Opus",
   "forceLoginMethod": "claudeai",
   "outputStyle": "Default",
   "alwaysThinkingEnabled": true,
-  "companyAnnouncements": [
-    "An intelligence that only reflects your beliefs back to you is not thinking, it is polishing your blindness until it shines."
-  ],
-  "env": {
-    "MAX_THINKING_TOKENS": "29999",
-    "DISABLE_TELEMETRY": "1",
-    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
-  },
   "includeCoAuthoredBy": false,
   "enableAllProjectMcpServers": true,
   "permissions": {
-    "allow": [
-      "Bash",
-      "Read",
-      "Write",
-      "Skill(git-manager)",
-      "Skill(project-metadata-builder)",
-      "Skill(aws-login)",
-      "Skill(gcp-login)",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
-    ],
-    "deny": [],
-    "ask": ["Bash(rm:*)"],
     "additionalDirectories": [
+      "/root",
+      "/root/.claude",
       "/tmp",
       "/workspace",
-      "/root",
-      "/root/.claude"
+      "{{ .Env.HOME_CLAUDE_ROOT_PATH }}",
+      "{{ .Env.CLAUDE_WORKSPACE_PATH }}",
+      "{{ .Env.CLAUDE_PATH }}",
+      "{{ .Env.CLAUDE_DATA_PATH }}",
+      "{{ .Env.CLAUDE_LOGS_PATH }}",
+      "{{ .Env.CLAUDE_AGENTS_PATH }}",
+      "{{ .Env.CLAUDE_HOOKS_PATH }}",
+      "{{ .Env.CLAUDE_PLANS_PATH }}",
+      "{{ .Env.CLAUDE_SCRIPTS_PATH }}",
+      "{{ .Env.CLAUDE_SKILLS_PATH }}"
     ],
     "defaultMode": "plan"
   },

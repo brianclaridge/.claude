@@ -6,7 +6,7 @@ inputDir: .claude/config/templates/
 # Dynamic output mapping with environment variable support
 # .in contains the input filename relative to inputDir
 outputMap: |
-  {{- $claudeDockerPath := getenv "HOME_CLAUDE_DOCKER_PATH" | required "HOME_CLAUDE_DOCKER_PATH environment variable must be set" -}}
+  {{- $claudeDockerPath := getenv "HOME_CLAUDE_ROOT_PATH" | required "HOME_CLAUDE_ROOT_PATH environment variable must be set" -}}
   {{- $claudeConfigPath := getenv "CLAUDE_PATH" | required "CLAUDE_PATH environment variable must be set" -}}
   {{- $map := dict
     "ansible.cfg" "/root/ansible.cfg"

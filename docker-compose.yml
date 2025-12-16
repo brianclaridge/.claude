@@ -42,11 +42,17 @@ services:
       CLAUDE_LOGS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs
       CLAUDE_AGENTS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents
       CLAUDE_HOOKS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks
+      CLAUDE_PLANS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/plans
       CLAUDE_SCRIPTS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/scripts
       CLAUDE_SKILLS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills
-      HOME_CLAUDE_DOCKER_PATH: ${HOME_CLAUDE_DOCKER_PATH}
       HOME_OS: ${OS}
       HOME_DIR: ${HOME_DIR}
+      HOME_SSH_PATH: ${HOME_SSH_PATH}
+      LOG_PATH: ${LOG_PATH}
+      DATA_PATH: ${DATA_PATH}
+      HOME_CLAUDE_ROOT_PATH: ${HOME_CLAUDE_ROOT_PATH}
+      PROJECTS_YML_PATH: ${PROJECTS_YML_PATH}
+      CONFIG_YML_PATH: ${CONFIG_YML_PATH}
       DOCKER_SOCK_PATH: ${DOCKER_SOCK_PATH}
       # misc vars
       AWS_CONFIG_FILE: /root/.aws/config
@@ -60,11 +66,10 @@ services:
       - ${DOCKER_SOCK_PATH}:/var/run/docker.sock
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       # bind folder mounts
-      - ${HOME_DIR}/.ssh:/ssh:ro
-      - ${HOME_CLAUDE_DOCKER_PATH}/claude_data:/root/.claude:delegated
+      - ${HOME_SSH_PATH}:/ssh:ro
+      - ${HOME_CLAUDE_ROOT_PATH}:/root
       - ../:/workspace/${CLAUDE_PROJECT_SLUG}:delegated
       # misc volumes
-      - shared-root:/root:delegated
       - minikube-data:/root/.minikube
       - kube-data:/root/.kube
       - maven-data:/root/.m2
@@ -79,8 +84,6 @@ networks:
     driver: bridge
 
 volumes:
-  shared-root:
-    name: claude-shared-root
   minikube-data: {}
   kube-data: {}
   maven-data: {}

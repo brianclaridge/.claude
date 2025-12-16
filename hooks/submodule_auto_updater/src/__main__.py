@@ -6,13 +6,14 @@ from pathlib import Path
 
 import structlog
 
+from .config import get_log_path
 from .formatter import format_update_notification
 from .state_manager import mark_notified, should_check, should_notify, write_check_state
 from .updater import check_and_update
 
 # Configure structlog
-LOG_DIR = Path("/workspace/.claude/.data/logs/submodule_auto_updater")
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+LOG_PATH = get_log_path()
+LOG_PATH.mkdir(parents=True, exist_ok=True)
 
 structlog.configure(
     processors=[

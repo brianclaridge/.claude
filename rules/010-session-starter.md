@@ -18,7 +18,7 @@
 - "switch to [group]"
 - "load [group]"
 
-Where `[group]` matches a key under `projects:` in `/workspace/projects.yml` (e.g., `camelot`, `gcp-ops`)
+Where `[group]` matches a key under `projects:` in `${PROJECTS_YML_PATH}` (e.g., `camelot`, `gcp-ops`)
 
 **Action**: Invoke `project-analysis` agent with "Analyze project group: [group]"
 
@@ -26,7 +26,7 @@ Where `[group]` matches a key under `projects:` in `/workspace/projects.yml` (e.
 
 Before invoking with a project group:
 
-1. Read `/workspace/projects.yml`
+1. Read `${PROJECTS_YML_PATH}`
 2. Check if `[group]` exists as a key under `projects:`
 3. If not found: Respond with "Project group '[group]' not found. Available: camelot, gcp-ops"
 4. Do NOT invoke the agent for unknown groups

@@ -19,14 +19,9 @@
       - ${DOCKER_SOCK_PATH}:/var/run/docker.sock
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       # bind folder mounts
-      - ${HOME_DIR}/.ssh:/ssh:ro
-      - ${HOME_CLAUDE_DOCKER_PATH}/claude_data:/root/.claude:delegated
+      - ${HOME_SSH_PATH}:/ssh:ro
+      - ${HOME_CLAUDE_ROOT_PATH}/root:/root
       - ../:/workspace/${CLAUDE_PROJECT_SLUG}:delegated
-      # misc volumes
-      - shared-root:/root:delegated
-      - minikube-data:/root/.minikube
-      - kube-data:/root/.kube
-      - maven-data:/root/.m2
 ```
 
 ## Quick Start

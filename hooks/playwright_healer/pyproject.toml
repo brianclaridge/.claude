@@ -3,7 +3,7 @@ name = "playwright-healer"
 version = "0.1.0"
 description = "Self-healing hook for Playwright MCP browser lock errors"
 requires-python = ">=3.12"
-dependencies = ["structlog>=24.0.0"]
+dependencies = ["structlog>=24.0.0", "pyyaml>=6.0"]
 
 [build-system]
 requires = ["hatchling"]
