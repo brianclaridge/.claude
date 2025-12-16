@@ -18,8 +18,8 @@ services:
         sqlProxyVersion: 2.19.0
         glabVersion: 1.78.3
         pythonVersion: 3.12
-        buildDate: 20251213.2
-        claudeCodeDate: 20251215.1
+        buildDate: 20251215.2
+        claudeCodeDate: 20251215.2
     init: true
     privileged: true
     ulimits:

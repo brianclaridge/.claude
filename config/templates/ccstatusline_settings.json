@@ -127,15 +127,16 @@
     [
       {
         "id": "cc6ed5bf-2bbe-4591-a355-0dfe049d2aa3",
-        "type": "custom-text",
+        "type": "custom-command",
         "backgroundColor": "bgCyan",
-        "customText": "host:"
+        "customText": "host:",
+        "commandPath": "[ -f /.dockerenv ] && echo \"docker:\" || echo \"host:\""
       },
       {
         "id": "0c32395f-a12e-43ca-a5f4-03654fbc22a7",
         "type": "custom-command",
         "backgroundColor": "bgBrightCyan",
-        "commandPath": "echo \"${HOSTNAME}\""
+        "commandPath": "[ -f /.dockerenv ] && echo \"$(ip route get 1 | awk '{print $7}') ($HOSTNAME)\" || echo \"127.0.0.1\""
       }
     ],
     [
@@ -189,7 +190,7 @@
       }
     ]
   ],
-  "flexMode": "full-minus-40",
+  "flexMode": "full",
   "compactThreshold": 60,
   "colorLevel": 3,
   "defaultPadding": " ",

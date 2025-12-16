@@ -2,11 +2,17 @@
   "mcpServers": {
     "context7": {
       "command": "bunx",
-      "args": ["-y", "@upstash/context7-mcp", "--api-key", "{{ .Env.CONTEXT7_API_KEY }}"]
+      "args": [
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "{{ .Env.CONTEXT7_API_KEY }}"
+      ]
     },
     "playwright": {
       "command": "bunx",
       "args": [
+        "-y",
         "@playwright/mcp@latest",
         "--headless",
         "--browser=chromium",
