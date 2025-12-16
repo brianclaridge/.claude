@@ -6,220 +6,97 @@ allowed-tools: Bash, Read, AskUserQuestion
 
 # AWS Login Skill
 
-Authenticate to AWS using SSO (Single Sign-On) with interactive account selection.
+Authenticate to AWS using SSO (Single Sign-On).
 
 ## Activation Triggers
 
-- `/auth-aws` slash command invokes this skill
+- `/auth-aws` slash command
 - User says: "login to AWS", "AWS SSO", "authenticate to AWS"
-- User explicitly invokes: "use the aws-login skill"
 
 ## Prerequisites
 
-- AWS CLI v2 installed with SSO support
-- Environment variables set in `.env`:
-  - `AWS_SSO_START_URL` - Your AWS SSO portal URL
-  - `AWS_ROOT_ACCOUNT_ID` - Root/management account ID
-  - `AWS_ROOT_ACCOUNT_NAME` - Root account alias
-- Valid SSO session or ability to authenticate via browser
-
-## Workflow
-
-### Step 1: Check Configuration
-
-Verify AWS SSO configuration exists:
+Environment variables in `.env`:
 
 ```bash
-cat ${CLAUDE_PATH}/.aws.yml 2>/dev/null | head -20
+AWS_SSO_START_URL="https://your-org.awsapps.com/start"
+AWS_ROOT_ACCOUNT_ID="123456789012"
+AWS_ROOT_ACCOUNT_NAME="your-org"
 ```
 
-If config not found:
-- Run setup wizard: `uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python scripts/config/setup_wizard.py`
-- Wizard will prompt for SSO URL and detect region
+## Usage
 
-### Step 2: Check Current Credentials
+### Human CLI
 
-Check if valid SSO credentials exist:
+```powershell
+# Interactive account selection
+./scripts/aws-auth.ps1
+
+# Login to specific account
+./scripts/aws-auth.ps1 root
+
+# Force re-login
+./scripts/aws-auth.ps1 sandbox -Force
+
+# First-time setup
+./scripts/aws-auth.ps1 -Setup
+```
+
+### Claude Agent
 
 ```bash
-uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python scripts/cli/sso_check.py --quiet ${ACCOUNT}
+# Via skill invocation
+uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python -m lib [account] [--force]
 ```
 
-Where `${ACCOUNT}` is the account alias (e.g., "root", "sandbox", "manager").
+## First-Run Setup
 
-Exit codes:
-- 0: Valid credentials exist
-- 1: Credentials expired or missing
+When no `.aws.yml` config exists:
 
-### Step 3: Account Selection
+1. Reads env vars for root account configuration
+2. Creates AWS CLI profile for root account
+3. Runs SSO login for root (presents URL and device code)
+4. Discovers accounts from AWS Organizations
+5. Saves accounts to `${CLAUDE_DATA_PATH}/.aws.yml`
 
-If no account specified, use AskUserQuestion to present available accounts:
+## SSO URL Detection
 
-```json
-{
-  "question": "Which AWS account would you like to use?",
-  "header": "AWS Account",
-  "options": [
-    {"label": "root", "description": "Management account (Organizations access)"},
-    {"label": "sandbox", "description": "Development/testing account"},
-    {"label": "Interactive menu", "description": "Show all available accounts"}
-  ],
-  "multiSelect": false
-}
-```
-
-If "Interactive menu" selected:
-```bash
-uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python scripts/discovery/account_discovery.py
-```
-
-### Step 4: Authenticate
-
-If credentials expired or missing, initiate SSO login:
-
-```bash
-uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python scripts/cli/sso_login.py ${ACCOUNT}
-```
-
-This will:
-1. Capture and present the SSO URL and device code in a formatted table
-2. Wait for authentication to complete
-3. Cache credentials locally
-
-**SSO URL Detection**: The skill automatically detects and presents the SSO URL and device code:
+The skill captures and displays the SSO URL and device code:
 
 | Field | Value |
 |-------|-------|
-| URL | https://mycompany.awsapps.com/start/#/device |
+| URL | https://your-org.awsapps.com/start/#/device |
 | Code | **XXXX-XXXX** |
 
-### Step 5: Verify Authentication
+## Configuration
 
-After login completes:
-
-```bash
-aws sts get-caller-identity --profile ${ACCOUNT}
-```
-
-Report to user:
-- Account ID
-- ARN (identity)
-- User/Role name
-
-## Environment Variables
-
-SSO settings are configured via environment variables in `.env`:
-
-```bash
-# Required - AWS SSO configuration
-AWS_SSO_START_URL="https://mycompany.awsapps.com/start"
-AWS_ROOT_ACCOUNT_ID="123456789012"
-AWS_ROOT_ACCOUNT_NAME="my-org"
-```
-
-## Configuration File (.aws.yml)
-
-Located at `${CLAUDE_DATA_PATH}/.aws.yml` - stores discovered accounts (auto-generated):
+Accounts stored at `${CLAUDE_DATA_PATH}/.aws.yml`:
 
 ```yaml
-schema_version: "2.0"
+schema_version: "1.0"
 default_region: us-east-1
 
 accounts:
   root:
-    account_number: "123456789012"
     account_name: "Management Account"
+    account_number: "123456789012"
+    sso_role_name: AdministratorAccess
   sandbox:
-    account_number: "234567890123"
     account_name: "Development"
-```
-
-**Note**: SSO URL comes from `AWS_SSO_START_URL` env var, not this file.
-
-## Error Handling
-
-| Error | Resolution |
-|-------|------------|
-| Config not found | Run setup wizard |
-| Account not in config | Offer to sync from Organizations |
-| SSO session expired | Initiate new SSO login |
-| Auth timeout | Offer retry or cancel |
-| No browser available | Use device code flow |
-
-## Taskfile Integration
-
-Available via Taskfile.yml:
-
-```bash
-# Check credentials
-task aws-check ACCOUNT=sandbox
-
-# Login to account
-task aws-login ACCOUNT=sandbox
-
-# Ensure valid credentials (silent)
-task aws-ensure-login ACCOUNT=sandbox
-
-# List configured accounts
-task aws-list-accounts
-```
-
-## Safety Rules
-
-**NEVER**:
-- Store long-term credentials
-- Log SSO tokens or session data
-- Modify AWS credentials outside SSO flow
-- Run destructive AWS commands without confirmation
-
-**ALWAYS**:
-- Use SSO for authentication
-- Verify identity after login
-- Allow user to cancel authentication
-- Respect existing valid credentials
-
-## Example Flow
-
-```text
-User: login to AWS
-
-Claude: Checking AWS configuration...
-        SSO URL: https://mycompany.awsapps.com/start
-        Configured accounts: root, sandbox, manager
-
-Claude: Which AWS account would you like to use?
-        [AskUserQuestion: root | sandbox | Interactive menu]
-
-User: [selects sandbox]
-
-Claude: Checking credentials for sandbox...
-        Status: Expired
-
-Claude: Starting SSO authentication for sandbox...
-        Opening browser for SSO login...
-        [Waiting for authentication...]
-
-Claude: AWS authentication successful!
-        Account: 234567890123
-        Identity: arn:aws:sts::234567890123:assumed-role/AdministratorAccess/user@example.com
+    account_number: "234567890123"
+    sso_role_name: AdministratorAccess
 ```
 
 ## Directory Structure
 
 ```
 skills/aws-login/
-├── SKILL.md              # This file
-├── pyproject.toml        # Python dependencies
-└── scripts/
-    ├── cli/
-    │   ├── sso_check.py   # Check credential status
-    │   └── sso_login.py   # Perform SSO login
-    ├── core/
-    │   ├── auth_helper.py # Session/auth utilities
-    │   ├── config_reader.py # Read .aws.yml
-    │   └── logging_config.py
-    ├── config/
-    │   └── setup_wizard.py # First-run setup
-    └── discovery/
-        └── account_discovery.py # Org account discovery
+├── lib/
+│   ├── __init__.py
+│   ├── __main__.py    # Entry point
+│   ├── config.py      # Config from env vars + .aws.yml
+│   ├── sso.py         # SSO login with URL detection
+│   ├── discovery.py   # Organizations account discovery
+│   └── profiles.py    # AWS CLI profile management
+├── pyproject.toml
+└── SKILL.md
 ```
