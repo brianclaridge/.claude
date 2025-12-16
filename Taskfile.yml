@@ -25,6 +25,39 @@ includes:
     flatten: true
 
 vars:
+  # // HOST PATHS \\
+  TASKFILE_PARENT:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "Split-Path -Parent '{{.TASKFILE_DIR}}'"
+      {{else}}
+        dirname "{{.TASKFILE_DIR}}"
+      {{end}}
+  HOST_HOME_PATH:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "
+          Write-Output \$env:USERPROFILE
+        "
+      {{else}}
+        echo "$HOME"
+      {{end}}
+  HOST_HOME_CLAUDE_ROOT_PATH:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        echo '{{.HOST_HOME_PATH}}\.claude\_docker\{{.CLAUDE_PROJECT_SLUG}}'
+      {{else}}
+        echo '{{.HOST_HOME_PATH}}/.claude/_docker/{{.CLAUDE_PROJECT_SLUG}}'
+      {{end}}
+
+  # // HOST LINUX STYLE PATHS \\
+  TASKFILE_PARENT_UNIX:
+    sh: |
+      {{if eq .OS "Windows_NT"}}
+        pwsh -NoProfile -Command "Write-Output ('{{.TASKFILE_PARENT}}' -replace '\\\\', '/')"
+      {{else}}
+        echo "{{.TASKFILE_PARENT}}"
+      {{end}}
   DOCKER_SOCK_PATH:
     sh: |
       OS_TYPE=$(docker version --format '{{.Server.Os}}' 2>/dev/null)
@@ -42,20 +75,6 @@ vars:
           fi
           ;;
       esac
-  TASKFILE_PARENT:
-    sh: |
-      {{if eq .OS "Windows_NT"}}
-        pwsh -NoProfile -Command "Split-Path -Parent '{{.TASKFILE_DIR}}'"
-      {{else}}
-        dirname "{{.TASKFILE_DIR}}"
-      {{end}}
-  TASKFILE_PARENT_UNIX:
-    sh: |
-      {{if eq .OS "Windows_NT"}}
-        pwsh -NoProfile -Command "Write-Output ('{{.TASKFILE_PARENT}}' -replace '\\\\', '/')"
-      {{else}}
-        echo "{{.TASKFILE_PARENT}}"
-      {{end}}
   HOME_DIR:
     sh: |
       {{if eq .OS "Windows_NT"}}
@@ -106,17 +125,23 @@ vars:
   CONFIG_YML_PATH: "{{.CLAUDE_DIR}}/config.yml"
 
 env:
-  DOCKER_SOCK_PATH: "{{.DOCKER_SOCK_PATH}}"
-  # Taskfile Native
+  # // TASKFILE NATIVE VARS \\
   OS: "{{.OS}}"
   TASK_VERSION: "{{.TASK_VERSION}}"
   TASK: "{{.TASK}}"
   TASKFILE: "{{.TASKFILE}}"
   TASKFILE_DIR: "{{.TASKFILE_DIR}}"
-  TASKFILE_PARENT: "{{.TASKFILE_PARENT}}"
   ROOT_DIR: "{{.ROOT_DIR}}"
   USER_WORKING_DIR: "{{.USER_WORKING_DIR}}"
-  # Custom Vars
+
+  # // HOST PATHS \\
+  TASKFILE_PARENT: "{{.TASKFILE_PARENT}}"
+  HOST_HOME_PATH: "{{.HOST_HOME_PATH}}"
+  HOST_HOME_CLAUDE_ROOT_PATH: "{{.HOST_HOME_CLAUDE_ROOT_PATH}}"
+
+  # // HOST LINUX STYLE PATHS \\
+  TASKFILE_PARENT_UNIX: "{{.TASKFILE_PARENT_UNIX}}"
+  DOCKER_SOCK_PATH: "{{.DOCKER_SOCK_PATH}}"
   HOME_DIR: "{{.HOME_DIR}}"
   CLAUDE_DIR: "{{.CLAUDE_DIR}}"
   CLAUDE_PARENT_DIR: "{{.CLAUDE_PARENT_DIR}}"
@@ -154,9 +179,7 @@ tasks:
       - task: clear
       - cmd: "echo"
       - task: info
-        vars: { MSG: "----- TASKFILE NATIVE -----" }
-      - task: print-var
-        vars: { K: "DOCKER_SOCK_PATH", V: "{{.DOCKER_SOCK_PATH}}" }
+        vars: { MSG: "----- TASKFILE NATIVE VARS -----" }
       - task: print-var
         vars: { K: "OS", V: "{{.OS}}" }
       - task: print-var
@@ -168,14 +191,27 @@ tasks:
       - task: print-var
         vars: { K: "TASKFILE_DIR", V: "{{.TASKFILE_DIR}}" }
       - task: print-var
-        vars: { K: "TASKFILE_PARENT", V: "{{.TASKFILE_PARENT}}" }
-      - task: print-var
         vars: { K: "ROOT_DIR", V: "{{.ROOT_DIR}}" }
       - task: print-var
         vars: { K: "USER_WORKING_DIR", V: "{{.USER_WORKING_DIR}}" }
+
       - cmd: "echo"
       - task: info
-        vars: { MSG: "----- CUSTOM VARS -----" }
+        vars: { MSG: "----- HOST PATHS -----" }
+      - task: print-var
+        vars: { K: "TASKFILE_PARENT", V: "{{.TASKFILE_PARENT}}" }
+      - task: print-var
+        vars: { K: "HOST_HOME_PATH", V: "{{.HOST_HOME_PATH}}" }
+      - task: print-var
+        vars: { K: "HOST_HOME_CLAUDE_ROOT_PATH", V: "{{.HOST_HOME_CLAUDE_ROOT_PATH}}" }
+
+      - cmd: "echo"
+      - task: info
+        vars: { MSG: "----- HOST LINUX STYLE PATHS-----" }
+      - task: print-var
+        vars: { K: "TASKFILE_PARENT_UNIX", V: "{{.TASKFILE_PARENT_UNIX}}" }
+      - task: print-var
+        vars: { K: "DOCKER_SOCK_PATH", V: "{{.DOCKER_SOCK_PATH}}" }
       - task: print-var
         vars: { K: "HOME_DIR", V: "{{.HOME_DIR}}" }
       - task: print-var
@@ -200,6 +236,7 @@ tasks:
         vars: { K: "PROJECTS_YML_PATH", V: "{{.PROJECTS_YML_PATH}}" }
       - task: print-var
         vars: { K: "CONFIG_YML_PATH", V: "{{.CONFIG_YML_PATH}}" }
+
       - cmd: "echo"
       - task: wait
         vars: { SECONDS: 2 }
@@ -395,7 +432,7 @@ tasks:
     deps:
       - ensure-host
     vars:
-      TARGET_PATH: "{{.HOME_CLAUDE_ROOT_PATH}}"
+      TARGET_PATH: "{{.HOST_HOME_CLAUDE_ROOT_PATH}}"
     desc: Remove the {{.TARGET_PATH}} folder from the current directory
     prompt: This will delete the {{.TARGET_PATH}} folder. Continue?
     dir: "{{.TASKFILE_DIR}}"
