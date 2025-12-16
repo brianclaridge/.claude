@@ -9,15 +9,26 @@ from .paths import get_rules_path, get_config
 
 
 def main():
-    try:
-        setup_logger()
+    # Capture event_name early for use in exception handling
+    event_name = "SessionStart"  # Default fallback (most common event for rules)
+    session_id = "unknown"
 
+    try:
+        # Parse stdin FIRST to capture event_name before any operations that might fail
+        hook_data_list = list(process_stdin())
+        if hook_data_list:
+            first_event = hook_data_list[0]
+            event_name = first_event.get("hook_event_name", "SessionStart")
+            session_id = first_event.get("session_id", "unknown")
+
+        setup_logger()
         rules_path = get_rules_path()
         hook_config = get_config()
 
-        for hook_data in process_stdin():
-            event_name = hook_data.get("hook_event_name", "Unknown")
-            session_id = hook_data.get("session_id", "unknown")
+        for hook_data in hook_data_list:
+            # Update event_name for each event in case of multiple events
+            event_name = hook_data.get("hook_event_name", event_name)
+            session_id = hook_data.get("session_id", session_id)
 
             start_time = time.time()
 
@@ -71,9 +82,10 @@ def main():
         return 0
 
     except Exception as e:
-        log_error(str(e), session_id="unknown", event_name="Unknown")
+        log_error(str(e), session_id=session_id, event_name=event_name)
         print(f"Fatal error: {e}", file=sys.stderr)
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "Unknown", "additionalContext": ""}}))
+        # Use captured event_name instead of hardcoded "Unknown"
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": event_name, "additionalContext": ""}}))
         return 0
 
 
