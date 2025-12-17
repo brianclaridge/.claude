@@ -9,14 +9,33 @@ from loguru import logger
 from aws_inspector.core.schemas import AccountInventory, AccountsConfig
 
 
+def _get_claude_path() -> Path:
+    """Get the .claude directory path."""
+    claude_path = os.environ.get("CLAUDE_PATH")
+    if claude_path:
+        return Path(claude_path)
+    return Path.home() / ".claude"
+
+
+def _get_global_config() -> dict:
+    """Load global config.yml from .claude directory."""
+    config_path = _get_claude_path() / "config.yml"
+    if config_path.exists():
+        with open(config_path) as f:
+            return yaml.safe_load(f) or {}
+    return {}
+
+
 def get_aws_data_path() -> Path:
-    """Get the base AWS data directory path.
+    """Get the base AWS data directory path from config.yml.
 
     Returns:
         Path to .data/aws/ directory
     """
-    claude_path = os.environ.get("CLAUDE_PATH", str(Path.home() / ".claude"))
-    return Path(claude_path) / ".data" / "aws"
+    config = _get_global_config()
+    # Get path from config.yml, default to .data/aws
+    data_path = config.get("cloud_providers", {}).get("aws", {}).get("data_path", ".data/aws")
+    return _get_claude_path() / data_path
 
 
 def get_inventory_path(org_id: str, ou_path: str, alias: str) -> Path:

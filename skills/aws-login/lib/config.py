@@ -19,17 +19,30 @@ if str(_lib_path) not in sys.path:
     sys.path.insert(0, str(_lib_path))
 
 
-def get_config_dir() -> Path:
-    """Get directory for config storage."""
-    claude_data_path = os.environ.get("CLAUDE_DATA_PATH")
-    if claude_data_path:
-        return Path(claude_data_path)
-    return Path.home() / ".claude"
+def get_claude_path() -> Path:
+    """Get the .claude directory path."""
+    claude_path = os.environ.get("CLAUDE_PATH")
+    if claude_path:
+        return Path(claude_path)
+    # Fallback: relative to this file
+    return Path(__file__).parent.parent.parent.parent
+
+
+def get_global_config() -> dict[str, Any]:
+    """Load global config.yml from .claude directory."""
+    config_path = get_claude_path() / "config.yml"
+    if config_path.exists():
+        with open(config_path) as f:
+            return yaml.safe_load(f) or {}
+    return {}
 
 
 def get_aws_data_path() -> Path:
-    """Get path to .data/aws directory."""
-    return get_config_dir() / ".data" / "aws"
+    """Get path to .data/aws directory from config.yml."""
+    config = get_global_config()
+    # Get path from config.yml, default to .data/aws
+    data_path = config.get("cloud_providers", {}).get("aws", {}).get("data_path", ".data/aws")
+    return get_claude_path() / data_path
 
 
 def get_accounts_path() -> Path:

@@ -1,12 +1,12 @@
 """Inventory file reader."""
 
-import os
 from pathlib import Path
 
 import yaml
 from loguru import logger
 
 from aws_inspector.core.schemas import AccountInventory, AccountsConfig, AccountConfig
+from aws_inspector.inventory.writer import get_aws_data_path
 
 
 def get_data_path() -> Path:
@@ -15,8 +15,7 @@ def get_data_path() -> Path:
     Returns:
         Path to .data/aws/ directory
     """
-    claude_path = os.environ.get("CLAUDE_PATH", str(Path.home() / ".claude"))
-    return Path(claude_path) / ".data" / "aws"
+    return get_aws_data_path()
 
 
 def load_accounts_config() -> AccountsConfig | None:
