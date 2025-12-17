@@ -86,6 +86,112 @@ def _bootstrap_initial_profile(sso_url: str) -> str | None:
     return result.access_token
 
 
+# Management account naming patterns (priority order)
+MANAGEMENT_PATTERNS = ["root", "main", "manager", "management"]
+
+
+def _sort_accounts_by_management_pattern(accounts: list) -> list:
+    """Sort accounts so management-like names appear first.
+
+    Args:
+        accounts: List of DiscoveredAccount objects
+
+    Returns:
+        Sorted list with management candidates first
+    """
+    def score(account) -> int:
+        name = account.account_name.lower()
+        for i, pattern in enumerate(MANAGEMENT_PATTERNS):
+            if pattern in name:
+                return i
+        return len(MANAGEMENT_PATTERNS)  # No match, put at end
+
+    return sorted(accounts, key=score)
+
+
+def _generate_alias(account_name: str) -> str:
+    """Generate profile alias from account name."""
+    alias = account_name.lower().replace(" ", "-")
+    for prefix in ["provision-iam-"]:
+        if alias.startswith(prefix):
+            alias = alias[len(prefix):]
+    return alias
+
+
+def _try_organizations_query(account, sso_url: str) -> tuple[bool, dict | None, str | None]:
+    """Try to query Organizations API using the given account.
+
+    Args:
+        account: DiscoveredAccount object
+        sso_url: SSO start URL
+
+    Returns:
+        Tuple of (success, tree_or_none, org_id_or_none)
+    """
+    alias = _generate_alias(account.account_name)
+
+    logger.info(f"Trying account {account.account_name} for Organizations query...")
+
+    ensure_profile(
+        profile_name=alias,
+        account_id=account.account_id,
+        account_name=account.account_name,
+    )
+
+    result = run_sso_login(alias)
+    if not result.success:
+        logger.warning(f"SSO login failed for {alias}")
+        return False, None, None
+
+    try:
+        org_id, tree = discover_organization(profile_name=alias)
+        return True, tree, org_id
+    except Exception as e:
+        error_str = str(e)
+        if "AccessDeniedException" in error_str:
+            logger.warning(f"Account {alias} lacks Organizations permissions")
+        else:
+            logger.warning(f"Organizations query failed: {e}")
+        return False, None, None
+
+
+def _ask_user_to_select_management_account(accounts: list):
+    """Ask user to select the management account interactively.
+
+    Args:
+        accounts: List of DiscoveredAccount objects
+
+    Returns:
+        Selected DiscoveredAccount
+    """
+    try:
+        from InquirerPy import inquirer
+    except ImportError:
+        logger.error("Interactive selection requires: pip install InquirerPy")
+        return accounts[0]  # Fallback to first account
+
+    if not sys.stdin.isatty():
+        logger.warning("Non-interactive mode, using first account")
+        return accounts[0]
+
+    choices = [
+        {"name": f"{acc.account_name} ({acc.account_id})", "value": acc}
+        for acc in accounts
+    ]
+
+    logger.info("")
+    logger.info("Please select the management account (has Organizations permissions):")
+
+    try:
+        return inquirer.fuzzy(
+            message="Management account:",
+            choices=choices,
+            instruction="(type to filter)",
+        ).execute()
+    except KeyboardInterrupt:
+        return None
+
+
 def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> bool:
     """Run first-time setup flow.
 
@@ -133,37 +239,46 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
 
     logger.info(f"Found {len(sso_accounts)} accounts via SSO")
 
-    # Create a temporary profile for the first account to query Organizations
-    first_account = sso_accounts[0]
-    temp_alias = first_account.account_name.lower().replace(" ", "-")
+    # Sort accounts by management pattern (root, main, manager, management)
+    sorted_accounts = _sort_accounts_by_management_pattern(sso_accounts)
 
-    # Strip common prefixes for cleaner aliases
-    for prefix in ["provision-iam-"]:
-        if temp_alias.startswith(prefix):
-            temp_alias = temp_alias[len(prefix):]
+    # Try heuristic-sorted accounts first
+    org_id = None
+    tree = None
+    tried_accounts = set()
 
-    logger.info(f"Using account {first_account.account_name} to query Organizations...")
+    for account in sorted_accounts:
+        # Only try accounts that match heuristic patterns
+        name_lower = account.account_name.lower()
+        if not any(p in name_lower for p in MANAGEMENT_PATTERNS):
+            break  # No more heuristic matches, move to user selection
 
-    ensure_profile(
-        profile_name=temp_alias,
-        account_id=first_account.account_id,
-        account_name=first_account.account_name,
-    )
+        tried_accounts.add(account.account_id)
+        success, tree, org_id = _try_organizations_query(account, sso_url)
+        if success:
+            break
 
-    # SSO login for the temp profile
-    result = run_sso_login(temp_alias)
-    if not result.success:
-        logger.error("SSO login failed for temp profile")
+    # Fallback: ask user to select if heuristics failed
+    if not tree:
+        remaining = [a for a in sso_accounts if a.account_id not in tried_accounts]
+
+        if remaining:
+            logger.info("")
+            logger.info("Heuristic selection failed. Please select the management account.")
+            selected = _ask_user_to_select_management_account(remaining)
+            if selected:
+                success, tree, org_id = _try_organizations_query(selected, sso_url)
+
+    if not tree:
+        logger.error("Failed to query Organizations API. Is the selected account the management account?")
         return False
 
-    # Discover organization hierarchy (this will get MasterAccountId)
+    management_account_id = tree.get("management_account_id", "")
+
+    if management_account_id:
+        logger.info(f"Management account detected: {management_account_id}")
+
     try:
-        org_id, tree = discover_organization(profile_name=temp_alias)
-        management_account_id = tree.get("management_account_id", "")
-
-        if management_account_id:
-            logger.info(f"Management account detected: {management_account_id}")
-
         if skip_vpc:
             # Auth only - just create profiles, no inventory
             logger.info("Skipping resource discovery (--skip-vpc)")
