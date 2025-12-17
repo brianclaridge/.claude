@@ -64,3 +64,52 @@ Do NOT invoke git-manager when:
 - User explicitly declines ("don't commit", "skip commit")
 - Task was read-only analysis or planning only
 - No file changes were made during implementation
+
+## Post-Execution Plan Update
+
+Before invoking git-manager, offer to update the plan file if any of these occurred:
+
+- Scope changed during implementation
+- Unexpected issues discovered
+- Approach modified from original plan
+- User provided mid-execution feedback
+
+### Update Format
+
+Append an "Execution Notes" section to the plan file:
+
+```markdown
+---
+
+## Execution Notes
+
+**Deviations from original plan:**
+- {bullet points of changes}
+
+**Issues discovered:**
+- {any problems encountered}
+
+**Additional work completed:**
+- {unplanned items that were done}
+```
+
+### Update Trigger
+
+Use AskUserQuestion before git-manager:
+
+```json
+{
+  "question": "The plan may have changed during execution. Update the plan file?",
+  "header": "Plan Update",
+  "options": [
+    {"label": "Yes, append notes", "description": "Add execution notes to plan file"},
+    {"label": "No, keep original", "description": "Plan file remains unchanged"}
+  ],
+  "multiSelect": false
+}
+```
+
+**Skip this prompt if:**
+- No deviations from plan occurred
+- Plan was trivial (single-file change)
+- User selected "Commit & Plan" mode (silent workflow)

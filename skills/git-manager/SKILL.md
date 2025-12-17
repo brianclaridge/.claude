@@ -190,8 +190,11 @@ When "Commit & Plan (Recommended)" selected:
 6. Commit with generated message
 7. Skip push confirmation entirely
 8. Invoke `EnterPlanMode` immediately
+9. **STOP** - Do NOT ask follow-up questions. Wait silently for user input.
 
-This is the recommended workflow for iterative development - commit your work and immediately plan the next task.
+This is the recommended workflow for iterative development - commit your work and immediately enter plan mode. The user will provide the next task when ready.
+
+**CRITICAL**: Unlike Auto and Interactive modes, Commit & Plan does NOT proceed to Step 7 (What's next?). The workflow ends after invoking EnterPlanMode.
 
 #### Auto Mode
 

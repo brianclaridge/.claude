@@ -39,8 +39,6 @@ def discover_organization(profile_name: str = "root") -> tuple[str, dict[str, An
     Returns:
         Tuple of (organization_id, organization_tree)
     """
-    logger.info("Discovering organization hierarchy...")
-
     tree = _discover_org(profile_name)
     org_id = get_organization_id(profile_name) or tree.get("organization_id", "unknown")
 
