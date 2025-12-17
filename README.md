@@ -9,6 +9,11 @@
 - [PowerShell 7+](https://github.com/PowerShell/PowerShell) (`pwsh`)
 - [Task](https://taskfile.dev/) (Taskfile runner)
 
+### Optional -- But helpful
+
+- [github cli](https://cli.github.com/)
+- [gitlab cli](https://gitlab.com/gitlab-org/cli/-/releases)
+
 ## **CRITICAL**
 
 > docker-compose uses both bind and volume mounts. The following relative and absolute paths MUST be allowed to Docker Desktop so they can be read or written to:
