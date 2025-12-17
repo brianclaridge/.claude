@@ -60,26 +60,28 @@ def get_sso_start_url() -> str:
     return url
 
 
-def get_root_account_id() -> str:
-    """Get root/management account ID from environment."""
-    account_id = os.environ.get("AWS_ROOT_ACCOUNT_ID", "")
-    if not account_id:
-        raise ValueError(
-            "AWS_ROOT_ACCOUNT_ID not set.\n"
-            "Add to .env: AWS_ROOT_ACCOUNT_ID=\"123456789012\""
-        )
-    return account_id
+def get_root_account_id() -> str | None:
+    """Get root/management account ID from environment (deprecated).
+
+    DEPRECATED: Use get_manager_account() instead. The management account
+    is now auto-detected from AWS Organizations API.
+
+    Returns:
+        Account ID if set, None otherwise
+    """
+    return os.environ.get("AWS_ROOT_ACCOUNT_ID") or None
 
 
-def get_root_account_name() -> str:
-    """Get root/management account name from environment."""
-    name = os.environ.get("AWS_ROOT_ACCOUNT_NAME", "")
-    if not name:
-        raise ValueError(
-            "AWS_ROOT_ACCOUNT_NAME not set.\n"
-            "Add to .env: AWS_ROOT_ACCOUNT_NAME=\"your-org\""
-        )
-    return name
+def get_root_account_name() -> str | None:
+    """Get root/management account name from environment (deprecated).
+
+    DEPRECATED: Use get_manager_account() instead. The management account
+    is now auto-detected from AWS Organizations API.
+
+    Returns:
+        Account name if set, None otherwise
+    """
+    return os.environ.get("AWS_ROOT_ACCOUNT_NAME") or None
 
 
 def get_default_region() -> str:
@@ -110,8 +112,15 @@ def load_config() -> dict[str, Any]:
 def save_config(
     accounts: dict[str, dict[str, Any]],
     organization_id: str,
+    management_account_id: str | None = None,
 ) -> None:
-    """Save accounts.yml."""
+    """Save accounts.yml.
+
+    Args:
+        accounts: Dict of alias -> account config
+        organization_id: AWS Organization ID (o-xxx)
+        management_account_id: Management account ID (auto-detected)
+    """
     config_path = get_accounts_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -122,6 +131,10 @@ def save_config(
         "sso_start_url": get_sso_start_url(),
         "accounts": accounts,
     }
+
+    # Add management_account_id if provided
+    if management_account_id:
+        config["management_account_id"] = management_account_id
 
     with open(config_path, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
@@ -153,3 +166,38 @@ def list_accounts() -> list[dict[str, Any]]:
         {**data, "alias": alias}
         for alias, data in sorted(accounts.items())
     ]
+
+
+def get_management_account_id() -> str | None:
+    """Get management account ID from accounts.yml.
+
+    Returns:
+        Management account ID if stored, None otherwise
+    """
+    if not config_exists():
+        return None
+    config = load_config()
+    return config.get("management_account_id")
+
+
+def get_manager_account() -> dict[str, Any] | None:
+    """Get the management account from accounts.yml.
+
+    Finds the account with is_manager=True flag.
+
+    Returns:
+        Account dict with alias key, or None if not found
+    """
+    accounts = load_accounts()
+    for alias, data in accounts.items():
+        if data.get("is_manager"):
+            return {**data, "alias": alias}
+
+    # Fallback: Check if management_account_id is stored
+    management_id = get_management_account_id()
+    if management_id:
+        for alias, data in accounts.items():
+            if data.get("id") == management_id:
+                return {**data, "alias": alias}
+
+    return None

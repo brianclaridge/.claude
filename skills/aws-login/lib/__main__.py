@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""AWS SSO authentication entry point (v1.0 split architecture).
+"""AWS SSO authentication entry point (v1.1 auto-discovery).
 
 Usage:
     python -m lib [account_alias] [--force]
     ./scripts/aws-auth.ps1 [account_alias] [-Force]
+
+Changes from v1.0:
+- Management account auto-detected from Organizations API (MasterAccountId)
+- No special "root" profile - all accounts use their alias
+- AWS_ROOT_ACCOUNT_ID and AWS_ROOT_ACCOUNT_NAME env vars no longer required
 """
 
 import argparse
@@ -14,8 +19,7 @@ from loguru import logger
 from .config import (
     config_exists,
     get_account,
-    get_root_account_id,
-    get_root_account_name,
+    get_manager_account,
     get_sso_start_url,
     list_accounts,
     save_config,
@@ -23,6 +27,7 @@ from .config import (
 from .discovery import discover_organization, enrich_and_save_inventory
 from .profiles import clear_aws_config, ensure_profile, set_default_profile
 from .sso import check_credentials_valid, run_sso_login
+from .sso_discovery import poll_for_token, discover_available_accounts
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -37,14 +42,59 @@ def setup_logging(verbose: bool = False) -> None:
     )
 
 
+def _find_manager_account_alias(
+    accounts_config: dict,
+    management_account_id: str,
+) -> str | None:
+    """Find the alias of the management account.
+
+    Args:
+        accounts_config: Dict of alias -> account config
+        management_account_id: The MasterAccountId from Organizations API
+
+    Returns:
+        Alias of the management account, or None if not found
+    """
+    for alias, data in accounts_config.items():
+        if data.get("id") == management_account_id:
+            return alias
+    return None
+
+
+def _bootstrap_initial_profile(sso_url: str) -> str | None:
+    """Bootstrap authentication via SSO device flow.
+
+    This is used when no profiles exist yet. We authenticate via device
+    code flow and discover available accounts.
+
+    Args:
+        sso_url: AWS SSO start URL
+
+    Returns:
+        Access token if successful, None otherwise
+    """
+    logger.info("Starting SSO device authorization...")
+    logger.info("")
+
+    result = poll_for_token(sso_url)
+
+    if not result.success:
+        logger.error(f"SSO authentication failed: {result.error}")
+        return None
+
+    logger.success("SSO authentication successful")
+    return result.access_token
+
+
 def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> bool:
     """Run first-time setup flow.
 
     1. Clear existing ~/.aws/config
-    2. Create root profile and SSO login
-    3. Discover organization hierarchy
-    4. Discover inventory for all accounts
-    5. Save accounts.yml and inventory files
+    2. Authenticate via SSO device flow
+    3. Discover available accounts via SSO
+    4. Pick any account to query Organizations API
+    5. Auto-detect management account from MasterAccountId
+    6. Discover org hierarchy and save config
 
     Args:
         skip_vpc: If True, skip all resource discovery (auth only)
@@ -60,33 +110,59 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
 
     try:
         sso_url = get_sso_start_url()
-        root_id = get_root_account_id()
-        root_name = get_root_account_name()
     except ValueError as e:
         logger.error(str(e))
         return False
 
     logger.info(f"SSO URL: {sso_url}")
-    logger.info(f"Root Account: {root_name} ({root_id})")
     logger.info("")
 
-    # Create root profile and login
-    ensure_profile(profile_name="root", account_id=root_id, account_name=root_name)
-    set_default_profile("root")
-
-    logger.info("Authenticating to root account...")
-    result = run_sso_login("root")
-
-    if not result.success:
-        logger.error("SSO login failed")
+    # Bootstrap via device auth flow
+    access_token = _bootstrap_initial_profile(sso_url)
+    if not access_token:
         return False
 
-    logger.success("Root account authenticated")
+    # Discover available accounts via SSO
     logger.info("")
+    logger.info("Discovering available accounts...")
+    sso_accounts = discover_available_accounts(access_token)
 
-    # Discover organization
+    if not sso_accounts:
+        logger.error("No accounts available. Check SSO permissions.")
+        return False
+
+    logger.info(f"Found {len(sso_accounts)} accounts via SSO")
+
+    # Create a temporary profile for the first account to query Organizations
+    first_account = sso_accounts[0]
+    temp_alias = first_account.account_name.lower().replace(" ", "-")
+
+    # Strip common prefixes for cleaner aliases
+    for prefix in ["provision-iam-"]:
+        if temp_alias.startswith(prefix):
+            temp_alias = temp_alias[len(prefix):]
+
+    logger.info(f"Using account {first_account.account_name} to query Organizations...")
+
+    ensure_profile(
+        profile_name=temp_alias,
+        account_id=first_account.account_id,
+        account_name=first_account.account_name,
+    )
+
+    # SSO login for the temp profile
+    result = run_sso_login(temp_alias)
+    if not result.success:
+        logger.error("SSO login failed for temp profile")
+        return False
+
+    # Discover organization hierarchy (this will get MasterAccountId)
     try:
-        org_id, tree = discover_organization(profile_name="root")
+        org_id, tree = discover_organization(profile_name=temp_alias)
+        management_account_id = tree.get("management_account_id", "")
+
+        if management_account_id:
+            logger.info(f"Management account detected: {management_account_id}")
 
         if skip_vpc:
             # Auth only - just create profiles, no inventory
@@ -103,6 +179,10 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
                     account_name=account.get("name"),
                 )
                 ou_path = account.get("ou_path", "root")
+
+                # Flag the management account
+                is_manager = account["id"] == management_account_id
+
                 accounts_config[alias] = {
                     "id": account["id"],
                     "name": account.get("name", ""),
@@ -111,8 +191,17 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
                     "inventory_path": None,
                 }
 
-            save_config(accounts_config, org_id)
+                if is_manager:
+                    accounts_config[alias]["is_manager"] = True
+
+            save_config(accounts_config, org_id, management_account_id)
             logger.success(f"Saved {len(accounts_config)} accounts (auth only)")
+
+            # Set default profile to manager account
+            manager_alias = _find_manager_account_alias(accounts_config, management_account_id)
+            if manager_alias:
+                set_default_profile(manager_alias)
+                logger.info(f"Default profile: {manager_alias}")
         else:
             # Full discovery with inventory
             accounts_config = enrich_and_save_inventory(
@@ -121,8 +210,20 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
                 profile_creator=ensure_profile,
                 skip_resources=skip_resources,
             )
-            save_config(accounts_config, org_id)
+
+            # Add is_manager flag
+            for alias, data in accounts_config.items():
+                if data.get("id") == management_account_id:
+                    data["is_manager"] = True
+
+            save_config(accounts_config, org_id, management_account_id)
             logger.success(f"Saved {len(accounts_config)} accounts with inventory")
+
+            # Set default profile to manager account
+            manager_alias = _find_manager_account_alias(accounts_config, management_account_id)
+            if manager_alias:
+                set_default_profile(manager_alias)
+                logger.info(f"Default profile: {manager_alias}")
 
         return True
 
@@ -134,6 +235,8 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
 def rebuild_config(skip_vpc: bool = False, skip_resources: bool = False) -> bool:
     """Rebuild config without forcing re-auth.
 
+    Uses the manager account (is_manager=True) for organization discovery.
+
     Args:
         skip_vpc: If True, skip all resource discovery
         skip_resources: If True, skip S3/SQS/SNS/SES
@@ -144,33 +247,56 @@ def rebuild_config(skip_vpc: bool = False, skip_resources: bool = False) -> bool
     logger.info("=== AWS Config Rebuild ===")
     logger.info("")
 
-    # Check if root credentials still valid
-    if check_credentials_valid("root"):
-        logger.info("Root credentials valid, skipping SSO login")
+    # Find manager account to use for org discovery
+    manager = get_manager_account()
+    if not manager:
+        # Fallback: try first account
+        accounts = list_accounts()
+        if not accounts:
+            logger.error("No accounts configured. Run --setup first.")
+            return False
+        manager = accounts[0]
+        logger.warning(f"No manager account flagged, using: {manager['alias']}")
+
+    manager_alias = manager["alias"]
+    manager_id = manager.get("id", "")
+    manager_name = manager.get("name", manager_alias)
+
+    # Ensure profile exists
+    ensure_profile(
+        profile_name=manager_alias,
+        account_id=manager_id,
+        account_name=manager_name,
+        sso_role=manager.get("sso_role"),
+    )
+
+    # Check if credentials still valid
+    if check_credentials_valid(manager_alias):
+        logger.info(f"Credentials valid for {manager_alias}, skipping SSO login")
     else:
-        logger.info("Root credentials expired, running SSO login...")
-        result = run_sso_login("root")
+        logger.info(f"Credentials expired for {manager_alias}, running SSO login...")
+        result = run_sso_login(manager_alias)
         if not result.success:
             logger.error("SSO login failed")
             return False
-        logger.success("Root account authenticated")
+        logger.success(f"{manager_alias} authenticated")
 
     logger.info("")
     clear_aws_config()
 
-    # Recreate root profile
-    try:
-        root_id = get_root_account_id()
-        root_name = get_root_account_name()
-        ensure_profile(profile_name="root", account_id=root_id, account_name=root_name)
-        set_default_profile("root")
-    except ValueError as e:
-        logger.error(str(e))
-        return False
+    # Recreate manager profile
+    ensure_profile(
+        profile_name=manager_alias,
+        account_id=manager_id,
+        account_name=manager_name,
+        sso_role=manager.get("sso_role"),
+    )
+    set_default_profile(manager_alias)
 
     # Discover and save
     try:
-        org_id, tree = discover_organization(profile_name="root")
+        org_id, tree = discover_organization(profile_name=manager_alias)
+        management_account_id = tree.get("management_account_id", "")
 
         if skip_vpc:
             from aws_inspector.services.organizations import collect_all_accounts
@@ -184,6 +310,9 @@ def rebuild_config(skip_vpc: bool = False, skip_resources: bool = False) -> bool
                     account_id=account["id"],
                     account_name=account.get("name"),
                 )
+
+                is_manager = account["id"] == management_account_id
+
                 accounts_config[alias] = {
                     "id": account["id"],
                     "name": account.get("name", ""),
@@ -192,7 +321,10 @@ def rebuild_config(skip_vpc: bool = False, skip_resources: bool = False) -> bool
                     "inventory_path": None,
                 }
 
-            save_config(accounts_config, org_id)
+                if is_manager:
+                    accounts_config[alias]["is_manager"] = True
+
+            save_config(accounts_config, org_id, management_account_id)
             logger.success(f"Rebuilt {len(accounts_config)} accounts (auth only)")
         else:
             accounts_config = enrich_and_save_inventory(
@@ -201,7 +333,13 @@ def rebuild_config(skip_vpc: bool = False, skip_resources: bool = False) -> bool
                 profile_creator=ensure_profile,
                 skip_resources=skip_resources,
             )
-            save_config(accounts_config, org_id)
+
+            # Add is_manager flag
+            for alias, data in accounts_config.items():
+                if data.get("id") == management_account_id:
+                    data["is_manager"] = True
+
+            save_config(accounts_config, org_id, management_account_id)
             logger.success(f"Rebuilt {len(accounts_config)} accounts with inventory")
 
         return True
@@ -216,8 +354,11 @@ def build_searchable_choice(acc: dict) -> dict:
     alias = acc["alias"]
     name = acc.get("name", "")
     ou_path = acc.get("ou_path", "")
+    is_manager = acc.get("is_manager", False)
 
     parts = [f"{alias} - {name}"]
+    if is_manager:
+        parts.append("(manager)")
     if ou_path:
         parts.append(f"OU:{ou_path}")
 
@@ -249,9 +390,16 @@ def select_account_interactive() -> str | None:
     table.add_column("Alias", style="cyan")
     table.add_column("Name", style="magenta")
     table.add_column("OU Path", style="dim")
+    table.add_column("Manager", style="green")
 
     for acc in accounts:
-        table.add_row(acc["alias"], acc.get("name", "-"), acc.get("ou_path", "-"))
+        manager_flag = "yes" if acc.get("is_manager") else ""
+        table.add_row(
+            acc["alias"],
+            acc.get("name", "-"),
+            acc.get("ou_path", "-"),
+            manager_flag,
+        )
 
     console.print(table)
     console.print()
@@ -284,6 +432,8 @@ def login_to_account(alias: str, force: bool = False) -> bool:
     logger.info(f"Account: {account_name} ({account_id})")
     if account.get("ou_path"):
         logger.info(f"OU Path: {account['ou_path']}")
+    if account.get("is_manager"):
+        logger.info("Role: Management Account")
 
     ensure_profile(
         profile_name=alias,
@@ -311,8 +461,8 @@ def login_to_account(alias: str, force: bool = False) -> bool:
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="AWS SSO authentication",
-        epilog="Examples:\n  aws-auth root\n  aws-auth --rebuild\n  aws-auth",
+        description="AWS SSO authentication (v1.1 auto-discovery)",
+        epilog="Examples:\n  aws-auth sandbox\n  aws-auth --rebuild\n  aws-auth",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("account", nargs="?", help="Account alias")

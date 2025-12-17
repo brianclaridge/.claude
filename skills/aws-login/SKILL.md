@@ -8,6 +8,10 @@ allowed-tools: Bash, Read, AskUserQuestion
 
 Authenticate to AWS using SSO (Single Sign-On) with optional resource discovery.
 
+## Version
+
+**v1.1** - Auto-discovery of management account (no hardcoded env vars)
+
 ## Activation Triggers
 
 - `/auth-aws` slash command
@@ -19,10 +23,10 @@ Environment variables in `.env`:
 
 ```bash
 AWS_SSO_START_URL="https://your-org.awsapps.com/start"
-AWS_ROOT_ACCOUNT_ID="123456789012"
-AWS_ROOT_ACCOUNT_NAME="your-org"
 AWS_DEFAULT_REGION="us-east-1"  # Optional, defaults to us-east-1
 ```
+
+**Note:** `AWS_ROOT_ACCOUNT_ID` and `AWS_ROOT_ACCOUNT_NAME` are no longer required. The management account is auto-detected from the AWS Organizations API (`MasterAccountId`).
 
 ## Usage
 
@@ -32,8 +36,9 @@ AWS_DEFAULT_REGION="us-east-1"  # Optional, defaults to us-east-1
 # Interactive account selection
 ./scripts/aws-auth.ps1
 
-# Login to specific account
-./scripts/aws-auth.ps1 root
+# Login to specific account (by alias)
+./scripts/aws-auth.ps1 sandbox
+./scripts/aws-auth.ps1 provision-iam  # Management account uses its alias
 
 # Force re-login
 ./scripts/aws-auth.ps1 sandbox -Force
@@ -61,17 +66,27 @@ uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python -m lib [account] [--fo
 uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python -m lib --setup --skip-resources
 ```
 
-## First-Run Setup
+## First-Run Setup (v1.1 Auto-Discovery)
 
 When no `accounts.yml` config exists:
 
-1. Reads env vars for root account configuration
-2. Creates AWS CLI profile for root account
-3. Runs SSO login for root (presents URL and device code)
-4. Discovers accounts from AWS Organizations
-5. Discovers resources for each account (parallel, 8 workers)
-6. Saves auth config to `${CLAUDE_DATA_PATH}/.data/aws/accounts.yml`
-7. Saves inventory per account to `${CLAUDE_DATA_PATH}/.data/aws/{org-id}/{ou-path}/{alias}.yml`
+1. **SSO Device Authorization**: Uses SSO OIDC to authenticate without pre-configured profiles
+2. **Account Discovery**: Lists available accounts via `sso.list_accounts()`
+3. **Organization Query**: Uses any available account to query AWS Organizations
+4. **Management Account Detection**: Auto-detects from `MasterAccountId` in Organizations API
+5. **Profile Creation**: Creates AWS CLI profiles for all accounts (using aliases, not "root")
+6. **Resource Discovery**: Discovers resources for each account (parallel, 8 workers)
+7. **Config Save**: Saves auth config with `is_manager: true` flag on management account
+
+### Profile Naming
+
+All accounts use their **alias** as the profile name - there is no special "root" profile:
+
+| Account | Profile Name | accounts.yml Flag |
+|---------|--------------|-------------------|
+| Provision IAM Manager | `provision-iam` | `is_manager: true` |
+| Sandbox | `sandbox` | |
+| Operations | `operations` | |
 
 ## Discovery Flags
 
@@ -109,33 +124,43 @@ Example:
 .data/aws/
 ├── accounts.yml
 └── o-abc123xyz/
+    ├── root/
+    │   └── provision-iam.yml       # Management account
     ├── piam-dev-accounts/
     │   └── sandbox.yml
     └── piam-ops-accounts/
         └── operations.yml
 ```
 
-### accounts.yml Schema
+### accounts.yml Schema (v1.1)
 
 ```yaml
 schema_version: "1.0"
 organization_id: "o-abc123xyz"
+management_account_id: "883269661255"  # Auto-detected from MasterAccountId
 default_region: us-east-1
 sso_start_url: "https://your-org.awsapps.com/start"
 
 accounts:
+  provision-iam:                    # Management account uses its alias
+    id: "883269661255"
+    name: "Provision IAM Manager"
+    ou_path: "root"
+    sso_role: "AdministratorAccess"
+    is_manager: true                # Flags this as the management account
+    inventory_path: "root/provision-iam.yml"
   sandbox:
     id: "411713055198"
     name: "provision-iam-sandbox"
     ou_path: "piam-dev-accounts"
     sso_role: "AdministratorAccess"
     inventory_path: "piam-dev-accounts/sandbox.yml"
-  root:
+  operations:
     id: "123456789012"
-    name: "Management Account"
-    ou_path: "root"
+    name: "provision-iam-operations"
+    ou_path: "piam-ops-accounts"
     sso_role: "AdministratorAccess"
-    inventory_path: "root/root.yml"
+    inventory_path: "piam-ops-accounts/operations.yml"
 ```
 
 ### Inventory File Schema ({alias}.yml)
@@ -200,28 +225,39 @@ ses_identities:
 skills/aws-login/
 ├── lib/
 │   ├── __init__.py
-│   ├── __main__.py    # Entry point with CLI
-│   ├── config.py      # Auth config (accounts.yml)
-│   ├── sso.py         # SSO login with URL detection
-│   ├── discovery.py   # Resource discovery (uses aws_inspector)
-│   └── profiles.py    # AWS CLI profile management
+│   ├── __main__.py       # Entry point with CLI (v1.1)
+│   ├── config.py         # Auth config (accounts.yml)
+│   ├── sso.py            # SSO login with URL detection
+│   ├── sso_discovery.py  # SSO device auth flow (NEW in v1.1)
+│   ├── discovery.py      # Resource discovery (uses aws_inspector)
+│   └── profiles.py       # AWS CLI profile management
 ├── pyproject.toml
 └── SKILL.md
 
-lib/aws_inspector/      # Shared library
+lib/aws_inspector/        # Shared library
 ├── __init__.py
 ├── pyproject.toml
 ├── core/
-│   ├── session.py     # Boto3 session factory
-│   └── schemas.py     # Pydantic models
+│   ├── session.py        # Boto3 session factory
+│   └── schemas.py        # Pydantic models
 ├── services/
-│   ├── ec2.py         # VPC, subnet, IGW, NAT, EIP
-│   ├── s3.py          # S3 bucket discovery
-│   ├── sqs.py         # SQS queue discovery
-│   ├── sns.py         # SNS topic discovery
-│   ├── ses.py         # SES identity discovery
-│   └── organizations.py  # Org/account discovery
+│   ├── ec2.py            # VPC, subnet, IGW, NAT, EIP
+│   ├── s3.py             # S3 bucket discovery
+│   ├── sqs.py            # SQS queue discovery
+│   ├── sns.py            # SNS topic discovery
+│   ├── ses.py            # SES identity discovery
+│   └── organizations.py  # Org/account discovery (MasterAccountId)
 └── inventory/
-    ├── reader.py      # Load inventory files
-    └── writer.py      # Save inventory files
+    ├── reader.py         # Load inventory files
+    └── writer.py         # Save inventory files
 ```
+
+## Migration from v1.0
+
+If you have existing configuration from v1.0:
+
+1. Run `--rebuild` to regenerate config with the new schema
+2. The management account will be auto-detected and flagged with `is_manager: true`
+3. The old "root" profile will be replaced with the account's alias
+
+You can remove `AWS_ROOT_ACCOUNT_ID` and `AWS_ROOT_ACCOUNT_NAME` from your `.env` file.

@@ -127,6 +127,7 @@ def discover_organization(
         org_response = org.describe_organization()
         org_data = org_response.get("Organization", {})
         org_id = org_data.get("Id", "")
+        management_account_id = org_data.get("MasterAccountId", "")
 
         # Get root ID
         roots_response = org.list_roots()
@@ -144,6 +145,7 @@ def discover_organization(
 
         # Add metadata
         tree["organization_id"] = org_id
+        tree["management_account_id"] = management_account_id
         tree["root_id"] = root_id
         tree["root_name"] = root_name
 

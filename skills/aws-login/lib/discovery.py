@@ -113,6 +113,7 @@ def enrich_and_save_inventory(
     """
     accounts = list(collect_all_accounts(tree))
     total = len(accounts)
+    management_account_id = tree.get("management_account_id", "")
 
     if not accounts:
         return {}
@@ -163,6 +164,7 @@ def enrich_and_save_inventory(
                 save_inventory(org_id, ou_path, alias, inventory)
 
                 # Build accounts.yml entry
+                is_manager = account["id"] == management_account_id
                 accounts_config[alias] = {
                     "id": account["id"],
                     "name": account.get("name", ""),
@@ -170,6 +172,8 @@ def enrich_and_save_inventory(
                     "sso_role": account.get("sso_role", "AdministratorAccess"),
                     "inventory_path": get_relative_inventory_path(ou_path, alias),
                 }
+                if is_manager:
+                    accounts_config[alias]["is_manager"] = True
 
                 # Log progress
                 vpc_count = len(inventory.vpcs)
@@ -183,6 +187,7 @@ def enrich_and_save_inventory(
                 logger.warning(f"Discovery failed for {alias}: {e}")
                 # Still add account to config even if discovery failed
                 ou_path = account.get("ou_path", "root")
+                is_manager = account["id"] == management_account_id
                 accounts_config[alias] = {
                     "id": account["id"],
                     "name": account.get("name", ""),
@@ -190,6 +195,8 @@ def enrich_and_save_inventory(
                     "sso_role": account.get("sso_role", "AdministratorAccess"),
                     "inventory_path": None,  # No inventory on failure
                 }
+                if is_manager:
+                    accounts_config[alias]["is_manager"] = True
 
     logger.info(f"Discovery complete for {total} accounts")
     return accounts_config
