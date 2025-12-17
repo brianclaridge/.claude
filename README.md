@@ -44,6 +44,41 @@ cd .claude/
 task claude
 ```
 
+### [OPTIONAL] Add as submodule
+
+```bash
+# optional, add .claude as a submodule
+git submodule add -b main https://github.com/brianclaridge/.claude.git
+git submodule update --init --recursive --remote
+```
+
+### Updating .claude Submodule
+
+```pwsh
+# run
+task claude:fetch
+
+# or
+git submodule update --init --remote --merge .claude
+
+# or
+git -C .claude checkout main && git -C .claude pull origin main
+
+# nuclear reset
+git -C .claude fetch origin
+git -C .claude reset --hard origin/main
+git -C .claude clean -fd
+```
+
+### Removing .claude Submodule
+
+```bash
+git submodule deinit -f .claude
+rm -rf .git/modules/.claude
+git rm -f .claude
+git commit -m "Remove .claude submodule"
+```
+
 ## Slash Commands
 
 | Command | Description |
@@ -92,41 +127,6 @@ task claude
 | taskfile-manager | Validate Taskfile best practices | "/taskfile", "validate tasks" |
 | health-check | Validate environment | "/health", "check setup" |
 | rule-builder | Scaffold new rules | "/build-rule", "create rule" |
-
-## [OPTIONAL] Add as submodule
-
-```bash
-# optional, add .claude as a submodule
-git submodule add -b main https://github.com/brianclaridge/.claude.git
-git submodule update --init --recursive --remote
-```
-
-### Updating .claude Submodule
-
-```pwsh
-# run
-task claude:fetch
-
-# or
-git submodule update --init --remote --merge .claude
-
-# or
-git -C .claude checkout main && git -C .claude pull origin main
-
-# nuclear reset
-git -C .claude fetch origin
-git -C .claude reset --hard origin/main
-git -C .claude clean -fd
-```
-
-### Removing .claude Submodule
-
-```bash
-git submodule deinit -f .claude
-rm -rf .git/modules/.claude
-git rm -f .claude
-git commit -m "Remove .claude submodule"
-```
 
 ## Stacks
 
