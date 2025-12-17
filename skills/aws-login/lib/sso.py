@@ -94,9 +94,14 @@ def run_sso_login(profile_name: str, no_browser: bool = True) -> SSOResult:
             # Show formatted table as soon as we have both URL and code
             if sso_url and device_code and not url_shown:
                 url_shown = True
+                # Append user_code to URL if not already present
+                display_url = sso_url
+                if "user_code=" not in sso_url:
+                    separator = "&" if "?" in sso_url else "?"
+                    display_url = f"{sso_url}{separator}user_code={device_code}"
                 print(f"\n| Field | Value |")
                 print(f"|-------|-------|")
-                print(f"| URL   | {sso_url} |")
+                print(f"| URL   | {display_url} |")
                 print(f"| Code  | {device_code} |")
                 print(f"\nOpen URL in browser and enter code to authenticate.\n", flush=True)
 
@@ -109,6 +114,10 @@ def run_sso_login(profile_name: str, no_browser: bool = True) -> SSOResult:
             output="".join(output_lines),
         )
 
+    except KeyboardInterrupt:
+        if process:
+            process.terminate()
+        raise  # Re-raise to let caller handle graceful exit
     except Exception as e:
         logger.error(f"SSO login failed: {e}")
         return SSOResult(success=False, error=str(e))

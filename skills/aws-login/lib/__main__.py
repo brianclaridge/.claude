@@ -613,4 +613,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        print("\n\nOperation cancelled by user.")
+        sys.exit(130)  # Standard exit code for SIGINT
