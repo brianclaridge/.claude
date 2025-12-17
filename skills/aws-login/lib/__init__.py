@@ -1,10 +1,9 @@
-"""AWS Login skill library (v3.0 schema)."""
+"""AWS Login skill library (v1.0 split architecture)."""
 
 from .config import (
     config_exists,
-    flatten_tree,
     get_account,
-    get_cache_path,
+    get_aws_data_path,
     get_default_region,
     get_root_account_id,
     get_root_account_name,
@@ -15,12 +14,9 @@ from .config import (
     save_config,
 )
 from .discovery import (
-    collect_all_accounts,
-    discover_accounts,
-    discover_account_vpc,
     discover_organization,
-    enrich_tree_with_vpc,
-    generate_alias,
+    discover_account_inventory,
+    enrich_and_save_inventory,
 )
 from .profiles import clear_aws_config, ensure_profile, set_default_profile
 from .sso import check_credentials_valid, run_sso_login
@@ -28,9 +24,8 @@ from .sso import check_credentials_valid, run_sso_login
 __all__ = [
     # Config
     "config_exists",
-    "flatten_tree",
     "get_account",
-    "get_cache_path",
+    "get_aws_data_path",
     "get_default_region",
     "get_root_account_id",
     "get_root_account_name",
@@ -40,12 +35,9 @@ __all__ = [
     "load_config",
     "save_config",
     # Discovery
-    "collect_all_accounts",
-    "discover_accounts",
-    "discover_account_vpc",
     "discover_organization",
-    "enrich_tree_with_vpc",
-    "generate_alias",
+    "discover_account_inventory",
+    "enrich_and_save_inventory",
     # Profiles
     "clear_aws_config",
     "ensure_profile",

@@ -1,366 +1,125 @@
-"""AWS Organizations account discovery with OU hierarchy (v3.0 schema)."""
+"""AWS Organizations and resource discovery using aws_inspector library."""
 
-import json
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
-import boto3
-from botocore.exceptions import ClientError
 from loguru import logger
 
-from .config import get_cache_path, get_default_region, get_root_account_id
+# Add aws_inspector to path
+# Path: .claude/skills/aws-login/lib/discovery.py -> .claude/lib/aws_inspector
+_lib_path = Path(__file__).parent.parent.parent.parent / "lib" / "aws_inspector"
+if str(_lib_path) not in sys.path:
+    sys.path.insert(0, str(_lib_path))
 
-# Cache configuration
-CACHE_TTL_HOURS = 24
+from aws_inspector.core.schemas import AccountInventory
+from aws_inspector.services.ec2 import discover_vpcs, discover_elastic_ips
+from aws_inspector.services.s3 import discover_s3_buckets
+from aws_inspector.services.sqs import discover_sqs_queues
+from aws_inspector.services.sns import discover_sns_topics
+from aws_inspector.services.ses import discover_ses_identities
+from aws_inspector.services.organizations import (
+    discover_organization as _discover_org,
+    get_organization_id,
+    collect_all_accounts,
+)
+from aws_inspector.inventory.writer import save_inventory, get_relative_inventory_path
 
-# Prefixes to strip when generating aliases
-ALIAS_PREFIXES = ["provision-iam-", "client-"]
-
-
-def generate_alias(account_id: str, account_name: str, root_account_id: str) -> str:
-    """Generate account alias from name.
-
-    Rules:
-    - Root account → "root"
-    - Strip "provision-iam-" prefix (e.g., provision-iam-sandbox → sandbox)
-    - Strip "client-" prefix (e.g., client-acme → acme)
-    - Fallback: sanitize name (lowercase, replace spaces/underscores with hyphens)
-
-    Args:
-        account_id: AWS account ID
-        account_name: AWS account name
-        root_account_id: Root/management account ID
-
-    Returns:
-        Generated alias string
-    """
-    if account_id == root_account_id:
-        return "root"
-
-    name = account_name.lower()
-
-    for prefix in ALIAS_PREFIXES:
-        if name.startswith(prefix):
-            return name[len(prefix):]
-
-    return name.replace(" ", "-").replace("_", "-")
+from .config import get_default_region
 
 
-def load_cache() -> dict[str, Any] | None:
-    """Load cached organization data if valid.
-
-    Returns:
-        Organization data or None if cache expired/missing
-    """
-    cache_path = get_cache_path()
-
-    if not cache_path.exists():
-        return None
-
-    try:
-        with open(cache_path) as f:
-            data = json.load(f)
-
-        cached_at = datetime.fromisoformat(data.get("cached_at", ""))
-        ttl = timedelta(hours=data.get("ttl_hours", CACHE_TTL_HOURS))
-
-        if datetime.now() - cached_at > ttl:
-            logger.debug("Cache expired")
-            return None
-
-        logger.debug("Using cached organization data")
-        return data.get("organization")
-
-    except (json.JSONDecodeError, ValueError, KeyError) as e:
-        logger.debug(f"Cache invalid: {e}")
-        return None
-
-
-def save_cache(organization: dict[str, Any]) -> None:
-    """Save organization data to cache.
-
-    Args:
-        organization: Organization tree
-    """
-    cache_path = get_cache_path()
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-
-    data = {
-        "cached_at": datetime.now().isoformat(),
-        "ttl_hours": CACHE_TTL_HOURS,
-        "organization": organization,
-    }
-
-    with open(cache_path, "w") as f:
-        json.dump(data, f, indent=2)
-
-    logger.debug("Cached organization data")
-
-
-def _traverse_ou(
-    org_client,
-    parent_id: str,
-    root_account_id: str,
-) -> dict[str, Any]:
-    """Recursively traverse OU tree and build dict-based structure.
-
-    Args:
-        org_client: boto3 organizations client
-        parent_id: Parent OU or root ID
-        root_account_id: Root account ID for alias detection
-
-    Returns:
-        Node with accounts (dict) and children (dict)
-    """
-    node = {"accounts": {}, "children": {}}
-
-    # Get child OUs
-    try:
-        ou_paginator = org_client.get_paginator("list_organizational_units_for_parent")
-        for page in ou_paginator.paginate(ParentId=parent_id):
-            for ou in page.get("OrganizationalUnits", []):
-                ou_name = ou["Name"]
-                child_node = _traverse_ou(org_client, ou["Id"], root_account_id)
-                child_node["ou_id"] = ou["Id"]
-                node["children"][ou_name] = child_node
-    except Exception as e:
-        logger.warning(f"Failed to list OUs for {parent_id}: {e}")
-
-    # Get accounts in this OU/root
-    try:
-        acc_paginator = org_client.get_paginator("list_accounts_for_parent")
-        for page in acc_paginator.paginate(ParentId=parent_id):
-            for acc in page.get("Accounts", []):
-                if acc["Status"] != "ACTIVE":
-                    continue
-
-                account_id = acc["Id"]
-                account_name = acc["Name"]
-                alias = generate_alias(account_id, account_name, root_account_id)
-
-                node["accounts"][alias] = {
-                    "id": account_id,
-                    "name": account_name,
-                    "sso_role": "AdministratorAccess",
-                }
-    except Exception as e:
-        logger.warning(f"Failed to list accounts for {parent_id}: {e}")
-
-    return node
-
-
-def discover_organization(profile_name: str = "root") -> dict[str, Any]:
-    """Discover organization with full OU hierarchy.
+def discover_organization(profile_name: str = "root") -> tuple[str, dict[str, Any]]:
+    """Discover organization hierarchy and return org_id + tree.
 
     Args:
         profile_name: AWS profile with Organizations access
 
     Returns:
-        Organization tree with dict-based accounts/children
-
-    Raises:
-        RuntimeError: If Organizations API call fails
+        Tuple of (organization_id, organization_tree)
     """
     logger.info("Discovering organization hierarchy...")
 
-    session = boto3.Session(profile_name=profile_name)
-    org_client = session.client("organizations")
-    root_account_id = get_root_account_id()
+    tree = _discover_org(profile_name)
+    org_id = get_organization_id(profile_name) or tree.get("organization_id", "unknown")
 
-    # Get organization root
-    roots = org_client.list_roots()["Roots"]
-    if not roots:
-        raise RuntimeError("No organization root found")
-
-    root = roots[0]
-    root_id = root["Id"]
-
-    # Traverse hierarchy
-    tree = _traverse_ou(org_client, root_id, root_account_id)
-    tree["name"] = "Root"
-    tree["ou_id"] = root_id
-
-    # Count accounts
-    def count_accounts(node: dict) -> int:
-        total = len(node.get("accounts", {}))
-        for child in node.get("children", {}).values():
-            total += count_accounts(child)
-        return total
-
-    total = count_accounts(tree)
-    logger.info(f"Discovered {total} accounts across organization")
-
-    return tree
+    return org_id, tree
 
 
-def discover_accounts(
-    profile_name: str = "root",
-    force_refresh: bool = False,
-) -> dict[str, Any]:
-    """Get organization tree with caching.
-
-    Args:
-        profile_name: AWS profile for Organizations access
-        force_refresh: If True, bypass cache
-
-    Returns:
-        Organization tree
-    """
-    if not force_refresh:
-        cached = load_cache()
-        if cached:
-            return cached
-
-    tree = discover_organization(profile_name)
-    save_cache(tree)
-    return tree
-
-
-def _get_public_subnet_ids(ec2, vpc_id: str) -> set[str]:
-    """Identify public subnets by checking for IGW routes.
-
-    Args:
-        ec2: boto3 EC2 client
-        vpc_id: VPC ID to query
-
-    Returns:
-        Set of subnet IDs that have IGW routes (public)
-    """
-    public_ids: set[str] = set()
-
-    try:
-        route_tables = ec2.describe_route_tables(
-            Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
-        )["RouteTables"]
-
-        for rt in route_tables:
-            has_igw = any(
-                r.get("GatewayId", "").startswith("igw-")
-                for r in rt.get("Routes", [])
-            )
-            if has_igw:
-                for assoc in rt.get("Associations", []):
-                    if assoc.get("SubnetId"):
-                        public_ids.add(assoc["SubnetId"])
-    except Exception as e:
-        logger.debug(f"Failed to get route tables for {vpc_id}: {e}")
-
-    return public_ids
-
-
-def discover_account_vpc(profile_name: str, region: str | None = None) -> dict[str, Any]:
-    """Discover ALL VPCs and subnets for an account.
+def discover_account_inventory(
+    profile_name: str,
+    region: str | None = None,
+    skip_resources: bool = False,
+) -> AccountInventory:
+    """Discover full inventory for an account.
 
     Args:
         profile_name: AWS CLI profile name
-        region: Region to query (defaults to AWS_DEFAULT_REGION)
+        region: AWS region
+        skip_resources: If True, skip S3/SQS/SNS/SES discovery
 
     Returns:
-        Dictionary with region and vpcs array (only VPCs with subnets)
+        AccountInventory with all discovered resources
     """
     region = region or get_default_region()
-    empty_result = {"region": region, "vpcs": []}
 
-    try:
-        session = boto3.Session(profile_name=profile_name, region_name=region)
-        ec2 = session.client("ec2")
+    # Always discover VPCs (core networking)
+    vpcs = discover_vpcs(profile_name, region)
+    eips = discover_elastic_ips(profile_name, region)
 
-        # Get ALL VPCs in the account
-        all_vpcs = ec2.describe_vpcs().get("Vpcs", [])
+    # Extended resources (optional)
+    s3_buckets = []
+    sqs_queues = []
+    sns_topics = []
+    ses_identities = []
 
-        if not all_vpcs:
-            return empty_result
+    if not skip_resources:
+        s3_buckets = discover_s3_buckets(profile_name, region)
+        sqs_queues = discover_sqs_queues(profile_name, region)
+        sns_topics = discover_sns_topics(profile_name, region)
+        ses_identities = discover_ses_identities(profile_name, region)
 
-        vpcs = []
-        for vpc in all_vpcs:
-            vpc_id = vpc["VpcId"]
-            is_default = vpc.get("IsDefault", False)
-
-            # Get subnets for this VPC
-            subnets_resp = ec2.describe_subnets(
-                Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
-            ).get("Subnets", [])
-
-            # Skip VPCs with no subnets
-            if not subnets_resp:
-                continue
-
-            # Determine which subnets are public
-            public_subnet_ids = _get_public_subnet_ids(ec2, vpc_id)
-
-            subnets = [
-                {
-                    "id": s["SubnetId"],
-                    "cidr": s["CidrBlock"],
-                    "az": s["AvailabilityZone"],
-                    "type": "public" if s["SubnetId"] in public_subnet_ids else "private",
-                }
-                for s in subnets_resp
-            ]
-
-            vpcs.append({
-                "id": vpc_id,
-                "cidr": vpc.get("CidrBlock", ""),
-                "is_default": is_default,
-                "subnets": subnets,
-            })
-
-        return {"region": region, "vpcs": vpcs}
-
-    except ClientError as e:
-        error_code = e.response.get("Error", {}).get("Code", "")
-        if error_code in ("ExpiredToken", "UnauthorizedAccess", "AccessDenied"):
-            logger.debug(f"No access to {profile_name}: {error_code}")
-        else:
-            logger.warning(f"VPC discovery failed for {profile_name}: {e}")
-        return empty_result
-    except Exception as e:
-        logger.warning(f"VPC discovery error for {profile_name}: {e}")
-        return empty_result
+    return AccountInventory(
+        account_id="",  # Set by caller
+        account_alias=profile_name,
+        discovered_at=datetime.utcnow(),
+        region=region,
+        vpcs=vpcs,
+        elastic_ips=eips,
+        s3_buckets=s3_buckets,
+        sqs_queues=sqs_queues,
+        sns_topics=sns_topics,
+        ses_identities=ses_identities,
+    )
 
 
-def collect_all_accounts(node: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
-    """Flatten tree to list of (alias, account_dict) tuples.
-
-    Args:
-        node: Organization tree node
-
-    Returns:
-        List of (alias, account) tuples from entire tree
-    """
-    accounts: list[tuple[str, dict[str, Any]]] = []
-
-    for alias, account in node.get("accounts", {}).items():
-        accounts.append((alias, account))
-
-    for child in node.get("children", {}).values():
-        accounts.extend(collect_all_accounts(child))
-
-    return accounts
-
-
-def enrich_tree_with_vpc(
-    node: dict[str, Any],
+def enrich_and_save_inventory(
+    org_id: str,
+    tree: dict[str, Any],
     profile_creator: Callable | None = None,
     max_workers: int = 8,
-) -> None:
-    """Add VPC info to all accounts in tree using parallel discovery.
+    skip_resources: bool = False,
+) -> dict[str, dict[str, Any]]:
+    """Discover inventory for all accounts and save to files.
 
     Args:
-        node: Organization tree node (mutated in place)
+        org_id: Organization ID
+        tree: Organization tree from discover_organization
         profile_creator: Function to create AWS CLI profiles
-        max_workers: Max parallel VPC discovery threads (default 8)
+        max_workers: Max parallel discovery threads
+        skip_resources: If True, skip S3/SQS/SNS/SES
+
+    Returns:
+        Dict of alias -> account config for accounts.yml
     """
-    # Collect all accounts from tree
-    accounts = collect_all_accounts(node)
+    accounts = list(collect_all_accounts(tree))
     total = len(accounts)
 
     if not accounts:
-        return
+        return {}
 
-    # Create profiles first (sequential - fast, ~150ms each)
+    # Create profiles first (sequential)
     if profile_creator:
         logger.info(f"Creating {total} AWS CLI profiles...")
         for alias, account in accounts:
@@ -370,13 +129,21 @@ def enrich_tree_with_vpc(
                 account_name=account.get("name"),
             )
 
-    # Parallel VPC discovery
-    logger.info(f"Discovering VPCs for {total} accounts (parallel, {max_workers} workers)...")
+    # Parallel inventory discovery
+    resource_type = "VPCs only" if skip_resources else "full inventory"
+    logger.info(f"Discovering {resource_type} for {total} accounts ({max_workers} workers)...")
+
+    accounts_config: dict[str, dict[str, Any]] = {}
     completed = 0
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
-            executor.submit(discover_account_vpc, alias): (alias, account)
+            executor.submit(
+                discover_account_inventory,
+                alias,
+                None,  # Use default region
+                skip_resources,
+            ): (alias, account)
             for alias, account in accounts
         }
 
@@ -385,24 +152,46 @@ def enrich_tree_with_vpc(
             completed += 1
 
             try:
-                vpc_info = future.result()
-                account["region"] = vpc_info["region"]
-                account["vpcs"] = vpc_info.get("vpcs", [])
+                inventory = future.result()
+                inventory.account_id = account["id"]
+                inventory.account_alias = alias
 
-                vpc_count = len(account["vpcs"])
-                subnet_count = sum(len(v.get("subnets", [])) for v in account["vpcs"])
+                # Get OU path for directory structure
+                ou_path = account.get("ou_path", "").replace("Root/", "").replace("Root", "")
+                if not ou_path:
+                    ou_path = "root"
 
-                if vpc_count:
-                    logger.debug(
-                        f"  [{completed}/{total}] {alias}: "
-                        f"{vpc_count} VPC(s), {subnet_count} subnets"
-                    )
-                else:
-                    logger.debug(f"  [{completed}/{total}] {alias}: no VPCs with subnets")
+                # Save inventory file
+                save_inventory(org_id, ou_path, alias, inventory)
+
+                # Build accounts.yml entry
+                accounts_config[alias] = {
+                    "id": account["id"],
+                    "name": account.get("name", ""),
+                    "ou_path": ou_path,
+                    "sso_role": account.get("sso_role", "AdministratorAccess"),
+                    "inventory_path": get_relative_inventory_path(ou_path, alias),
+                }
+
+                # Log progress
+                vpc_count = len(inventory.vpcs)
+                resource_summary = f"{vpc_count} VPCs"
+                if not skip_resources:
+                    resource_summary += f", {len(inventory.s3_buckets)} S3, {len(inventory.sqs_queues)} SQS"
+
+                logger.debug(f"  [{completed}/{total}] {alias}: {resource_summary}")
 
             except Exception as e:
-                logger.warning(f"VPC discovery failed for {alias}: {e}")
-                account["region"] = get_default_region()
-                account["vpcs"] = []
+                logger.warning(f"Discovery failed for {alias}: {e}")
+                # Still add account to config even if discovery failed
+                ou_path = account.get("ou_path", "root")
+                accounts_config[alias] = {
+                    "id": account["id"],
+                    "name": account.get("name", ""),
+                    "ou_path": ou_path,
+                    "sso_role": account.get("sso_role", "AdministratorAccess"),
+                    "inventory_path": None,  # No inventory on failure
+                }
 
-    logger.info(f"VPC discovery complete for {total} accounts")
+    logger.info(f"Discovery complete for {total} accounts")
+    return accounts_config

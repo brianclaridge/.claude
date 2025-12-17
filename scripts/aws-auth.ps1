@@ -26,7 +26,10 @@
     Rebuild .aws.yml and profiles (re-auth only if needed).
 
 .PARAMETER SkipVpc
-    Skip VPC discovery for faster setup/rebuild.
+    Skip ALL resource discovery (auth only, no inventory files).
+
+.PARAMETER SkipResources
+    Skip S3/SQS/SNS/SES discovery (VPCs still discovered).
 
 .EXAMPLE
     ./aws-auth.ps1
@@ -46,7 +49,11 @@
 
 .EXAMPLE
     ./aws-auth.ps1 -Rebuild -SkipVpc
-    # Fast rebuild without VPC discovery
+    # Fast rebuild (auth only, no inventory)
+
+.EXAMPLE
+    ./aws-auth.ps1 -Rebuild -SkipResources
+    # Rebuild with VPCs only (skip S3/SQS/SNS/SES)
 #>
 
 param(
@@ -59,7 +66,9 @@ param(
 
     [switch]$Rebuild,
 
-    [switch]$SkipVpc
+    [switch]$SkipVpc,
+
+    [switch]$SkipResources
 )
 
 $ErrorActionPreference = "Stop"
@@ -92,6 +101,10 @@ if ($Rebuild) {
 
 if ($SkipVpc) {
     $args += "--skip-vpc"
+}
+
+if ($SkipResources) {
+    $args += "--skip-resources"
 }
 
 # Run via uv
