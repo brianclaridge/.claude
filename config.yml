@@ -77,8 +77,16 @@ hooks:
         reinforce: true                # Persona consistency
       030-agents:
         reinforce: true                # Agent usage reminder
+      040-plans:
+        reinforce: true                # Plan usage reminder
+      050-python:
+        reinforce: true
+      060-contex7:
+        reinforce: true
+      070-backward-compat:
+        reinforce: true
       080-ask-user-questions:
-        reinforce: true                # UX consistency
+        reinforce: true
     # Logging config
     log_base_path: .data/logs/rules_loader
     log_enabled: true
