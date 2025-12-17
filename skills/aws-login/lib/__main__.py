@@ -213,8 +213,38 @@ def rebuild_config(skip_vpc: bool = False) -> bool:
         return False
 
 
+def build_searchable_choice(acc: dict) -> dict:
+    """Build choice with searchable text in name field.
+
+    Args:
+        acc: Account dictionary with alias, name, ou_path, vpcs
+
+    Returns:
+        Choice dict with searchable name and alias value
+    """
+    alias = acc["alias"]
+    name = acc.get("name", "")
+    ou_path = acc.get("ou_path", "")
+
+    # Collect VPC CIDRs for search
+    vpcs = acc.get("vpcs", [])
+    cidrs = [vpc.get("cidr", "") for vpc in vpcs if vpc.get("cidr")]
+    cidrs_str = " ".join(cidrs) if cidrs else ""
+
+    # Build searchable name: alias - name | OU:path | CIDRs
+    parts = [f"{alias} - {name}"]
+    if ou_path:
+        parts.append(f"OU:{ou_path}")
+    if cidrs_str:
+        parts.append(cidrs_str)
+
+    searchable_name = " | ".join(parts)
+
+    return {"name": searchable_name, "value": alias}
+
+
 def select_account_interactive() -> str | None:
-    """Show interactive account selection menu.
+    """Show interactive account selection menu with fuzzy search.
 
     Returns:
         Selected account alias or None if cancelled
@@ -258,16 +288,15 @@ def select_account_interactive() -> str | None:
     console.print(table)
     console.print()
 
-    # Selection prompt
-    choices = [
-        {"name": f"{acc['alias']} - {acc.get('name', acc.get('id', ''))}", "value": acc["alias"]}
-        for acc in accounts
-    ]
+    # Build searchable choices
+    choices = [build_searchable_choice(acc) for acc in accounts]
 
     try:
-        return inquirer.select(
+        return inquirer.fuzzy(
             message="Select AWS Account:",
             choices=choices,
+            instruction="(type to filter by alias, name, OU, or VPC CIDR)",
+            border=True,
         ).execute()
     except KeyboardInterrupt:
         return None
