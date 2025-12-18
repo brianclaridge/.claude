@@ -28,7 +28,7 @@
       "/root/.claude",
       "/tmp",
       "/workspace",
-      "{{ .Env.CLAUDE_WORKSPACE_PATH }}",
+      "{{ .Env.WORKSPACE_PATH }}",
       "{{ .Env.CLAUDE_PATH }}",
       "{{ .Env.CLAUDE_DATA_PATH }}",
       "{{ .Env.CLAUDE_LOGS_PATH }}",

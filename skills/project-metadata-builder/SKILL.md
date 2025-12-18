@@ -1,12 +1,12 @@
 ---
 name: project-metadata-builder
-description: Build and update project metadata registry in ${PROJECTS_YML_PATH}. Use when starting a session, after project analysis, when user says "update project metadata", "refresh projects", "register project", or when project-discovery agent completes analysis.
+description: Build and update project metadata registry in ${CLAUDE_PROJECTS_YML_PATH}. Use when starting a session, after project analysis, when user says "update project metadata", "refresh projects", "register project", or when project-discovery agent completes analysis.
 allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Project Metadata Builder
 
-Build comprehensive project metadata and maintain a global registry at `${PROJECTS_YML_PATH}`.
+Build comprehensive project metadata and maintain a global registry at `${CLAUDE_PROJECTS_YML_PATH}`.
 
 ## Activation Triggers
 
@@ -33,7 +33,7 @@ uv run python -m scripts.builder <project_path> [--session-id <id>]
 
 ## Output
 
-Updates `${PROJECTS_YML_PATH}` with:
+Updates `${CLAUDE_PROJECTS_YML_PATH}` with:
 
 - **Identity**: Name, slug, description
 - **Git**: Remote URL, branch, last commit (hash, message, author, date), total commits
@@ -56,7 +56,7 @@ project_metadata:
   periodic_refresh_hours: 24     # Periodic refresh (0 = disabled)
   stale_project_days: 30         # Mark stale after N days inactive
   activity_threshold_commits: 5  # Min commits for "active" status
-  projects_file: ${PROJECTS_YML_PATH}
+  projects_file: ${CLAUDE_PROJECTS_YML_PATH}
   log_level: INFO
 ```
 
@@ -64,7 +64,7 @@ project_metadata:
 
 ```yaml
 projects:
-  /workspace/z/projects/personal/claude-sandbox:
+  /workspace/projects/personal/claude-sandbox:
     name: claude-sandbox
     slug: claude-sandbox
     description: "Docker-ized development environment for Claude Code CLI"

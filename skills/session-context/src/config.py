@@ -39,7 +39,7 @@ def load_config() -> dict[str, Any]:
         log.debug("config_loaded_via_shared_module")
         return merged
     except EnvironmentError:
-        log.warning("CONFIG_YML_PATH not set, using defaults")
+        log.warning("CLAUDE_CONFIG_YML_PATH not set, using defaults")
         return DEFAULT_CONFIG["session_context"]
     except Exception as e:
         log.warning("config_load_failed", error=str(e))

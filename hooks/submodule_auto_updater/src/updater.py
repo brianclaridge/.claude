@@ -9,7 +9,7 @@ import structlog
 
 log = structlog.get_logger()
 
-WORKSPACE_PATH = os.environ.get("CLAUDE_WORKSPACE_PATH")
+WORKSPACE_PATH = os.environ.get("WORKSPACE_PATH")
 CLAUDE_PATH = os.environ.get("CLAUDE_PATH")
 
 

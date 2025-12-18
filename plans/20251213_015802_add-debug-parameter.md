@@ -16,7 +16,7 @@ param(
     [switch]$debug_claude
 )
 
-Set-Location "/workspace/${env:CLAUDE_PROJECT_SLUG}"
+Set-Location "/workspace
 claude update
 
 if ($debug_claude) {

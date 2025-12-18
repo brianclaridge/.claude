@@ -31,44 +31,50 @@ services:
       - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
-    working_dir: /workspace/${CLAUDE_PROJECT_SLUG}
+    working_dir: /workspace/
     env_file:
       - .env
     environment:
-      CLAUDE_PROJECT_SLUG: ${CLAUDE_PROJECT_SLUG}
-      CLAUDE_WORKSPACE_PATH: /workspace/${CLAUDE_PROJECT_SLUG}
-      CLAUDE_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude
-      CLAUDE_DATA_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data
-      CLAUDE_LOGS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/.data/logs
-      CLAUDE_AGENTS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/agents
-      CLAUDE_HOOKS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/hooks
-      CLAUDE_PLANS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/plans
-      CLAUDE_SCRIPTS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/scripts
-      CLAUDE_SKILLS_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/skills
-      HOME_OS: ${OS}
+      HOST_TASK_OS: ${OS}
       HOME_DIR: ${HOME_DIR}
       HOME_SSH_PATH: ${HOME_SSH_PATH}
-      LOG_PATH: ${LOG_PATH}
-      DATA_PATH: ${DATA_PATH}
-      HOME_CLAUDE_ROOT_PATH: ${HOME_CLAUDE_ROOT_PATH}
-      PROJECTS_YML_PATH: ${HOME_CLAUDE_ROOT_PATH}/projects.yml
-      CONFIG_YML_PATH: /workspace/${CLAUDE_PROJECT_SLUG}/.claude/config.yml
-      DOCKER_SOCK_PATH: ${DOCKER_SOCK_PATH}
-      COLORTERM: truecolor
       AWS_CONFIG_FILE: /root/.aws/config
+      COLORTERM: truecolor
       OLLAMA_API_BASE: http://ollama:11434
       OLLAMA_API_KEY: ollama
       USERPROFILE: /root
       UV_LINK_MODE: copy
       CDK_DISABLE_CLI_TELEMETRY: true
+      DOCKER_SOCK_PATH: ${DOCKER_SOCK_PATH}
+      # /workspace vars
+      WORKSPACE_PATH: /workspace
+      WORKSPACE_DATA_PATH: /workspace/.data
+      WORKSPACE_LOGS_PATH: /workspace/.data/logs
+      WORKSPACE_HOST_PATH: ${CLAUDE_PARENT_DIR}
+      # .claude vars
+      CLAUDE_ROOT_PATH: /root/.claude
+      CLAUDE_PROJECTS_YML_PATH: /root/.claude/projects.yml
+      CLAUDE_PATH: /workspace/.claude
+      CLAUDE_DATA_PATH: /workspace/.claude/.data
+      CLAUDE_LOGS_PATH: /workspace/.claude/.data/logs
+      CLAUDE_AGENTS_PATH: /workspace/.claude/agents
+      CLAUDE_COMMANDS_PATH: /workspace/.claude/commands
+      CLAUDE_HOOKS_PATH: /workspace/.claude/hooks
+      CLAUDE_PLANS_PATH: /workspace/.claude/plans
+      CLAUDE_PROMPTS_PATH: /workspace/.claude/prompts
+      CLAUDE_RULES_PATH: /workspace/.claude/rules
+      CLAUDE_SCRIPTS_PATH: /workspace/.claude/scripts
+      CLAUDE_SKILLS_PATH: /workspace/.claude/skills
+      CLAUDE_CONFIG_YML_PATH: /workspace/.claude/config.yml
+      CLAUDE_PROJECT_SLUG: ${CLAUDE_PROJECT_SLUG}
     volumes:
       # dind stuff
       - ${DOCKER_SOCK_PATH}:/var/run/docker.sock
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       # bind folder mounts
       - ${HOME_SSH_PATH}:/ssh:ro
-      - ${HOME_CLAUDE_ROOT_PATH}:/root
-      - ../:/workspace/${CLAUDE_PROJECT_SLUG}:delegated
+      - ${CLAUDE_ROOT_PATH}:/root
+      - ${CLAUDE_PARENT_DIR}:/workspace/:delegated
       # misc volumes
       - minikube-data:/root/.minikube
       - kube-data:/root/.kube

@@ -1,10 +1,15 @@
 #!/usr/bin/env pwsh
 
 param(
-  [switch]$stream,
-  [switch]$debug_claude,
+  [switch]
+  $stream_claude,
+
+  [switch]
+  $debug_claude,
+
   [Parameter(ValueFromRemainingArguments)]
-  [string[]]$remaining_args
+  [string[]]
+  $remaining_args
 )
 
 _run "claude data cleanup" {
@@ -23,22 +28,22 @@ _run "claude update" {
   if ($LASTEXITCODE -ne 0) { throw "claude update failed" }
 }
 
-_attn "Starting Claude in '${env:CLAUDE_WORKSPACE_PATH}'..."
-Set-Location "${env:CLAUDE_WORKSPACE_PATH}"
+_attn "Starting Claude in '${env:WORKSPACE_PATH}'..."
+Set-Location "${env:WORKSPACE_PATH}"
 
 if ($debug_claude) {
-  $debugLog = "/root/.claude/debug/latest"
-  $logFile = "${env:CLAUDE_LOGS_PATH}/claude.log"
+  _warn "debug mode"
   & claude --continue --debug --verbose 2> $null || claude --debug
 }
 elseif ($stream) {
+  _warn "strem mode"
   $msg = @{
-    type = "user"
-    message = @{
-      role = "user"
+    type               = "user"
+    message            = @{
+      role    = "user"
       content = ($remaining_args -join ' ')
     }
-    session_id = "default"
+    session_id         = "default"
     parent_tool_use_id = $null
   } | ConvertTo-Json -Compress
 

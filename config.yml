@@ -28,7 +28,7 @@ project_metadata:
   activity_threshold_commits: 5      # Minimum commits for "active" status
 
   # Paths
-  projects_file: ${PROJECTS_YML_PATH}
+  projects_file: ${CLAUDE_PROJECTS_YML_PATH}
 
   # Logging
   log_level: INFO

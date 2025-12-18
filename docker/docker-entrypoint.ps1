@@ -120,7 +120,7 @@ New-Module -ScriptBlock {
       [string]$Name,
       [string]$Value
     )
-    $padding = 24
+    $padding = 26
     $paddedName = $Name.PadRight($padding)
     Write-Host "   " -NoNewline
     Write-Host $paddedName -ForegroundColor DarkGray -NoNewline
@@ -162,24 +162,33 @@ _run "~/.ssh environment copied & configured" { run-ssh-setup }
 _run "playwright cleanup" { run-cleanup-playwright } -CountSuffix "removed"
 
 # --- Environment ---
-_header "Environment"
-_value "CLAUDE_PROJECT_SLUG" $env:CLAUDE_PROJECT_SLUG
-_value "CLAUDE_WORKSPACE_PATH" $env:CLAUDE_WORKSPACE_PATH
+_header "workspace"
+_value "WORKSPACE_PATH" $env:WORKSPACE_PATH
+_value "WORKSPACE_DATA_PATH" $env:WORKSPACE_DATA_PATH
+_value "WORKSPACE_LOGS_PATH" $env:WORKSPACE_LOGS_PATH
+_value "WORKSPACE_HOST_PATH" $env:WORKSPACE_HOST_PATH
+_header "claude"
+_value "CLAUDE_ROOT_PATH" $env:CLAUDE_ROOT_PATH
+_value "CLAUDE_PROJECTS_YML_PATH" $env:CLAUDE_PROJECTS_YML_PATH
 _value "CLAUDE_PATH" $env:CLAUDE_PATH
 _value "CLAUDE_DATA_PATH" $env:CLAUDE_DATA_PATH
 _value "CLAUDE_LOGS_PATH" $env:CLAUDE_LOGS_PATH
 _value "CLAUDE_AGENTS_PATH" $env:CLAUDE_AGENTS_PATH
 _value "CLAUDE_HOOKS_PATH" $env:CLAUDE_HOOKS_PATH
+_value "CLAUDE_PLANS_PATH" $env:CLAUDE_PLANS_PATH
+_value "CLAUDE_PROMPTS_PATH" $env:CLAUDE_PROMPTS_PATH
+_value "CLAUDE_RULES_PATH" $env:CLAUDE_RULES_PATH
 _value "CLAUDE_SCRIPTS_PATH" $env:CLAUDE_SCRIPTS_PATH
 _value "CLAUDE_SKILLS_PATH" $env:CLAUDE_SKILLS_PATH
-_value "HOME_CLAUDE_ROOT_PATH" $env:HOME_CLAUDE_ROOT_PATH
-_value "PROJECTS_YML_PATH" $env:PROJECTS_YML_PATH
-_value "CONFIG_YML_PATH" $env:CONFIG_YML_PATH
-_value "HOME_OS" $env:HOME_OS
+_value "CLAUDE_CONFIG_YML_PATH" $env:CLAUDE_CONFIG_YML_PATH
+_value "CLAUDE_PROJECT_SLUG" $env:CLAUDE_PROJECT_SLUG
+_header "misc"
+_value "POSH_THEME" $env:POSH_THEME
+_value "HOST_TASK_OS" $env:HOST_TASK_OS
 _value "HOME_DIR" $env:HOME_DIR
+_value "HOME_SSH_PATH" $env:HOME_SSH_PATH
 _value "DOCKER_SOCK_PATH" $env:DOCKER_SOCK_PATH
 _value "AWS_CONFIG_FILE" $env:AWS_CONFIG_FILE
-_value "POSH_THEME" $env:POSH_THEME
 Write-Host ""
 
 oh-my-posh init pwsh --config "${env:POSH_THEMES_PATH}/${env:POSH_THEME}.omp.json" | Invoke-Expression

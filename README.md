@@ -25,8 +25,8 @@
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       # bind folder mounts
       - ${HOME_SSH_PATH}:/ssh:ro
-      - ${HOME_CLAUDE_ROOT_PATH}/root:/root
-      - ../:/workspace/${CLAUDE_PROJECT_SLUG}:delegated
+      - ${CLAUDE_ROOT_PATH}:/root
+      - ${CLAUDE_PARENT_DIR}:/workspace/:delegated
 ```
 
 ## Quick Start

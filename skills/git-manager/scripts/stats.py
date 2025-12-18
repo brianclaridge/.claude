@@ -64,7 +64,7 @@ def cwd_to_transcript_dir(cwd: Optional[Path] = None) -> Optional[Path]:
     ~/.claude/projects/-{cwd-with-slashes-as-dashes}/
 
     Example:
-        /workspace/z/projects/personal/claude-stack
+        /workspace/projects/personal/claude-stack
         -> ~/.claude/projects/-workspace-z-projects-personal-claude-stack/
     """
     if cwd is None:

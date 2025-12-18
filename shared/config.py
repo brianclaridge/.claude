@@ -8,13 +8,13 @@ import yaml
 
 
 def get_config_path() -> Path:
-    """Get the config.yml path from CONFIG_YML_PATH environment variable.
+    """Get the config.yml path from CLAUDE_CONFIG_YML_PATH environment variable.
 
     This is a required environment variable with no fallback.
     """
-    config_path = os.environ.get("CONFIG_YML_PATH")
+    config_path = os.environ.get("CLAUDE_CONFIG_YML_PATH")
     if not config_path:
-        raise EnvironmentError("CONFIG_YML_PATH environment variable is required")
+        raise EnvironmentError("CLAUDE_CONFIG_YML_PATH environment variable is required")
     return Path(config_path)
 
 

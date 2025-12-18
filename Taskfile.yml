@@ -42,7 +42,7 @@ vars:
       {{else}}
         echo "$HOME"
       {{end}}
-  HOST_HOME_CLAUDE_ROOT_PATH:
+  HOST_CLAUDE_ROOT_PATH:
     sh: |
       {{if eq .OS "Windows_NT"}}
         echo '{{.HOST_HOME_PATH}}\.claude\_docker\{{.CLAUDE_PROJECT_SLUG}}'
@@ -51,13 +51,6 @@ vars:
       {{end}}
 
   # // HOST LINUX STYLE PATHS \\
-  TASKFILE_PARENT_UNIX:
-    sh: |
-      {{if eq .OS "Windows_NT"}}
-        pwsh -NoProfile -Command "Write-Output ('{{.TASKFILE_PARENT}}' -replace '\\\\', '/')"
-      {{else}}
-        echo "{{.TASKFILE_PARENT}}"
-      {{end}}
   DOCKER_SOCK_PATH:
     sh: |
       OS_TYPE=$(docker version --format '{{.Server.Os}}' 2>/dev/null)
@@ -105,24 +98,22 @@ vars:
       {{else}}
         dirname "{{.CLAUDE_DIR}}"
       {{end}}
-  CLAUDE_PROJECT_PATH: "{{.CLAUDE_PARENT_DIR}}"
   CLAUDE_PROJECT_SLUG:
     sh: |
       {{if eq .OS "Windows_NT"}}
         pwsh -NoProfile -Command "
-          \$slug = '{{.CLAUDE_PROJECT_PATH}}'.TrimStart('/') -replace '/', '-'
+          \$slug = '{{.CLAUDE_PARENT_DIR}}'.TrimStart('/') -replace '/', '-'
           Write-Output \$slug.ToLower()
         "
       {{else}}
-        echo "{{.CLAUDE_PROJECT_PATH}}" | sed 's|^/||' | tr '/' '-' | tr '[:upper:]' '[:lower:]'
+        echo "{{.CLAUDE_PARENT_DIR}}" | sed 's|^/||' | tr '/' '-' | tr '[:upper:]' '[:lower:]'
       {{end}}
-  DOCKERFILE_PATH: "{{.CLAUDE_DIR}}/docker/Dockerfile"
-  DATA_PATH: "{{.CLAUDE_DIR}}/.data"
-  LOG_PATH: "{{.CLAUDE_DIR}}/.data/logs"
+  CLAUDE_DOCKERFILE_PATH: "{{.CLAUDE_DIR}}/docker/Dockerfile"
+  CLAUDE_DATA_PATH: "{{.CLAUDE_DIR}}/.data"
+  CLAUDE_LOG_PATH: "{{.CLAUDE_DIR}}/.data/logs"
+  CLAUDE_ROOT_PATH: "{{.HOME_DIR}}/.claude/_docker/{{.CLAUDE_PROJECT_SLUG}}"
+  CLAUDE_CONFIG_YML_PATH: "{{.CLAUDE_DIR}}/config.yml"
   HOME_SSH_PATH: "{{.HOME_DIR}}/.ssh"
-  HOME_CLAUDE_ROOT_PATH: "{{.HOME_DIR}}/.claude/_docker/{{.CLAUDE_PROJECT_SLUG}}"
-  PROJECTS_YML_PATH: "{{.HOME_CLAUDE_ROOT_PATH}}/projects.yml"
-  CONFIG_YML_PATH: "{{.CLAUDE_DIR}}/config.yml"
 
 env:
   # // TASKFILE NATIVE VARS \\
@@ -137,23 +128,20 @@ env:
   # // HOST PATHS \\
   TASKFILE_PARENT: "{{.TASKFILE_PARENT}}"
   HOST_HOME_PATH: "{{.HOST_HOME_PATH}}"
-  HOST_HOME_CLAUDE_ROOT_PATH: "{{.HOST_HOME_CLAUDE_ROOT_PATH}}"
+  HOST_CLAUDE_ROOT_PATH: "{{.HOST_CLAUDE_ROOT_PATH}}"
 
   # // HOST LINUX STYLE PATHS \\
-  TASKFILE_PARENT_UNIX: "{{.TASKFILE_PARENT_UNIX}}"
-  DOCKER_SOCK_PATH: "{{.DOCKER_SOCK_PATH}}"
   HOME_DIR: "{{.HOME_DIR}}"
-  CLAUDE_DIR: "{{.CLAUDE_DIR}}"
-  CLAUDE_PARENT_DIR: "{{.CLAUDE_PARENT_DIR}}"
-  CLAUDE_PROJECT_PATH: "{{.CLAUDE_PROJECT_PATH}}"
-  CLAUDE_PROJECT_SLUG: "{{.CLAUDE_PROJECT_SLUG}}"
-  DOCKERFILE_PATH: "{{.DOCKERFILE_PATH}}"
-  DATA_PATH: "{{.DATA_PATH}}"
-  LOG_PATH: "{{.LOG_PATH}}"
   HOME_SSH_PATH: "{{.HOME_SSH_PATH}}"
-  HOME_CLAUDE_ROOT_PATH: "{{.HOME_CLAUDE_ROOT_PATH}}"
-  PROJECTS_YML_PATH: "{{.PROJECTS_YML_PATH}}"
-  CONFIG_YML_PATH: "{{.CONFIG_YML_PATH}}"
+  CLAUDE_DIR: "{{.CLAUDE_DIR}}"
+  CLAUDE_DATA_PATH: "{{.CLAUDE_DATA_PATH}}"
+  CLAUDE_LOG_PATH: "{{.CLAUDE_LOG_PATH}}"
+  CLAUDE_PARENT_DIR: "{{.CLAUDE_PARENT_DIR}}"
+  CLAUDE_PROJECT_SLUG: "{{.CLAUDE_PROJECT_SLUG}}"
+  CLAUDE_ROOT_PATH: "{{.CLAUDE_ROOT_PATH}}"
+  CLAUDE_CONFIG_YML_PATH: "{{.CLAUDE_CONFIG_YML_PATH}}"
+  CLAUDE_DOCKERFILE_PATH: "{{.CLAUDE_DOCKERFILE_PATH}}"
+  DOCKER_SOCK_PATH: "{{.DOCKER_SOCK_PATH}}"
 
 tasks:
   claude:default:
@@ -172,9 +160,36 @@ tasks:
         platforms: [windows]
     silent: true
 
+  ensure-env:
+    desc: Ensures a .env is present, even if empty
+    aliases:
+      - ensure-env
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - cmd: >-
+          pwsh -c "
+          if (!(Test-Path '.env')) {
+            cp '.env.example' '.env'
+          }"
+    silent: true
+
+  claude:ensure-host:
+    desc: Determines if running in on the host
+    aliases:
+      - ensure-host
+    preconditions:
+      - sh: test ! -f /.dockerenv
+        msg: "This task can only be run on the host"
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - echo "Running on the host"
+    silent: true
+
   claude:env:
     aliases:
       - env
+    deps:
+      - ensure-host
     cmds:
       - task: clear
       - cmd: "echo"
@@ -203,68 +218,37 @@ tasks:
       - task: print-var
         vars: { K: "HOST_HOME_PATH", V: "{{.HOST_HOME_PATH}}" }
       - task: print-var
-        vars: { K: "HOST_HOME_CLAUDE_ROOT_PATH", V: "{{.HOST_HOME_CLAUDE_ROOT_PATH}}" }
+        vars: { K: "HOST_CLAUDE_ROOT_PATH", V: "{{.HOST_CLAUDE_ROOT_PATH}}" }
 
       - cmd: "echo"
       - task: info
         vars: { MSG: "----- HOST LINUX STYLE PATHS-----" }
       - task: print-var
-        vars: { K: "TASKFILE_PARENT_UNIX", V: "{{.TASKFILE_PARENT_UNIX}}" }
+        vars: { K: "HOME_DIR", V: "{{.HOME_DIR}}" }
+      - task: print-var
+        vars: { K: "HOME_SSH_PATH", V: "{{.HOME_SSH_PATH}}" }
       - task: print-var
         vars: { K: "DOCKER_SOCK_PATH", V: "{{.DOCKER_SOCK_PATH}}" }
-      - task: print-var
-        vars: { K: "HOME_DIR", V: "{{.HOME_DIR}}" }
       - task: print-var
         vars: { K: "CLAUDE_DIR", V: "{{.CLAUDE_DIR}}" }
       - task: print-var
         vars: { K: "CLAUDE_PARENT_DIR", V: "{{.CLAUDE_PARENT_DIR}}" }
       - task: print-var
-        vars: { K: "CLAUDE_PROJECT_PATH", V: "{{.CLAUDE_PROJECT_PATH}}" }
+        vars: { K: "CLAUDE_DATA_PATH", V: "{{.CLAUDE_DATA_PATH}}" }
+      - task: print-var
+        vars: { K: "CLAUDE_LOG_PATH", V: "{{.CLAUDE_LOG_PATH}}" }
       - task: print-var
         vars: { K: "CLAUDE_PROJECT_SLUG", V: "{{.CLAUDE_PROJECT_SLUG}}" }
       - task: print-var
-        vars: { K: "DOCKERFILE_PATH", V: "{{.DOCKERFILE_PATH}}" }
+        vars: { K: "CLAUDE_CONFIG_YML_PATH", V: "{{.CLAUDE_CONFIG_YML_PATH}}" }
       - task: print-var
-        vars: { K: "DATA_PATH", V: "{{.DATA_PATH}}" }
+        vars: { K: "CLAUDE_DOCKERFILE_PATH", V: "{{.CLAUDE_DOCKERFILE_PATH}}" }
       - task: print-var
-        vars: { K: "LOG_PATH", V: "{{.LOG_PATH}}" }
-      - task: print-var
-        vars: { K: "HOME_SSH_PATH", V: "{{.HOME_SSH_PATH}}" }
-      - task: print-var
-        vars: { K: "HOME_CLAUDE_ROOT_PATH", V: "{{.HOME_CLAUDE_ROOT_PATH}}" }
-      - task: print-var
-        vars: { K: "PROJECTS_YML_PATH", V: "{{.PROJECTS_YML_PATH}}" }
-      - task: print-var
-        vars: { K: "CONFIG_YML_PATH", V: "{{.CONFIG_YML_PATH}}" }
+        vars: { K: "CLAUDE_ROOT_PATH", V: "{{.CLAUDE_ROOT_PATH}}" }
 
       - cmd: "echo"
       - task: wait
         vars: { SECONDS: 2 }
-    silent: true
-
-  ensure-env:
-    desc: Ensures a .env is present, even if empty
-    aliases:
-      - ensure-env
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - cmd: >-
-          pwsh -c "
-          if (!(Test-Path '.env')) {
-            cp '.env.example' '.env'
-          }"
-    silent: true
-
-  claude:ensure-host:
-    desc: Determines if running in on the host
-    aliases:
-      - ensure-host
-    preconditions:
-      - sh: test ! -f /.dockerenv
-        msg: "This task can only be run on the host"
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - echo "Running on the host"
     silent: true
 
   claude:build:
@@ -272,10 +256,23 @@ tasks:
     aliases:
       - build
     deps:
+      - ensure-host
       - ensure-env
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose build
+    silent: true
+
+  claude:pull:
+    desc: Pulls the image from dockerhub
+    aliases:
+      - pull
+    deps:
+      - ensure-host
+      - ensure-env
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - docker compose pull
     silent: true
 
   claude:push:
@@ -283,34 +280,11 @@ tasks:
     aliases:
       - push
     deps:
+      - ensure-host
       - ensure-env
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose push
-    silent: true
-
-  claude:shell:
-    desc: Runs the claude container in shell mode
-    aliases:
-      - shell
-    deps:
-      - ensure-env
-      - ensure-stack-network
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - docker compose run --remove-orphans claude shell
-    silent: true
-
-  claude:test:
-    desc: Runs the claude container in test mode
-    aliases:
-      - test
-    deps:
-      - ensure-env
-      - ensure-stack-network
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - docker compose run --remove-orphans claude 'echo "test"'
     silent: true
 
   claude:claude:
@@ -321,20 +295,13 @@ tasks:
       - start
       - vibe
     deps:
+      - ensure-host
       - ensure-env
       - ensure-stack-network
+      - pull
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - >-
-        pwsh -c "
-        if (Test-Path /.dockerenv) {
-          Set-Location {{.CLAUDE_PROJECT_PATH}}
-          claude update
-          claude --continue 2> \$null || claude
-        } else {
-          docker compose build
-          docker compose run --remove-orphans claude run-claude '{{.CLI_ARGS}}'
-        }"
+      - docker compose run --remove-orphans claude run-claude '{{.CLI_ARGS}}'
     interactive: true
     silent: true
 
@@ -343,20 +310,11 @@ tasks:
     aliases:
       - stream
     deps:
-      - ensure-env
       - ensure-stack-network
+      - pull
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - >-
-        pwsh -c "
-        if (Test-Path /.dockerenv) {
-          Set-Location {{.CLAUDE_PROJECT_PATH}}
-          claude update
-          echo {{.CLI_ARGS}} | claude --print --fork-session --input-format stream-json --output-format stream-json --verbose
-        } else {
-          docker compose build
-          echo {{.CLI_ARGS}} | docker compose run -T --remove-orphans claude 'claude --print --fork-session --input-format stream-json --output-format stream-json --verbose'
-        }"
+      - docker compose run --remove-orphans claude run-claude '-stream_claude {{.CLI_ARGS}}'
     silent: true
 
   claude:debug:
@@ -364,20 +322,37 @@ tasks:
     aliases:
       - debug
     deps:
-      - ensure-env
       - ensure-stack-network
+      - pull
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - >-
-        pwsh -c "
-        if (Test-Path /.dockerenv) {
-          Set-Location {{.CLAUDE_PROJECT_PATH}}
-          claude update
-          claude --continue --debug 2> \$null || claude --debug
-        } else {
-          docker compose build
-          docker compose run --remove-orphans claude 'run-claude -debug_claude'
-        }"
+      - docker compose run --remove-orphans claude run-claude '-debug_claude'
+    silent: true
+
+  claude:shell:
+    desc: Runs the claude container in shell mode
+    aliases:
+      - shell
+    deps:
+      - ensure-stack-network
+      - pull
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - docker compose run --remove-orphans claude shell
+    silent: true
+
+  claude:test:
+    desc: Runs the claude container in test mode
+    aliases:
+      - test
+      - doctor
+    deps:
+      - ensure-stack-network
+      - pull
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - task: clear
+      - docker compose run --remove-orphans claude run-test '{{.CLI_ARGS}}'
     silent: true
 
   claude:config:
@@ -385,6 +360,7 @@ tasks:
     aliases:
       - config
     deps:
+      - ensure-host
       - ensure-env
     dir: "{{.TASKFILE_DIR}}"
     cmds:
@@ -432,7 +408,7 @@ tasks:
     deps:
       - ensure-host
     vars:
-      TARGET_PATH: "{{.HOST_HOME_CLAUDE_ROOT_PATH}}"
+      TARGET_PATH: "{{.HOST_CLAUDE_ROOT_PATH}}"
     desc: Remove the {{.TARGET_PATH}} folder from the current directory
     prompt: This will delete the {{.TARGET_PATH}} folder. Continue?
     dir: "{{.TASKFILE_DIR}}"

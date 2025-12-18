@@ -20,7 +20,7 @@ outputFiles:
 
 ```go
 # CORRECT - Fails if VAR is unset (enforced)
-{{ .Env.CLAUDE_WORKSPACE_PATH }}
+{{ .Env.WORKSPACE_PATH }}
 {{ .Env.CONTEXT7_API_KEY }}
 
 # WRONG - Silent empty string if unset

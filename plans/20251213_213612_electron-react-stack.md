@@ -15,7 +15,7 @@ Add a new "Electron + React" stack option to the stack-manager skill, enabling u
 
 ## File to Create
 
-**Path:** `/workspace/z/projects/personal/claude-sandbox/.claude/stacks/electron-react.md`
+**Path:** `/workspace/projects/personal/claude-sandbox/.claude/stacks/electron-react.md`
 
 ## Stack Definition
 
@@ -96,7 +96,7 @@ npm run package
 ## Implementation Tasks
 
 - [x] Create physical plan file in .claude/plans/
-- [ ] Create `/workspace/z/projects/personal/claude-sandbox/.claude/stacks/electron-react.md`
+- [ ] Create `/workspace/projects/personal/claude-sandbox/.claude/stacks/electron-react.md`
 - [ ] Follow existing stack format (nextjs-prisma.md as template)
 - [ ] Include comprehensive Bootstrap section with electron-vite commands
 - [ ] Document security best practices in Rationale section

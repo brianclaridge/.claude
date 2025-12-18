@@ -156,37 +156,39 @@
     ],
     [
       {
-        "id": "269f28c5-ddb1-4e53-8fbd-e75920112ffd",
+        "id": "015fd4db-394d-4a8d-a9e8-c80a74f63dd1",
         "type": "custom-text",
-        "backgroundColor": "bgBrightYellow",
+        "backgroundColor": "bgBrightCyan",
         "customText": "cwd:"
       },
       {
-        "id": "c184ddbf-b76a-475c-8c3e-1b1bdbe4f546",
+        "id": "a3bdb850-25bb-4892-bf58-f6e52ceac818",
         "type": "current-working-dir",
-        "backgroundColor": "bgBrightCyan",
+        "backgroundColor": "bgBrightRed",
         "rawValue": true
       }
     ],
     [
       {
-        "id": "015fd4db-394d-4a8d-a9e8-c80a74f63dd1",
+        "id": "ae3fc29e-b189-46b3-9b79-6f114b0eab16",
         "type": "custom-text",
-        "backgroundColor": "bgBrightCyan",
+        "backgroundColor": "bgMagenta",
         "customText": "git:"
       },
       {
-        "id": "a5ddd126-7c93-47e3-aac3-50c8e63ea91f",
-        "type": "git-branch"
+        "id": "91cf4ae8-fdc5-4269-ba3a-d21c64cafe44",
+        "type": "git-branch",
+        "backgroundColor": "bgGreen"
       },
       {
-        "id": "eba2d9b0-d614-4c82-bca9-ef3f958b6d7e",
-        "type": "git-changes"
+        "id": "c0ff62e9-0ae0-4449-8740-7ad7c232b646",
+        "type": "git-changes",
+        "backgroundColor": "bgWhite"
       },
       {
-        "id": "f48d6452-c7cc-4f04-b899-ca5459cc2663",
+        "id": "c2c5e193-5285-4429-b972-96ed045c2a1a",
         "type": "git-worktree",
-        "color": "magenta"
+        "backgroundColor": "bgYellow"
       }
     ]
   ],

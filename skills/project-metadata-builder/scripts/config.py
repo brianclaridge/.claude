@@ -22,7 +22,7 @@ class ProjectMetadataConfig:
     periodic_refresh_hours: int = 24
     stale_project_days: int = 30
     activity_threshold_commits: int = 5
-    projects_file: str = "${PROJECTS_YML_PATH}"
+    projects_file: str = "${CLAUDE_PROJECTS_YML_PATH}"
     log_level: str = "INFO"
 
 
@@ -45,7 +45,7 @@ def load_config() -> Config:
             periodic_refresh_hours=pm_data.get("periodic_refresh_hours", 24),
             stale_project_days=pm_data.get("stale_project_days", 30),
             activity_threshold_commits=pm_data.get("activity_threshold_commits", 5),
-            projects_file=pm_data.get("projects_file", "${PROJECTS_YML_PATH}"),
+            projects_file=pm_data.get("projects_file", "${CLAUDE_PROJECTS_YML_PATH}"),
             log_level=pm_data.get("log_level", "INFO"),
         )
 
