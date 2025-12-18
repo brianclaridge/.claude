@@ -6,7 +6,7 @@ from typing import Any
 
 from loguru import logger
 
-from .config import get_sso_start_url, get_default_region, get_sso_role_name
+from .config import get_sso_start_url, get_default_region, get_sso_region, get_sso_role_name
 
 
 def get_aws_config_path() -> Path:
@@ -90,6 +90,7 @@ def ensure_profile(
     sso_url = sso_url or get_sso_start_url()
     region = region or get_default_region()
     sso_role = sso_role or get_sso_role_name()
+    sso_region = get_sso_region()  # SSO region may differ from default region
 
     # Ensure https prefix
     if not sso_url.startswith("http"):
@@ -97,7 +98,7 @@ def ensure_profile(
 
     config.add_section(section_name)
     config.set(section_name, "sso_start_url", sso_url)
-    config.set(section_name, "sso_region", region)
+    config.set(section_name, "sso_region", sso_region)
     config.set(section_name, "sso_account_id", str(account_id))
     config.set(section_name, "sso_role_name", sso_role)
     config.set(section_name, "region", region)
