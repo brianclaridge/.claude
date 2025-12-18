@@ -342,6 +342,83 @@ class APIGatewayV2API(BaseModel):
     region: str = Field(description="AWS region")
 
 
+# Cognito Resources
+class CognitoUserPool(BaseModel):
+    """AWS Cognito User Pool."""
+
+    id: str = Field(description="User pool ID")
+    name: str = Field(description="User pool name")
+    arn: str = Field(description="User pool ARN")
+    status: str | None = Field(default=None, description="User pool status")
+    creation_date: str | None = Field(default=None, description="Creation date")
+    last_modified_date: str | None = Field(default=None, description="Last modified date")
+    mfa_configuration: str | None = Field(default=None, description="MFA configuration (OFF, ON, OPTIONAL)")
+    estimated_number_of_users: int = Field(default=0, description="Estimated number of users")
+    region: str = Field(description="AWS region")
+
+
+class CognitoIdentityPool(BaseModel):
+    """AWS Cognito Identity Pool (Federated Identities)."""
+
+    identity_pool_id: str = Field(description="Identity pool ID")
+    identity_pool_name: str = Field(description="Identity pool name")
+    allow_unauthenticated: bool = Field(default=False, description="Allow unauthenticated identities")
+    developer_provider_name: str | None = Field(default=None, description="Developer provider name")
+    region: str = Field(description="AWS region")
+
+
+# CloudFront Resources
+class CloudFrontDistribution(BaseModel):
+    """AWS CloudFront Distribution."""
+
+    id: str = Field(description="Distribution ID")
+    arn: str = Field(description="Distribution ARN")
+    domain_name: str = Field(description="CloudFront domain name")
+    status: str = Field(description="Distribution status (Deployed, InProgress)")
+    enabled: bool = Field(default=True, description="Whether distribution is enabled")
+    price_class: str | None = Field(default=None, description="Price class")
+    aliases: list[str] = Field(default_factory=list, description="CNAMEs/alternate domain names")
+    origins: list[str] = Field(default_factory=list, description="Origin domain names")
+    default_root_object: str | None = Field(default=None, description="Default root object")
+    comment: str | None = Field(default=None, description="Distribution comment")
+    last_modified_time: str | None = Field(default=None, description="Last modified time")
+
+
+# CodeBuild Resources
+class CodeBuildProject(BaseModel):
+    """AWS CodeBuild Project."""
+
+    name: str = Field(description="Project name")
+    arn: str = Field(description="Project ARN")
+    description: str | None = Field(default=None, description="Project description")
+    source_type: str = Field(description="Source type (CODECOMMIT, GITHUB, S3, etc.)")
+    source_location: str | None = Field(default=None, description="Source location")
+    build_badge_url: str | None = Field(default=None, description="Build badge URL")
+    environment_type: str | None = Field(default=None, description="Build environment type")
+    environment_image: str | None = Field(default=None, description="Build environment image")
+    compute_type: str | None = Field(default=None, description="Compute type")
+    service_role: str | None = Field(default=None, description="Service role ARN")
+    created: str | None = Field(default=None, description="Creation date")
+    last_modified: str | None = Field(default=None, description="Last modified date")
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+    region: str = Field(description="AWS region")
+
+
+# CodePipeline Resources
+class CodePipeline(BaseModel):
+    """AWS CodePipeline."""
+
+    name: str = Field(description="Pipeline name")
+    arn: str | None = Field(default=None, description="Pipeline ARN")
+    role_arn: str | None = Field(default=None, description="Service role ARN")
+    stage_count: int = Field(default=0, description="Number of stages")
+    created: str | None = Field(default=None, description="Creation date")
+    updated: str | None = Field(default=None, description="Last updated date")
+    version: int | None = Field(default=None, description="Pipeline version")
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+    region: str = Field(description="AWS region")
+
+
 class AccountInventory(BaseModel):
     """Complete inventory for an AWS account."""
 
@@ -429,6 +506,29 @@ class AccountInventory(BaseModel):
     )
     api_gateway_v2_apis: list[APIGatewayV2API] = Field(
         default_factory=list, description="API Gateway HTTP/WebSocket APIs (v2)"
+    )
+
+    # Cognito Resources
+    cognito_user_pools: list[CognitoUserPool] = Field(
+        default_factory=list, description="Cognito User Pools"
+    )
+    cognito_identity_pools: list[CognitoIdentityPool] = Field(
+        default_factory=list, description="Cognito Identity Pools"
+    )
+
+    # CloudFront Resources
+    cloudfront_distributions: list[CloudFrontDistribution] = Field(
+        default_factory=list, description="CloudFront distributions"
+    )
+
+    # CodeBuild Resources
+    codebuild_projects: list[CodeBuildProject] = Field(
+        default_factory=list, description="CodeBuild projects"
+    )
+
+    # CodePipeline Resources
+    codepipelines: list[CodePipeline] = Field(
+        default_factory=list, description="CodePipeline pipelines"
     )
 
     def to_dict(self) -> dict:

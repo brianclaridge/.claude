@@ -52,6 +52,10 @@ from aws_utils.services.stepfunctions import (
 )
 from aws_utils.services.secrets_manager import discover_secrets
 from aws_utils.services.api_gateway import discover_rest_apis, discover_v2_apis
+from aws_utils.services.cognito import discover_user_pools, discover_identity_pools
+from aws_utils.services.cloudfront import discover_distributions
+from aws_utils.services.codebuild import discover_codebuild_projects
+from aws_utils.services.codepipeline import discover_pipelines
 
 __all__ = [
     # EC2
@@ -111,4 +115,13 @@ __all__ = [
     # API Gateway
     "discover_rest_apis",
     "discover_v2_apis",
+    # Cognito
+    "discover_user_pools",
+    "discover_identity_pools",
+    # CloudFront
+    "discover_distributions",
+    # CodeBuild
+    "discover_codebuild_projects",
+    # CodePipeline
+    "discover_pipelines",
 ]
