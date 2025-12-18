@@ -31,6 +31,7 @@ from aws_utils.services.organizations import (
 from aws_utils.services.rds import discover_rds_clusters, discover_rds_instances
 from aws_utils.services.route53 import (
     discover_all_route53_records,
+    discover_route53_domains,
     discover_route53_records,
     discover_route53_zones,
 )
@@ -85,6 +86,7 @@ __all__ = [
     "discover_route53_zones",
     "discover_route53_records",
     "discover_all_route53_records",
+    "discover_route53_domains",
     # DynamoDB
     "discover_dynamodb_tables",
     # Step Functions

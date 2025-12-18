@@ -151,6 +151,20 @@ class Route53Record(BaseModel):
     values: list[str] = Field(default_factory=list, description="Record values")
 
 
+class Route53Domain(BaseModel):
+    """Route53 Registered Domain."""
+
+    domain_name: str = Field(description="Domain name")
+    auto_renew: bool = Field(default=True, description="Auto-renewal enabled")
+    transfer_lock: bool = Field(default=True, description="Transfer lock enabled")
+    expiration_date: str | None = Field(default=None, description="Domain expiration date")
+    creation_date: str | None = Field(default=None, description="Domain registration date")
+    registrar_name: str | None = Field(default=None, description="Registrar name")
+    registrar_url: str | None = Field(default=None, description="Registrar URL")
+    abuse_contact_email: str | None = Field(default=None, description="Abuse contact email")
+    abuse_contact_phone: str | None = Field(default=None, description="Abuse contact phone")
+
+
 class DynamoDBTable(BaseModel):
     """DynamoDB Table."""
 
@@ -457,6 +471,9 @@ class AccountInventory(BaseModel):
     )
     route53_zones: list[Route53Zone] = Field(
         default_factory=list, description="Route53 hosted zones"
+    )
+    route53_domains: list[Route53Domain] = Field(
+        default_factory=list, description="Route53 registered domains"
     )
     dynamodb_tables: list[DynamoDBTable] = Field(
         default_factory=list, description="DynamoDB tables in the account"

@@ -3,7 +3,7 @@
 from botocore.exceptions import ClientError
 from loguru import logger
 
-from aws_utils.core.schemas import Route53Record, Route53Zone
+from aws_utils.core.schemas import Route53Domain, Route53Record, Route53Zone
 from aws_utils.core.session import create_session
 
 
@@ -119,3 +119,57 @@ def discover_all_route53_records(
 
     logger.debug(f"Discovered {len(all_records)} total Route53 records")
     return all_records
+
+
+def discover_route53_domains(
+    profile_name: str | None = None,
+) -> list[Route53Domain]:
+    """Discover all Route53 registered domains.
+
+    Note: Route53 Domains is a global service (us-east-1 endpoint only).
+
+    Args:
+        profile_name: AWS CLI profile name
+
+    Returns:
+        List of Route53Domain objects
+    """
+    # Route53 Domains API only available in us-east-1
+    session = create_session(profile_name, "us-east-1")
+    client = session.client("route53domains")
+
+    try:
+        domains = []
+        paginator = client.get_paginator("list_domains")
+
+        for page in paginator.paginate():
+            for domain_data in page.get("Domains", []):
+                domain_name = domain_data.get("DomainName", "")
+
+                # Get detailed info for each domain
+                try:
+                    detail = client.get_domain_detail(DomainName=domain_name)
+
+                    expiration = detail.get("ExpirationDate")
+                    creation = detail.get("CreationDate")
+
+                    domain = Route53Domain(
+                        domain_name=domain_name,
+                        auto_renew=domain_data.get("AutoRenew", True),
+                        transfer_lock=domain_data.get("TransferLock", True),
+                        expiration_date=expiration.isoformat() if expiration else None,
+                        creation_date=creation.isoformat() if creation else None,
+                        registrar_name=detail.get("RegistrarName"),
+                        registrar_url=detail.get("RegistrarUrl"),
+                        abuse_contact_email=detail.get("AbuseContactEmail"),
+                        abuse_contact_phone=detail.get("AbuseContactPhone"),
+                    )
+                    domains.append(domain)
+                except ClientError as e:
+                    logger.warning(f"Failed to get domain detail for {domain_name}: {e}")
+
+        logger.debug(f"Discovered {len(domains)} Route53 registered domains")
+        return domains
+    except ClientError as e:
+        logger.warning(f"Failed to discover Route53 domains: {e}")
+        return []
