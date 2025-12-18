@@ -197,6 +197,109 @@ class SSOAccount(BaseModel):
     email_address: str = Field(description="Account email")
 
 
+# ECS Resources
+class ECSCluster(BaseModel):
+    """ECS Cluster."""
+
+    cluster_name: str = Field(description="Cluster name")
+    cluster_arn: str = Field(description="Cluster ARN")
+    status: str = Field(description="Cluster status (ACTIVE, etc.)")
+    registered_container_instances: int = Field(
+        default=0, description="Number of registered container instances"
+    )
+    running_tasks: int = Field(default=0, description="Number of running tasks")
+    pending_tasks: int = Field(default=0, description="Number of pending tasks")
+    active_services: int = Field(default=0, description="Number of active services")
+    region: str = Field(description="AWS region")
+
+
+class ECSService(BaseModel):
+    """ECS Service."""
+
+    service_name: str = Field(description="Service name")
+    service_arn: str = Field(description="Service ARN")
+    cluster_arn: str = Field(description="Parent cluster ARN")
+    status: str = Field(description="Service status")
+    desired_count: int = Field(default=0, description="Desired task count")
+    running_count: int = Field(default=0, description="Running task count")
+    launch_type: str = Field(description="Launch type (FARGATE or EC2)")
+    task_definition: str = Field(description="Task definition ARN")
+    region: str = Field(description="AWS region")
+
+
+class ECSTaskDefinition(BaseModel):
+    """ECS Task Definition."""
+
+    family: str = Field(description="Task definition family")
+    task_definition_arn: str = Field(description="Task definition ARN")
+    revision: int = Field(description="Revision number")
+    status: str = Field(description="Status (ACTIVE, INACTIVE)")
+    cpu: str | None = Field(default=None, description="CPU units")
+    memory: str | None = Field(default=None, description="Memory in MB")
+    requires_compatibilities: list[str] = Field(
+        default_factory=list, description="Required compatibilities (FARGATE, EC2)"
+    )
+    region: str = Field(description="AWS region")
+
+
+# EKS Resources
+class EKSCluster(BaseModel):
+    """EKS Kubernetes Cluster."""
+
+    cluster_name: str = Field(description="Cluster name")
+    cluster_arn: str = Field(description="Cluster ARN")
+    status: str = Field(description="Cluster status (ACTIVE, CREATING, etc.)")
+    version: str = Field(description="Kubernetes version")
+    endpoint: str | None = Field(default=None, description="API server endpoint")
+    platform_version: str | None = Field(default=None, description="EKS platform version")
+    created_at: datetime | None = Field(default=None, description="Creation timestamp")
+    region: str = Field(description="AWS region")
+
+
+class EKSNodeGroup(BaseModel):
+    """EKS Managed Node Group."""
+
+    nodegroup_name: str = Field(description="Node group name")
+    nodegroup_arn: str = Field(description="Node group ARN")
+    cluster_name: str = Field(description="Parent cluster name")
+    status: str = Field(description="Node group status")
+    instance_types: list[str] = Field(default_factory=list, description="EC2 instance types")
+    desired_size: int = Field(default=0, description="Desired node count")
+    min_size: int = Field(default=0, description="Minimum node count")
+    max_size: int = Field(default=0, description="Maximum node count")
+    region: str = Field(description="AWS region")
+
+
+class EKSFargateProfile(BaseModel):
+    """EKS Fargate Profile."""
+
+    fargate_profile_name: str = Field(description="Fargate profile name")
+    fargate_profile_arn: str = Field(description="Fargate profile ARN")
+    cluster_name: str = Field(description="Parent cluster name")
+    status: str = Field(description="Profile status")
+    pod_execution_role_arn: str = Field(description="Pod execution role ARN")
+    selectors: list[dict] = Field(default_factory=list, description="Pod selectors")
+    region: str = Field(description="AWS region")
+
+
+# ACM Resources
+class ACMCertificate(BaseModel):
+    """ACM Certificate."""
+
+    certificate_arn: str = Field(description="Certificate ARN")
+    domain_name: str = Field(description="Primary domain name")
+    status: str = Field(description="Certificate status (ISSUED, PENDING_VALIDATION, etc.)")
+    certificate_type: str = Field(description="Certificate type (AMAZON_ISSUED, IMPORTED)")
+    issuer: str | None = Field(default=None, description="Certificate issuer")
+    not_before: datetime | None = Field(default=None, description="Valid from")
+    not_after: datetime | None = Field(default=None, description="Valid until")
+    in_use_by: list[str] = Field(default_factory=list, description="Resources using this cert")
+    subject_alternative_names: list[str] = Field(
+        default_factory=list, description="Subject alternative names (SANs)"
+    )
+    region: str = Field(description="AWS region")
+
+
 class AccountInventory(BaseModel):
     """Complete inventory for an AWS account."""
 
@@ -246,6 +349,33 @@ class AccountInventory(BaseModel):
         default_factory=list, description="Step Functions activities"
     )
 
+    # ECS Resources
+    ecs_clusters: list[ECSCluster] = Field(
+        default_factory=list, description="ECS clusters in the account"
+    )
+    ecs_services: list[ECSService] = Field(
+        default_factory=list, description="ECS services in the account"
+    )
+    ecs_task_definitions: list[ECSTaskDefinition] = Field(
+        default_factory=list, description="ECS task definitions in the account"
+    )
+
+    # EKS Resources
+    eks_clusters: list[EKSCluster] = Field(
+        default_factory=list, description="EKS clusters in the account"
+    )
+    eks_node_groups: list[EKSNodeGroup] = Field(
+        default_factory=list, description="EKS node groups in the account"
+    )
+    eks_fargate_profiles: list[EKSFargateProfile] = Field(
+        default_factory=list, description="EKS Fargate profiles in the account"
+    )
+
+    # ACM Resources
+    acm_certificates: list[ACMCertificate] = Field(
+        default_factory=list, description="ACM certificates in the account"
+    )
+
     def to_dict(self) -> dict:
         """Convert to dictionary for YAML serialization."""
         data = self.model_dump()
@@ -254,6 +384,16 @@ class AccountInventory(BaseModel):
         for bucket in data.get("s3_buckets", []):
             if bucket.get("created"):
                 bucket["created"] = bucket["created"].isoformat()
+        # EKS cluster created_at
+        for cluster in data.get("eks_clusters", []):
+            if cluster.get("created_at"):
+                cluster["created_at"] = cluster["created_at"].isoformat()
+        # ACM certificate dates
+        for cert in data.get("acm_certificates", []):
+            if cert.get("not_before"):
+                cert["not_before"] = cert["not_before"].isoformat()
+            if cert.get("not_after"):
+                cert["not_after"] = cert["not_after"].isoformat()
         return data
 
 

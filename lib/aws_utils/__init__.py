@@ -13,6 +13,9 @@ This library provides AWS resource discovery capabilities for:
 - Step Functions: State machines and activities
 - SSO: Instance and account discovery
 - Organizations: Account and OU hierarchy discovery
+- ECS: Clusters, services, and task definitions
+- EKS: Clusters, node groups, and Fargate profiles
+- ACM: Certificate management
 
 Usage:
     from aws_utils import discover_account_inventory, save_inventory
@@ -27,7 +30,14 @@ Usage:
 from aws_utils.core.schemas import (
     VPC,
     AccountInventory,
+    ACMCertificate,
     DynamoDBTable,
+    ECSCluster,
+    ECSService,
+    ECSTaskDefinition,
+    EKSCluster,
+    EKSFargateProfile,
+    EKSNodeGroup,
     ElasticIP,
     InternetGateway,
     LambdaFunction,
@@ -49,10 +59,24 @@ from aws_utils.core.schemas import (
 from aws_utils.core.session import create_session, get_default_region
 from aws_utils.inventory.reader import load_accounts_config, load_inventory
 from aws_utils.inventory.writer import save_accounts_config, save_inventory
+from aws_utils.services.acm import discover_acm_certificates
 from aws_utils.services.dynamodb import discover_dynamodb_tables
 from aws_utils.services.ec2 import (
     discover_elastic_ips,
     discover_vpcs,
+)
+from aws_utils.services.ecs import (
+    discover_all_ecs_services,
+    discover_ecs_clusters,
+    discover_ecs_services,
+    discover_ecs_task_definitions,
+)
+from aws_utils.services.eks import (
+    discover_all_eks_fargate_profiles,
+    discover_all_eks_node_groups,
+    discover_eks_clusters,
+    discover_eks_fargate_profiles,
+    discover_eks_node_groups,
 )
 from aws_utils.services.lambda_svc import discover_lambda_functions
 from aws_utils.services.organizations import (
@@ -107,6 +131,13 @@ __all__ = [
     "SFNActivity",
     "SSOInstance",
     "SSOAccount",
+    "ECSCluster",
+    "ECSService",
+    "ECSTaskDefinition",
+    "EKSCluster",
+    "EKSNodeGroup",
+    "EKSFargateProfile",
+    "ACMCertificate",
     # Inventory I/O
     "load_inventory",
     "save_inventory",
@@ -147,6 +178,19 @@ __all__ = [
     # Discovery - Organizations
     "discover_organization",
     "get_organization_id",
+    # Discovery - ECS
+    "discover_ecs_clusters",
+    "discover_ecs_services",
+    "discover_all_ecs_services",
+    "discover_ecs_task_definitions",
+    # Discovery - EKS
+    "discover_eks_clusters",
+    "discover_eks_node_groups",
+    "discover_all_eks_node_groups",
+    "discover_eks_fargate_profiles",
+    "discover_all_eks_fargate_profiles",
+    # Discovery - ACM
+    "discover_acm_certificates",
 ]
 
 __version__ = "1.0.0"

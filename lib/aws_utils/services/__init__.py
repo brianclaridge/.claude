@@ -1,5 +1,6 @@
 """AWS service discovery modules."""
 
+from aws_utils.services.acm import discover_acm_certificates
 from aws_utils.services.dynamodb import discover_dynamodb_tables
 from aws_utils.services.ec2 import (
     discover_elastic_ips,
@@ -7,6 +8,19 @@ from aws_utils.services.ec2 import (
     discover_nat_gateways,
     discover_subnets,
     discover_vpcs,
+)
+from aws_utils.services.ecs import (
+    discover_all_ecs_services,
+    discover_ecs_clusters,
+    discover_ecs_services,
+    discover_ecs_task_definitions,
+)
+from aws_utils.services.eks import (
+    discover_all_eks_fargate_profiles,
+    discover_all_eks_node_groups,
+    discover_eks_clusters,
+    discover_eks_fargate_profiles,
+    discover_eks_node_groups,
 )
 from aws_utils.services.lambda_svc import discover_lambda_functions
 from aws_utils.services.organizations import (
@@ -77,4 +91,17 @@ __all__ = [
     "start_device_authorization",
     "poll_for_token",
     "DeviceAuthResult",
+    # ECS
+    "discover_ecs_clusters",
+    "discover_ecs_services",
+    "discover_all_ecs_services",
+    "discover_ecs_task_definitions",
+    # EKS
+    "discover_eks_clusters",
+    "discover_eks_node_groups",
+    "discover_all_eks_node_groups",
+    "discover_eks_fargate_profiles",
+    "discover_all_eks_fargate_profiles",
+    # ACM
+    "discover_acm_certificates",
 ]
