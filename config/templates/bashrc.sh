@@ -3,6 +3,13 @@
 # if not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
+# Source .claude/.env if it exists (environment variables for Claude tools)
+if [ -f "${CLAUDE_PATH}/.env" ]; then
+    set -a  # automatically export all variables
+    source "${CLAUDE_PATH}/.env"
+    set +a
+fi
+
 export CONTAINER_ID=`cat /proc/self/cgroup | grep -o -E '[0-9a-f]{64}' | head -n 1`
 
 alias less='less -R'

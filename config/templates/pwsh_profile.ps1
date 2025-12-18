@@ -1,3 +1,15 @@
+# Source .claude/.env if it exists (environment variables for Claude tools)
+$envFile = "${env:CLAUDE_PATH}/.env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match '^([^#=]+)=(.*)$') {
+            $name = $matches[1].Trim()
+            $value = $matches[2].Trim().Trim('"').Trim("'")
+            [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+        }
+    }
+}
+
 Function ll {
   ls -hal --color=auto
 }

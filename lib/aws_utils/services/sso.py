@@ -4,6 +4,7 @@ Enables bootstrapping without pre-configured AWS CLI profiles by using
 the SSO OIDC device authorization grant to discover available accounts.
 """
 
+import os
 import time
 from dataclasses import dataclass
 
@@ -12,6 +13,18 @@ from botocore.exceptions import ClientError
 from loguru import logger
 
 from aws_utils.core.schemas import SSOAccount, SSOInstance
+
+
+def get_sso_region() -> str:
+    """Get SSO region from environment variable.
+
+    AWS Identity Center must be queried in the region where it's configured.
+    Set AWS_SSO_REGION environment variable to override the default.
+
+    Returns:
+        SSO region (defaults to us-east-1 if not set)
+    """
+    return os.environ.get("AWS_SSO_REGION", "us-east-1")
 
 
 @dataclass
@@ -27,7 +40,7 @@ class DeviceAuthResult:
 
 def discover_sso_instances(
     profile_name: str | None = None,
-    region: str = "us-east-1",
+    region: str | None = None,
 ) -> list[SSOInstance]:
     """Discover SSO instances in the organization.
 
@@ -38,6 +51,9 @@ def discover_sso_instances(
     Returns:
         List of SSOInstance objects
     """
+    if region is None:
+        region = get_sso_region()
+
     try:
         session = boto3.Session(profile_name=profile_name, region_name=region)
         sso_admin = session.client("sso-admin")
@@ -62,7 +78,7 @@ def discover_sso_instances(
 
 def start_device_authorization(
     sso_start_url: str,
-    region: str = "us-east-1",
+    region: str | None = None,
 ) -> DeviceAuthResult:
     """Start SSO OIDC device authorization flow.
 
@@ -76,6 +92,9 @@ def start_device_authorization(
     Returns:
         DeviceAuthResult with verification URI and user code
     """
+    if region is None:
+        region = get_sso_region()
+
     try:
         sso_oidc = boto3.client("sso-oidc", region_name=region)
 
@@ -113,7 +132,7 @@ def start_device_authorization(
 
 def poll_for_token(
     sso_start_url: str,
-    region: str = "us-east-1",
+    region: str | None = None,
     timeout_seconds: int = 300,
     poll_interval: int = 5,
 ) -> DeviceAuthResult:
@@ -134,6 +153,9 @@ def poll_for_token(
     Returns:
         DeviceAuthResult with access token if successful
     """
+    if region is None:
+        region = get_sso_region()
+
     try:
         sso_oidc = boto3.client("sso-oidc", region_name=region)
 
@@ -224,7 +246,7 @@ def poll_for_token(
 
 def discover_sso_accounts(
     access_token: str,
-    region: str = "us-east-1",
+    region: str | None = None,
 ) -> list[SSOAccount]:
     """List all accounts available to the authenticated user.
 
@@ -235,6 +257,9 @@ def discover_sso_accounts(
     Returns:
         List of SSOAccount objects
     """
+    if region is None:
+        region = get_sso_region()
+
     try:
         sso = boto3.client("sso", region_name=region)
 
@@ -270,7 +295,7 @@ def discover_sso_accounts(
 def discover_account_roles(
     access_token: str,
     account_id: str,
-    region: str = "us-east-1",
+    region: str | None = None,
 ) -> list[str]:
     """List available roles for an account.
 
@@ -282,6 +307,9 @@ def discover_account_roles(
     Returns:
         List of role names available in the account
     """
+    if region is None:
+        region = get_sso_region()
+
     try:
         sso = boto3.client("sso", region_name=region)
 
