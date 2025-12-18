@@ -2,7 +2,7 @@
 
 import pytest
 
-from config_helper import setup_logger, get_logger
+from config_helper.logging import setup_logger, get_logger
 
 
 class TestSetupLogger:
