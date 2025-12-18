@@ -13,7 +13,7 @@ from typing import Any
 import yaml
 from loguru import logger
 
-# Add aws_inspector to path
+# Add aws_utils to path
 _lib_path = Path(__file__).parent.parent.parent.parent / "lib"
 if str(_lib_path) not in sys.path:
     sys.path.insert(0, str(_lib_path))

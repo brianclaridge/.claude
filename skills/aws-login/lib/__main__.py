@@ -282,7 +282,7 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
         if skip_vpc:
             # Auth only - just create profiles, no inventory
             logger.info("Skipping resource discovery (--skip-vpc)")
-            from aws_inspector.services.organizations import collect_all_accounts
+            from aws_utils.services.organizations import collect_all_accounts
 
             accounts = list(collect_all_accounts(tree))
             accounts_config = {}
@@ -414,7 +414,7 @@ def rebuild_config(skip_vpc: bool = False, skip_resources: bool = False) -> bool
         management_account_id = tree.get("management_account_id", "")
 
         if skip_vpc:
-            from aws_inspector.services.organizations import collect_all_accounts
+            from aws_utils.services.organizations import collect_all_accounts
 
             accounts = list(collect_all_accounts(tree))
             accounts_config = {}

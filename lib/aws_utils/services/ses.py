@@ -3,8 +3,8 @@
 from botocore.exceptions import ClientError
 from loguru import logger
 
-from aws_inspector.core.schemas import SESIdentity
-from aws_inspector.core.session import create_session, get_default_region
+from aws_utils.core.schemas import SESIdentity
+from aws_utils.core.session import create_session, get_default_region
 
 
 def discover_ses_identities(

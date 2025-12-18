@@ -229,14 +229,13 @@ skills/aws-login/
 │   ├── config.py         # Auth config (accounts.yml)
 │   ├── sso.py            # SSO login with URL detection
 │   ├── sso_discovery.py  # SSO device auth flow (NEW in v1.1)
-│   ├── discovery.py      # Resource discovery (uses aws_inspector)
+│   ├── discovery.py      # Resource discovery (uses aws_utils)
 │   └── profiles.py       # AWS CLI profile management
 ├── pyproject.toml
 └── SKILL.md
 
-lib/aws_inspector/        # Shared library
+lib/aws_utils/            # Shared library
 ├── __init__.py
-├── pyproject.toml
 ├── core/
 │   ├── session.py        # Boto3 session factory
 │   └── schemas.py        # Pydantic models

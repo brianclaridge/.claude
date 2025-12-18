@@ -5,7 +5,7 @@ from typing import Any, Callable
 from botocore.exceptions import ClientError
 from loguru import logger
 
-from aws_inspector.core.session import create_session
+from aws_utils.core.session import create_session
 
 
 def get_organization_id(profile_name: str | None = None) -> str | None:

@@ -5,8 +5,8 @@ from pathlib import Path
 import yaml
 from loguru import logger
 
-from aws_inspector.core.schemas import AccountInventory, AccountsConfig, AccountConfig
-from aws_inspector.inventory.writer import get_aws_data_path
+from aws_utils.core.schemas import AccountInventory, AccountsConfig, AccountConfig
+from aws_utils.inventory.writer import get_aws_data_path
 
 
 def get_data_path() -> Path:

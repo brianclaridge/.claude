@@ -1,4 +1,4 @@
-"""AWS Inspector - Resource discovery and inventory library.
+"""AWS Utils - Resource discovery and inventory library.
 
 This library provides AWS resource discovery capabilities for:
 - EC2: VPCs, subnets, internet gateways, NAT gateways, elastic IPs
@@ -9,7 +9,7 @@ This library provides AWS resource discovery capabilities for:
 - Organizations: Account and OU hierarchy discovery
 
 Usage:
-    from aws_inspector import discover_account_inventory, save_inventory
+    from aws_utils import discover_account_inventory, save_inventory
 
     # Discover all resources for an account
     inventory = discover_account_inventory(profile_name="sandbox")
@@ -18,8 +18,8 @@ Usage:
     save_inventory(org_id="o-xxx", ou_path="dev-accounts", alias="sandbox", data=inventory)
 """
 
-from aws_inspector.core.session import create_session, get_default_region
-from aws_inspector.core.schemas import (
+from aws_utils.core.session import create_session, get_default_region
+from aws_utils.core.schemas import (
     AccountInventory,
     ElasticIP,
     InternetGateway,
@@ -31,17 +31,17 @@ from aws_inspector.core.schemas import (
     Subnet,
     VPC,
 )
-from aws_inspector.inventory.reader import load_inventory, load_accounts_config
-from aws_inspector.inventory.writer import save_inventory, save_accounts_config
-from aws_inspector.services.ec2 import (
+from aws_utils.inventory.reader import load_inventory, load_accounts_config
+from aws_utils.inventory.writer import save_inventory, save_accounts_config
+from aws_utils.services.ec2 import (
     discover_vpcs,
     discover_elastic_ips,
 )
-from aws_inspector.services.s3 import discover_s3_buckets
-from aws_inspector.services.sqs import discover_sqs_queues
-from aws_inspector.services.sns import discover_sns_topics
-from aws_inspector.services.ses import discover_ses_identities
-from aws_inspector.services.organizations import (
+from aws_utils.services.s3 import discover_s3_buckets
+from aws_utils.services.sqs import discover_sqs_queues
+from aws_utils.services.sns import discover_sns_topics
+from aws_utils.services.ses import discover_ses_identities
+from aws_utils.services.organizations import (
     discover_organization,
     get_organization_id,
 )

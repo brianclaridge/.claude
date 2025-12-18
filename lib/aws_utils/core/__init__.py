@@ -1,7 +1,7 @@
 """Core module - session management and schemas."""
 
-from aws_inspector.core.session import create_session, get_default_region
-from aws_inspector.core.schemas import (
+from aws_utils.core.session import create_session, get_default_region
+from aws_utils.core.schemas import (
     AccountInventory,
     ElasticIP,
     InternetGateway,

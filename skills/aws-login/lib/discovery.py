@@ -1,4 +1,4 @@
-"""AWS Organizations and resource discovery using aws_inspector library."""
+"""AWS Organizations and resource discovery using aws_utils library."""
 
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -8,24 +8,24 @@ from typing import Any, Callable
 
 from loguru import logger
 
-# Add aws_inspector to path
-# Path: .claude/skills/aws-login/lib/discovery.py -> .claude/lib/aws_inspector
-_lib_path = Path(__file__).parent.parent.parent.parent / "lib" / "aws_inspector"
+# Add aws_utils to path
+# Path: .claude/skills/aws-login/lib/discovery.py -> .claude/lib/aws_utils
+_lib_path = Path(__file__).parent.parent.parent.parent / "lib" / "aws_utils"
 if str(_lib_path) not in sys.path:
     sys.path.insert(0, str(_lib_path))
 
-from aws_inspector.core.schemas import AccountInventory
-from aws_inspector.services.ec2 import discover_vpcs, discover_elastic_ips
-from aws_inspector.services.s3 import discover_s3_buckets
-from aws_inspector.services.sqs import discover_sqs_queues
-from aws_inspector.services.sns import discover_sns_topics
-from aws_inspector.services.ses import discover_ses_identities
-from aws_inspector.services.organizations import (
+from aws_utils.core.schemas import AccountInventory
+from aws_utils.services.ec2 import discover_vpcs, discover_elastic_ips
+from aws_utils.services.s3 import discover_s3_buckets
+from aws_utils.services.sqs import discover_sqs_queues
+from aws_utils.services.sns import discover_sns_topics
+from aws_utils.services.ses import discover_ses_identities
+from aws_utils.services.organizations import (
     discover_organization as _discover_org,
     get_organization_id,
     collect_all_accounts,
 )
-from aws_inspector.inventory.writer import save_inventory, get_relative_inventory_path
+from aws_utils.inventory.writer import save_inventory, get_relative_inventory_path
 
 from .config import get_default_region
 

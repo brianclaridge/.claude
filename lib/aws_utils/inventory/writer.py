@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 from loguru import logger
 
-from aws_inspector.core.schemas import AccountInventory, AccountsConfig
+from aws_utils.core.schemas import AccountInventory, AccountsConfig
 
 
 def _get_claude_path() -> Path:

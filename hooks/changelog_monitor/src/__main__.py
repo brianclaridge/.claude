@@ -9,9 +9,9 @@ from typing import Any
 
 import structlog
 
-# Add shared module to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-from shared.config import get_hook_config
+# Add lib to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "lib"))
+from config_helper import get_hook_config
 
 from .analyzer import AnalysisResult, analyze_versions, format_context_injection
 from .fetcher import fetch_changelog, get_last_known_version

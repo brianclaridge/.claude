@@ -3,8 +3,8 @@
 from botocore.exceptions import ClientError
 from loguru import logger
 
-from aws_inspector.core.schemas import S3Bucket
-from aws_inspector.core.session import create_session
+from aws_utils.core.schemas import S3Bucket
+from aws_utils.core.session import create_session
 
 
 def discover_s3_buckets(

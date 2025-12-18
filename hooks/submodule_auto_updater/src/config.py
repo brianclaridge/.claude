@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Add shared module to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-from shared.config import get_hook_config, resolve_log_path
+# Add lib to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "lib"))
+from config_helper import get_hook_config, resolve_log_path
 
 
 DEFAULT_CONFIG = {

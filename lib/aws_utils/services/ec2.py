@@ -6,14 +6,14 @@ import boto3
 from botocore.exceptions import ClientError
 from loguru import logger
 
-from aws_inspector.core.schemas import (
+from aws_utils.core.schemas import (
     ElasticIP,
     InternetGateway,
     NATGateway,
     Subnet,
     VPC,
 )
-from aws_inspector.core.session import create_session, get_default_region
+from aws_utils.core.session import create_session, get_default_region
 
 
 def discover_internet_gateways(ec2_client: Any, vpc_id: str) -> list[InternetGateway]:

@@ -10,11 +10,11 @@ dependencies = [
     "pydantic>=2.0.0",
     "InquirerPy>=0.3.4",
     "rich>=13.0.0",
-    "aws-inspector",
+    "claude-lib",
 ]
 
 [tool.uv.sources]
-aws-inspector = { path = "../../lib/aws_inspector", editable = true }
+claude-lib = { path = "../../lib", editable = true }
 
 [build-system]
 requires = ["hatchling"]

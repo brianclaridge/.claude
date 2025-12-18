@@ -1,6 +1,8 @@
 settings.local.json
 .data
-__pycache__
 .mcp.json
 .env
+
+__pycache__
+.pytest_cache
 .venv
