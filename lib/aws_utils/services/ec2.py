@@ -2,16 +2,15 @@
 
 from typing import Any
 
-import boto3
 from botocore.exceptions import ClientError
 from loguru import logger
 
 from aws_utils.core.schemas import (
+    VPC,
     ElasticIP,
     InternetGateway,
     NATGateway,
     Subnet,
-    VPC,
 )
 from aws_utils.core.session import create_session, get_default_region
 

@@ -1,4 +1,4 @@
-"""AWS SSO OIDC device authorization flow for account discovery.
+"""AWS SSO discovery and device authorization.
 
 Enables bootstrapping without pre-configured AWS CLI profiles by using
 the SSO OIDC device authorization grant to discover available accounts.
@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import boto3
 from botocore.exceptions import ClientError
 from loguru import logger
+
+from aws_utils.core.schemas import SSOAccount, SSOInstance
 
 
 @dataclass
@@ -23,13 +25,39 @@ class DeviceAuthResult:
     error: str | None = None
 
 
-@dataclass
-class DiscoveredAccount:
-    """Account discovered via SSO."""
+def discover_sso_instances(
+    profile_name: str | None = None,
+    region: str = "us-east-1",
+) -> list[SSOInstance]:
+    """Discover SSO instances in the organization.
 
-    account_id: str
-    account_name: str
-    email: str
+    Args:
+        profile_name: AWS CLI profile name (optional)
+        region: AWS region for SSO admin
+
+    Returns:
+        List of SSOInstance objects
+    """
+    try:
+        session = boto3.Session(profile_name=profile_name, region_name=region)
+        sso_admin = session.client("sso-admin")
+
+        instances = []
+        paginator = sso_admin.get_paginator("list_instances")
+
+        for page in paginator.paginate():
+            for instance_data in page.get("Instances", []):
+                instance = SSOInstance(
+                    instance_arn=instance_data["InstanceArn"],
+                    identity_store_id=instance_data["IdentityStoreId"],
+                )
+                instances.append(instance)
+
+        logger.debug(f"Discovered {len(instances)} SSO instances")
+        return instances
+    except ClientError as e:
+        logger.warning(f"Failed to discover SSO instances: {e}")
+        return []
 
 
 def start_device_authorization(
@@ -132,11 +160,11 @@ def poll_for_token(
         interval = auth_response.get("interval", poll_interval)
 
         # Display verification info
-        print(f"\n| Field | Value |")
-        print(f"|-------|-------|")
+        print("\n| Field | Value |")
+        print("|-------|-------|")
         print(f"| URL   | {verification_uri} |")
         print(f"| Code  | {user_code} |")
-        print(f"\nOpen URL in browser and enter code to authenticate.\n", flush=True)
+        print("\nOpen URL in browser and enter code to authenticate.\n", flush=True)
 
         # Poll for token
         start_time = time.time()
@@ -194,10 +222,10 @@ def poll_for_token(
         return DeviceAuthResult(success=False, error=str(e))
 
 
-def discover_available_accounts(
+def discover_sso_accounts(
     access_token: str,
     region: str = "us-east-1",
-) -> list[DiscoveredAccount]:
+) -> list[SSOAccount]:
     """List all accounts available to the authenticated user.
 
     Args:
@@ -205,7 +233,7 @@ def discover_available_accounts(
         region: AWS region for SSO
 
     Returns:
-        List of DiscoveredAccount objects
+        List of SSOAccount objects
     """
     try:
         sso = boto3.client("sso", region_name=region)
@@ -218,10 +246,10 @@ def discover_available_accounts(
 
             for account in response.get("accountList", []):
                 accounts.append(
-                    DiscoveredAccount(
+                    SSOAccount(
                         account_id=account["accountId"],
                         account_name=account.get("accountName", ""),
-                        email=account.get("emailAddress", ""),
+                        email_address=account.get("emailAddress", ""),
                     )
                 )
 

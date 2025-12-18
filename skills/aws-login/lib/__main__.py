@@ -27,7 +27,16 @@ from .config import (
 from .discovery import discover_organization, enrich_and_save_inventory
 from .profiles import clear_aws_config, ensure_profile, set_default_profile
 from .sso import check_credentials_valid, run_sso_login
-from .sso_discovery import poll_for_token, discover_available_accounts
+
+# SSO discovery now comes from aws_utils library
+import sys
+from pathlib import Path
+
+_lib_path = Path(__file__).parent.parent.parent.parent / "lib"
+if str(_lib_path) not in sys.path:
+    sys.path.insert(0, str(_lib_path))
+
+from aws_utils.services.sso import poll_for_token, discover_sso_accounts
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -231,7 +240,7 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
     # Discover available accounts via SSO
     logger.info("")
     logger.info("Discovering available accounts...")
-    sso_accounts = discover_available_accounts(access_token)
+    sso_accounts = discover_sso_accounts(access_token)
 
     if not sso_accounts:
         logger.error("No accounts available. Check SSO permissions.")

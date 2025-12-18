@@ -1,7 +1,7 @@
 """Core module - session management and schemas."""
 
-from aws_utils.core.session import create_session, get_default_region
 from aws_utils.core.schemas import (
+    VPC,
     AccountInventory,
     ElasticIP,
     InternetGateway,
@@ -11,8 +11,8 @@ from aws_utils.core.schemas import (
     SNSTopic,
     SQSQueue,
     Subnet,
-    VPC,
 )
+from aws_utils.core.session import create_session, get_default_region
 
 __all__ = [
     "create_session",

@@ -2,7 +2,7 @@
 
 import pytest
 
-from config_helper import safe_load, safe_dump
+from config_helper import safe_dump, safe_load
 
 
 class TestSafeLoad:

@@ -1,20 +1,40 @@
 """AWS service discovery modules."""
 
+from aws_utils.services.dynamodb import discover_dynamodb_tables
 from aws_utils.services.ec2 import (
-    discover_vpcs,
     discover_elastic_ips,
     discover_internet_gateways,
     discover_nat_gateways,
     discover_subnets,
+    discover_vpcs,
 )
-from aws_utils.services.s3 import discover_s3_buckets
-from aws_utils.services.sqs import discover_sqs_queues
-from aws_utils.services.sns import discover_sns_topics
-from aws_utils.services.ses import discover_ses_identities
+from aws_utils.services.lambda_svc import discover_lambda_functions
 from aws_utils.services.organizations import (
+    collect_all_accounts,
     discover_organization,
     get_organization_id,
-    collect_all_accounts,
+)
+from aws_utils.services.rds import discover_rds_clusters, discover_rds_instances
+from aws_utils.services.route53 import (
+    discover_all_route53_records,
+    discover_route53_records,
+    discover_route53_zones,
+)
+from aws_utils.services.s3 import discover_s3_buckets
+from aws_utils.services.ses import discover_ses_identities
+from aws_utils.services.sns import discover_sns_topics
+from aws_utils.services.sqs import discover_sqs_queues
+from aws_utils.services.sso import (
+    DeviceAuthResult,
+    discover_account_roles,
+    discover_sso_accounts,
+    discover_sso_instances,
+    poll_for_token,
+    start_device_authorization,
+)
+from aws_utils.services.stepfunctions import (
+    discover_sfn_activities,
+    discover_state_machines,
 )
 
 __all__ = [
@@ -36,4 +56,25 @@ __all__ = [
     "discover_organization",
     "get_organization_id",
     "collect_all_accounts",
+    # Lambda
+    "discover_lambda_functions",
+    # RDS
+    "discover_rds_instances",
+    "discover_rds_clusters",
+    # Route53
+    "discover_route53_zones",
+    "discover_route53_records",
+    "discover_all_route53_records",
+    # DynamoDB
+    "discover_dynamodb_tables",
+    # Step Functions
+    "discover_state_machines",
+    "discover_sfn_activities",
+    # SSO
+    "discover_sso_instances",
+    "discover_sso_accounts",
+    "discover_account_roles",
+    "start_device_authorization",
+    "poll_for_token",
+    "DeviceAuthResult",
 ]

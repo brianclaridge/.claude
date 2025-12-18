@@ -1,15 +1,14 @@
 """Tests for config_helper.config module."""
 
-import os
 
 import pytest
 
 from config_helper import (
-    get_config_path,
     get_claude_root,
-    get_workspace_root,
+    get_config_path,
     get_global_config,
     get_hook_config,
+    get_workspace_root,
     resolve_log_path,
 )
 
@@ -74,7 +73,9 @@ class TestGetHookConfig:
         assert result["log_enabled"] is True
         assert result["log_level"] == "DEBUG"
 
-    def test_returns_empty_dict_for_missing_hook(self, mock_claude_env, sample_config_yml, monkeypatch):
+    def test_returns_empty_dict_for_missing_hook(
+        self, mock_claude_env, sample_config_yml, monkeypatch
+    ):
         """Should return empty dict for non-existent hook."""
         monkeypatch.setenv("CLAUDE_CONFIG_YML_PATH", str(sample_config_yml))
         result = get_hook_config("nonexistent_hook")

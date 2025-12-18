@@ -1,6 +1,5 @@
 """Shared test fixtures for claude-lib tests."""
 
-import os
 import tempfile
 from pathlib import Path
 

@@ -1,18 +1,11 @@
 """Tests for aws_utils.core.schemas module."""
 
-import pytest
 
 from aws_utils.core.schemas import (
     VPC,
-    Subnet,
-    InternetGateway,
-    NATGateway,
-    ElasticIP,
-    S3Bucket,
-    SQSQueue,
-    SNSTopic,
-    SESIdentity,
     AccountInventory,
+    S3Bucket,
+    Subnet,
 )
 
 

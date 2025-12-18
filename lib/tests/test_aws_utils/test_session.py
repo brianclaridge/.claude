@@ -1,6 +1,5 @@
 """Tests for aws_utils.core.session module."""
 
-import pytest
 
 from aws_utils.core.session import get_default_region
 

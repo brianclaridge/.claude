@@ -139,6 +139,15 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --directory {{ .Env.CLAUDE_HOOKS_PATH }}/plan_distributor python -m src"
+          }
+        ]
+      },
+      {
         "matcher": "mcp__playwright__*",
         "hooks": [
           {

@@ -1,8 +1,7 @@
 """Tests for config_helper.logging module."""
 
-import pytest
 
-from config_helper.logging import setup_logger, get_logger
+from config_helper.logging import get_logger, setup_logger
 
 
 class TestSetupLogger:

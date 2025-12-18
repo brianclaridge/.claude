@@ -1,6 +1,6 @@
 """AWS Organizations discovery."""
 
-from typing import Any, Callable
+from typing import Any
 
 from botocore.exceptions import ClientError
 from loguru import logger

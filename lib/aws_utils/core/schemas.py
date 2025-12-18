@@ -92,6 +92,111 @@ class SESIdentity(BaseModel):
     region: str = Field(description="AWS region")
 
 
+class LambdaFunction(BaseModel):
+    """AWS Lambda Function."""
+
+    function_name: str = Field(description="Function name")
+    runtime: str | None = Field(default=None, description="Runtime (e.g., python3.12)")
+    memory_size: int = Field(description="Memory size in MB")
+    timeout: int = Field(description="Timeout in seconds")
+    last_modified: str = Field(description="Last modified timestamp")
+    arn: str = Field(description="Function ARN")
+    region: str = Field(description="AWS region")
+
+
+class RDSInstance(BaseModel):
+    """RDS Database Instance."""
+
+    db_instance_identifier: str = Field(description="DB instance identifier")
+    engine: str = Field(description="Database engine (mysql, postgres, etc.)")
+    engine_version: str = Field(description="Engine version")
+    instance_class: str = Field(description="Instance class (db.t3.micro, etc.)")
+    status: str = Field(description="Instance status")
+    endpoint: str | None = Field(default=None, description="Endpoint address")
+    port: int | None = Field(default=None, description="Endpoint port")
+    arn: str = Field(description="Instance ARN")
+    region: str = Field(description="AWS region")
+
+
+class RDSCluster(BaseModel):
+    """RDS Aurora Cluster."""
+
+    cluster_identifier: str = Field(description="Cluster identifier")
+    engine: str = Field(description="Database engine (aurora-mysql, aurora-postgresql)")
+    engine_version: str = Field(description="Engine version")
+    status: str = Field(description="Cluster status")
+    endpoint: str | None = Field(default=None, description="Writer endpoint")
+    reader_endpoint: str | None = Field(default=None, description="Reader endpoint")
+    port: int | None = Field(default=None, description="Endpoint port")
+    arn: str = Field(description="Cluster ARN")
+    region: str = Field(description="AWS region")
+
+
+class Route53Zone(BaseModel):
+    """Route53 Hosted Zone."""
+
+    zone_id: str = Field(description="Hosted zone ID")
+    name: str = Field(description="Zone name (domain)")
+    is_private: bool = Field(default=False, description="Whether zone is private")
+    record_count: int = Field(default=0, description="Number of resource records")
+
+
+class Route53Record(BaseModel):
+    """Route53 DNS Record."""
+
+    zone_id: str = Field(description="Parent zone ID")
+    name: str = Field(description="Record name (FQDN)")
+    record_type: str = Field(description="Record type (A, AAAA, CNAME, etc.)")
+    ttl: int | None = Field(default=None, description="TTL in seconds")
+    values: list[str] = Field(default_factory=list, description="Record values")
+
+
+class DynamoDBTable(BaseModel):
+    """DynamoDB Table."""
+
+    table_name: str = Field(description="Table name")
+    status: str = Field(description="Table status (ACTIVE, etc.)")
+    item_count: int = Field(default=0, description="Approximate item count")
+    size_bytes: int = Field(default=0, description="Table size in bytes")
+    arn: str = Field(description="Table ARN")
+    region: str = Field(description="AWS region")
+
+
+class StateMachine(BaseModel):
+    """Step Functions State Machine."""
+
+    name: str = Field(description="State machine name")
+    arn: str = Field(description="State machine ARN")
+    status: str = Field(description="Status (ACTIVE, DELETING)")
+    machine_type: str = Field(description="Type (STANDARD or EXPRESS)")
+    creation_date: str = Field(description="Creation timestamp")
+    region: str = Field(description="AWS region")
+
+
+class SFNActivity(BaseModel):
+    """Step Functions Activity."""
+
+    name: str = Field(description="Activity name")
+    arn: str = Field(description="Activity ARN")
+    creation_date: str = Field(description="Creation timestamp")
+    region: str = Field(description="AWS region")
+
+
+class SSOInstance(BaseModel):
+    """AWS SSO Instance."""
+
+    instance_arn: str = Field(description="SSO instance ARN")
+    identity_store_id: str = Field(description="Identity store ID")
+
+
+class SSOAccount(BaseModel):
+    """AWS Account accessible via SSO."""
+
+    account_id: str = Field(description="AWS Account ID")
+    account_name: str = Field(description="Account name")
+    email_address: str = Field(description="Account email")
+
+
 class AccountInventory(BaseModel):
     """Complete inventory for an AWS account."""
 
@@ -118,6 +223,27 @@ class AccountInventory(BaseModel):
     )
     ses_identities: list[SESIdentity] = Field(
         default_factory=list, description="SES identities in the account"
+    )
+    lambda_functions: list[LambdaFunction] = Field(
+        default_factory=list, description="Lambda functions in the account"
+    )
+    rds_instances: list[RDSInstance] = Field(
+        default_factory=list, description="RDS instances in the account"
+    )
+    rds_clusters: list[RDSCluster] = Field(
+        default_factory=list, description="RDS Aurora clusters in the account"
+    )
+    route53_zones: list[Route53Zone] = Field(
+        default_factory=list, description="Route53 hosted zones"
+    )
+    dynamodb_tables: list[DynamoDBTable] = Field(
+        default_factory=list, description="DynamoDB tables in the account"
+    )
+    state_machines: list[StateMachine] = Field(
+        default_factory=list, description="Step Functions state machines"
+    )
+    sfn_activities: list[SFNActivity] = Field(
+        default_factory=list, description="Step Functions activities"
     )
 
     def to_dict(self) -> dict:

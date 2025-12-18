@@ -1,8 +1,7 @@
 """Tests for config_helper.paths module."""
 
-import pytest
 
-from config_helper import get_data_path, get_logs_path, ensure_directory
+from config_helper import ensure_directory, get_data_path, get_logs_path
 
 
 class TestGetDataPath:

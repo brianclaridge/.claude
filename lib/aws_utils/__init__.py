@@ -6,6 +6,12 @@ This library provides AWS resource discovery capabilities for:
 - SQS: Queue listing
 - SNS: Topic listing
 - SES: Identity listing
+- Lambda: Function listing
+- RDS: Instance and cluster listing
+- Route53: Hosted zones and records
+- DynamoDB: Table listing
+- Step Functions: State machines and activities
+- SSO: Instance and account discovery
 - Organizations: Account and OU hierarchy discovery
 
 Usage:
@@ -18,32 +24,62 @@ Usage:
     save_inventory(org_id="o-xxx", ou_path="dev-accounts", alias="sandbox", data=inventory)
 """
 
-from aws_utils.core.session import create_session, get_default_region
 from aws_utils.core.schemas import (
+    VPC,
     AccountInventory,
+    DynamoDBTable,
     ElasticIP,
     InternetGateway,
+    LambdaFunction,
     NATGateway,
+    RDSCluster,
+    RDSInstance,
+    Route53Record,
+    Route53Zone,
     S3Bucket,
     SESIdentity,
+    SFNActivity,
     SNSTopic,
     SQSQueue,
+    SSOAccount,
+    SSOInstance,
+    StateMachine,
     Subnet,
-    VPC,
 )
-from aws_utils.inventory.reader import load_inventory, load_accounts_config
-from aws_utils.inventory.writer import save_inventory, save_accounts_config
+from aws_utils.core.session import create_session, get_default_region
+from aws_utils.inventory.reader import load_accounts_config, load_inventory
+from aws_utils.inventory.writer import save_accounts_config, save_inventory
+from aws_utils.services.dynamodb import discover_dynamodb_tables
 from aws_utils.services.ec2 import (
-    discover_vpcs,
     discover_elastic_ips,
+    discover_vpcs,
 )
-from aws_utils.services.s3 import discover_s3_buckets
-from aws_utils.services.sqs import discover_sqs_queues
-from aws_utils.services.sns import discover_sns_topics
-from aws_utils.services.ses import discover_ses_identities
+from aws_utils.services.lambda_svc import discover_lambda_functions
 from aws_utils.services.organizations import (
     discover_organization,
     get_organization_id,
+)
+from aws_utils.services.rds import discover_rds_clusters, discover_rds_instances
+from aws_utils.services.route53 import (
+    discover_all_route53_records,
+    discover_route53_records,
+    discover_route53_zones,
+)
+from aws_utils.services.s3 import discover_s3_buckets
+from aws_utils.services.ses import discover_ses_identities
+from aws_utils.services.sns import discover_sns_topics
+from aws_utils.services.sqs import discover_sqs_queues
+from aws_utils.services.sso import (
+    DeviceAuthResult,
+    discover_account_roles,
+    discover_sso_accounts,
+    discover_sso_instances,
+    poll_for_token,
+    start_device_authorization,
+)
+from aws_utils.services.stepfunctions import (
+    discover_sfn_activities,
+    discover_state_machines,
 )
 
 __all__ = [
@@ -61,18 +97,54 @@ __all__ = [
     "SQSQueue",
     "SNSTopic",
     "SESIdentity",
+    "LambdaFunction",
+    "RDSInstance",
+    "RDSCluster",
+    "Route53Zone",
+    "Route53Record",
+    "DynamoDBTable",
+    "StateMachine",
+    "SFNActivity",
+    "SSOInstance",
+    "SSOAccount",
     # Inventory I/O
     "load_inventory",
     "save_inventory",
     "load_accounts_config",
     "save_accounts_config",
-    # Discovery
+    # Discovery - EC2
     "discover_vpcs",
     "discover_elastic_ips",
+    # Discovery - S3
     "discover_s3_buckets",
+    # Discovery - SQS
     "discover_sqs_queues",
+    # Discovery - SNS
     "discover_sns_topics",
+    # Discovery - SES
     "discover_ses_identities",
+    # Discovery - Lambda
+    "discover_lambda_functions",
+    # Discovery - RDS
+    "discover_rds_instances",
+    "discover_rds_clusters",
+    # Discovery - Route53
+    "discover_route53_zones",
+    "discover_route53_records",
+    "discover_all_route53_records",
+    # Discovery - DynamoDB
+    "discover_dynamodb_tables",
+    # Discovery - Step Functions
+    "discover_state_machines",
+    "discover_sfn_activities",
+    # Discovery - SSO
+    "discover_sso_instances",
+    "discover_sso_accounts",
+    "discover_account_roles",
+    "start_device_authorization",
+    "poll_for_token",
+    "DeviceAuthResult",
+    # Discovery - Organizations
     "discover_organization",
     "get_organization_id",
 ]
