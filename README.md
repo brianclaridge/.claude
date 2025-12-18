@@ -79,6 +79,10 @@ git rm -f .claude
 git commit -m "Remove .claude submodule"
 ```
 
+## project-analysis agent
+
+[![ultrathink](./docs/images/ultrathink.png)](./agents/project-analysis.md)
+
 ## Slash Commands
 
 | Command | Description |
