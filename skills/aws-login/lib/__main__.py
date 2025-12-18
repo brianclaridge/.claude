@@ -127,7 +127,7 @@ def _generate_alias(account_name: str) -> str:
     return alias
 
 
-def _try_organizations_query(account, sso_url: str) -> tuple[bool, dict | None, str | None]:
+def _try_organizations_query(account, sso_url: str) -> tuple[bool, dict | None, str | None, str | None]:
     """Try to query Organizations API using the given account.
 
     Args:
@@ -135,7 +135,8 @@ def _try_organizations_query(account, sso_url: str) -> tuple[bool, dict | None, 
         sso_url: SSO start URL
 
     Returns:
-        Tuple of (success, tree_or_none, org_id_or_none)
+        Tuple of (success, tree_or_none, org_id_or_none, error_type_or_none)
+        error_type: "sso_login_failed", "access_denied", "api_error", or None
     """
     alias = _generate_alias(account.account_name)
 
@@ -150,18 +151,19 @@ def _try_organizations_query(account, sso_url: str) -> tuple[bool, dict | None, 
     result = run_sso_login(alias)
     if not result.success:
         logger.warning(f"SSO login failed for {alias}")
-        return False, None, None
+        return False, None, None, "sso_login_failed"
 
     try:
         org_id, tree = discover_organization(profile_name=alias)
-        return True, tree, org_id
+        return True, tree, org_id, None
     except Exception as e:
         error_str = str(e)
         if "AccessDeniedException" in error_str:
             logger.warning(f"Account {alias} lacks Organizations permissions")
+            return False, None, None, "access_denied"
         else:
             logger.warning(f"Organizations query failed: {e}")
-        return False, None, None
+            return False, None, None, "api_error"
 
 
 def _ask_user_to_select_management_account(accounts: list):
@@ -255,6 +257,7 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
     org_id = None
     tree = None
     tried_accounts = set()
+    last_error = None
 
     for account in sorted_accounts:
         # Only try accounts that match heuristic patterns
@@ -263,7 +266,7 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
             break  # No more heuristic matches, move to user selection
 
         tried_accounts.add(account.account_id)
-        success, tree, org_id = _try_organizations_query(account, sso_url)
+        success, tree, org_id, last_error = _try_organizations_query(account, sso_url)
         if success:
             break
 
@@ -272,14 +275,26 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
         remaining = [a for a in sso_accounts if a.account_id not in tried_accounts]
 
         if remaining:
-            logger.info("")
-            logger.info("Heuristic selection failed. Please select the management account.")
-            selected = _ask_user_to_select_management_account(remaining)
-            if selected:
-                success, tree, org_id = _try_organizations_query(selected, sso_url)
+            # Single account org - use it directly without prompting
+            if len(remaining) == 1 and len(sso_accounts) == 1:
+                logger.info("")
+                logger.info("Single-account organization detected. Using it as management account.")
+                success, tree, org_id, last_error = _try_organizations_query(remaining[0], sso_url)
+            else:
+                logger.info("")
+                logger.info("Heuristic selection failed. Please select the management account.")
+                selected = _ask_user_to_select_management_account(remaining)
+                if selected:
+                    success, tree, org_id, last_error = _try_organizations_query(selected, sso_url)
 
     if not tree:
-        logger.error("Failed to query Organizations API. Is the selected account the management account?")
+        # Provide specific error based on failure type
+        if last_error == "sso_login_failed":
+            logger.error("SSO login failed. Check AWS_SSO_REGION matches your Identity Center region.")
+        elif last_error == "access_denied":
+            logger.error("Account lacks Organizations permissions. Only the management account can query Organizations.")
+        else:
+            logger.error("Failed to query Organizations API.")
         return False
 
     management_account_id = tree.get("management_account_id", "")
