@@ -50,6 +50,8 @@ from aws_utils.services.stepfunctions import (
     discover_sfn_activities,
     discover_state_machines,
 )
+from aws_utils.services.secrets_manager import discover_secrets
+from aws_utils.services.api_gateway import discover_rest_apis, discover_v2_apis
 
 __all__ = [
     # EC2
@@ -104,4 +106,9 @@ __all__ = [
     "discover_all_eks_fargate_profiles",
     # ACM
     "discover_acm_certificates",
+    # Secrets Manager
+    "discover_secrets",
+    # API Gateway
+    "discover_rest_apis",
+    "discover_v2_apis",
 ]

@@ -300,6 +300,48 @@ class ACMCertificate(BaseModel):
     region: str = Field(description="AWS region")
 
 
+# Secrets Manager Resources
+class SecretsManagerSecret(BaseModel):
+    """AWS Secrets Manager secret metadata (not values)."""
+
+    name: str = Field(description="Secret name")
+    arn: str = Field(description="Secret ARN")
+    description: str | None = Field(default=None, description="Secret description")
+    kms_key_id: str | None = Field(default=None, description="KMS key ID for encryption")
+    rotation_enabled: bool = Field(default=False, description="Whether rotation is enabled")
+    last_rotated_date: str | None = Field(default=None, description="Last rotation date")
+    last_accessed_date: str | None = Field(default=None, description="Last access date")
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+    region: str = Field(description="AWS region")
+
+
+# API Gateway Resources
+class APIGatewayRestAPI(BaseModel):
+    """AWS API Gateway REST API (v1)."""
+
+    id: str = Field(description="API ID")
+    name: str = Field(description="API name")
+    description: str | None = Field(default=None, description="API description")
+    endpoint_type: str = Field(description="Endpoint type (REGIONAL, EDGE, PRIVATE)")
+    created_date: str | None = Field(default=None, description="Creation date")
+    api_key_source: str | None = Field(default=None, description="API key source")
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+    region: str = Field(description="AWS region")
+
+
+class APIGatewayV2API(BaseModel):
+    """AWS API Gateway v2 (HTTP/WebSocket)."""
+
+    api_id: str = Field(description="API ID")
+    name: str = Field(description="API name")
+    description: str | None = Field(default=None, description="API description")
+    protocol_type: str = Field(description="Protocol type (HTTP, WEBSOCKET)")
+    api_endpoint: str | None = Field(default=None, description="API endpoint URL")
+    created_date: str | None = Field(default=None, description="Creation date")
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+    region: str = Field(description="AWS region")
+
+
 class AccountInventory(BaseModel):
     """Complete inventory for an AWS account."""
 
@@ -374,6 +416,19 @@ class AccountInventory(BaseModel):
     # ACM Resources
     acm_certificates: list[ACMCertificate] = Field(
         default_factory=list, description="ACM certificates in the account"
+    )
+
+    # Secrets Manager Resources
+    secrets: list[SecretsManagerSecret] = Field(
+        default_factory=list, description="Secrets Manager secrets (metadata only)"
+    )
+
+    # API Gateway Resources
+    api_gateway_rest_apis: list[APIGatewayRestAPI] = Field(
+        default_factory=list, description="API Gateway REST APIs (v1)"
+    )
+    api_gateway_v2_apis: list[APIGatewayV2API] = Field(
+        default_factory=list, description="API Gateway HTTP/WebSocket APIs (v2)"
     )
 
     def to_dict(self) -> dict:
