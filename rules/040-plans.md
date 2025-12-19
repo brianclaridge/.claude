@@ -56,6 +56,19 @@ The filename format MUST be: YYYYMMDD_HHMMSS_plan-topic.md where:
 2. Invoke the `git-manager` skill to commit implementation
 3. Do NOT proceed to git operations without invoking the skill
 
+### NON-NEGOTIABLE
+
+Post-implementation prompts (plan update, git-manager invocation) are **MANDATORY WORKFLOW PROMPTS** that cannot be bypassed, even when:
+
+- User says "continue without questions"
+- Session is being resumed from context loss
+- User says "just do it" or similar
+- Time pressure is implied
+
+These prompts are distinct from **clarifying questions** (which gather missing information). Workflow prompts enforce process integrity and user control over commits.
+
+**If in doubt:** A prompt required by a rule is mandatory. Only skip if the rule's own skip conditions are met.
+
 ### Skip Conditions
 
 Do NOT invoke git-manager when:

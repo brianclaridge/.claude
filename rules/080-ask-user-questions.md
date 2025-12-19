@@ -57,6 +57,32 @@ This forces the user to type a response instead of selecting from an interactive
 3. **Clarity**: Discrete options prevent ambiguous responses
 4. **Accessibility**: Menu navigation is more accessible
 
+## Prompt Categories
+
+AskUserQuestion serves two distinct purposes with different skip rules:
+
+### Clarifying Questions
+
+Questions that gather missing information to proceed:
+
+- "Which auth method should I use?"
+- "What should the component be named?"
+- "Which database driver do you prefer?"
+
+**Can be skipped when:** User provides sufficient context, says "use your judgment", or explicitly defers.
+
+### Mandatory Workflow Prompts
+
+Questions required by rules to enforce process integrity:
+
+- Plan update prompts (Rule 040)
+- Git commit confirmations (Rule 040, git-manager)
+- Destructive action confirmations
+
+**Cannot be skipped even when:** User says "continue without questions", session resumes from context loss, or time pressure is implied.
+
+**Key distinction:** If a rule specifies a prompt, it is mandatory unless the rule's own skip conditions are met.
+
 ## Exceptions
 
 Plain text questions are acceptable ONLY when:

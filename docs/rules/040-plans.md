@@ -31,6 +31,16 @@ For ANY non-trivial task, multi-step operation, or complex request, ALWAYS creat
 2. Offer to update plan with execution notes
 3. Invoke `git-manager` skill
 
+### NON-NEGOTIABLE
+
+Post-implementation prompts are **MANDATORY WORKFLOW PROMPTS** that cannot be bypassed, even when:
+
+- User says "continue without questions"
+- Session resumes from context loss
+- User says "just do it" or similar
+
+These prompts enforce process integrity. Only skip if the rule's own skip conditions are met.
+
 ## Exceptions
 
 - Single, straightforward tasks

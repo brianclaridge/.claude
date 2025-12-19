@@ -43,6 +43,16 @@ Which authentication method would you like?
 Please let me know...
 ```
 
+## Prompt Categories
+
+### Clarifying Questions
+
+Gather missing information. **Can be skipped** when user provides context or defers.
+
+### Mandatory Workflow Prompts
+
+Required by rules (e.g., Rule 040 plan updates, git confirmations). **Cannot be skipped** even when user says "continue without questions" or session resumes.
+
 ## Exceptions
 
 - Free-form text input (names, descriptions)
