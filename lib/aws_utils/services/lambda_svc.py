@@ -30,6 +30,20 @@ def discover_lambda_functions(
 
         for page in paginator.paginate():
             for func_data in page.get("Functions", []):
+                # Extract VPC configuration
+                vpc_config = func_data.get("VpcConfig", {})
+                vpc_id = vpc_config.get("VpcId")
+                subnet_ids = vpc_config.get("SubnetIds", [])
+                security_group_ids = vpc_config.get("SecurityGroupIds", [])
+
+                # Extract dead letter config
+                dlq_config = func_data.get("DeadLetterConfig", {})
+                dead_letter_target_arn = dlq_config.get("TargetArn")
+
+                # Extract layer ARNs
+                layers = func_data.get("Layers", [])
+                layer_arns = [layer.get("Arn") for layer in layers if layer.get("Arn")]
+
                 function = LambdaFunction(
                     function_name=func_data["FunctionName"],
                     runtime=func_data.get("Runtime"),
@@ -38,6 +52,16 @@ def discover_lambda_functions(
                     last_modified=func_data.get("LastModified", ""),
                     arn=func_data["FunctionArn"],
                     region=region_name,
+                    # VPC configuration
+                    vpc_id=vpc_id if vpc_id else None,
+                    subnet_ids=subnet_ids,
+                    security_group_ids=security_group_ids,
+                    # IAM configuration
+                    execution_role_arn=func_data.get("Role"),
+                    # Dead letter config
+                    dead_letter_target_arn=dead_letter_target_arn,
+                    # Layers
+                    layer_arns=layer_arns,
                 )
                 functions.append(function)
 

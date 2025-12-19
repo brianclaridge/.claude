@@ -3,7 +3,7 @@
 from botocore.exceptions import ClientError
 from loguru import logger
 
-from aws_utils.core.schemas import CloudFrontDistribution
+from aws_utils.core.schemas import CloudFrontDistribution, CloudFrontOrigin
 from aws_utils.core.session import create_session
 
 
@@ -35,18 +35,37 @@ def discover_distributions(
                 aliases_data = dist_data.get("Aliases", {})
                 aliases = aliases_data.get("Items", []) if aliases_data else []
 
-                # Extract origin domain names
+                # Extract origin domain names (simple list) and detailed configs
                 origins_data = dist_data.get("Origins", {})
                 origins = []
+                origin_details = []
                 for origin in origins_data.get("Items", []):
                     domain = origin.get("DomainName", "")
                     if domain:
                         origins.append(domain)
 
-                # Extract default cache behavior
-                default_behavior = dist_data.get("DefaultCacheBehavior", {})
-                default_ttl = default_behavior.get("DefaultTTL")
-                viewer_protocol = default_behavior.get("ViewerProtocolPolicy")
+                    # Determine origin type
+                    origin_type = None
+                    if origin.get("S3OriginConfig"):
+                        origin_type = "s3"
+                    elif origin.get("CustomOriginConfig"):
+                        origin_type = "custom"
+
+                    origin_detail = CloudFrontOrigin(
+                        id=origin.get("Id", ""),
+                        domain_name=domain,
+                        origin_type=origin_type,
+                        s3_origin_config=origin.get("S3OriginConfig"),
+                        custom_origin_config=origin.get("CustomOriginConfig"),
+                    )
+                    origin_details.append(origin_detail)
+
+                # Extract ACM certificate ARN
+                viewer_cert = dist_data.get("ViewerCertificate", {})
+                acm_certificate_arn = viewer_cert.get("ACMCertificateArn")
+
+                # Extract WAF Web ACL ID
+                web_acl_id = dist_data.get("WebACLId")
 
                 # Format last modified date
                 last_modified = dist_data.get("LastModifiedTime")
@@ -60,11 +79,13 @@ def discover_distributions(
                     price_class=dist_data.get("PriceClass"),
                     aliases=aliases,
                     origins=origins,
-                    default_ttl=default_ttl,
-                    viewer_protocol_policy=viewer_protocol,
-                    http_version=dist_data.get("HttpVersion"),
-                    is_ipv6_enabled=dist_data.get("IsIPV6Enabled", False),
+                    default_root_object=dist_data.get("DefaultRootObject"),
+                    comment=dist_data.get("Comment"),
                     last_modified_time=last_modified.isoformat() if last_modified else None,
+                    # Relationship fields
+                    acm_certificate_arn=acm_certificate_arn,
+                    web_acl_id=web_acl_id if web_acl_id else None,
+                    origin_details=origin_details,
                 )
                 distributions.append(distribution)
 

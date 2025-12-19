@@ -102,6 +102,28 @@ def discover_ecs_services(
             response = ecs_client.describe_services(cluster=cluster_arn, services=batch)
 
             for svc_data in response.get("services", []):
+                # Extract network configuration (awsvpc mode)
+                network_config = svc_data.get("networkConfiguration", {})
+                awsvpc_config = network_config.get("awsvpcConfiguration", {})
+                subnet_ids = awsvpc_config.get("subnets", [])
+                security_group_ids = awsvpc_config.get("securityGroups", [])
+
+                # Extract load balancer target groups
+                load_balancers = svc_data.get("loadBalancers", [])
+                target_groups = [
+                    lb.get("targetGroupArn")
+                    for lb in load_balancers
+                    if lb.get("targetGroupArn")
+                ]
+
+                # Extract service registries (Cloud Map)
+                registries = svc_data.get("serviceRegistries", [])
+                registry_arns = [
+                    reg.get("registryArn")
+                    for reg in registries
+                    if reg.get("registryArn")
+                ]
+
                 service = ECSService(
                     service_name=svc_data["serviceName"],
                     service_arn=svc_data["serviceArn"],
@@ -112,6 +134,13 @@ def discover_ecs_services(
                     launch_type=svc_data.get("launchType", "EC2"),
                     task_definition=svc_data.get("taskDefinition", ""),
                     region=region_name,
+                    # VPC configuration
+                    subnet_ids=subnet_ids,
+                    security_group_ids=security_group_ids,
+                    # Load balancers
+                    load_balancer_target_groups=target_groups,
+                    # Service discovery
+                    service_registries=registry_arns,
                 )
                 services.append(service)
 

@@ -37,6 +37,21 @@ def discover_eks_clusters(
             response = eks_client.describe_cluster(name=name)
             cluster_data = response.get("cluster", {})
 
+            # Extract VPC configuration
+            vpc_config = cluster_data.get("resourcesVpcConfig", {})
+            vpc_id = vpc_config.get("vpcId")
+            subnet_ids = vpc_config.get("subnetIds", [])
+            security_group_ids = vpc_config.get("securityGroupIds", [])
+            cluster_security_group_id = vpc_config.get("clusterSecurityGroupId")
+
+            # Extract enabled log types
+            logging_config = cluster_data.get("logging", {})
+            cluster_logging = logging_config.get("clusterLogging", [])
+            enabled_log_types = []
+            for log_entry in cluster_logging:
+                if log_entry.get("enabled"):
+                    enabled_log_types.extend(log_entry.get("types", []))
+
             cluster = EKSCluster(
                 cluster_name=cluster_data.get("name", name),
                 cluster_arn=cluster_data.get("arn", ""),
@@ -46,6 +61,15 @@ def discover_eks_clusters(
                 platform_version=cluster_data.get("platformVersion"),
                 created_at=cluster_data.get("createdAt"),
                 region=region_name,
+                # VPC configuration
+                vpc_id=vpc_id,
+                subnet_ids=subnet_ids,
+                security_group_ids=security_group_ids,
+                cluster_security_group_id=cluster_security_group_id,
+                # IAM
+                role_arn=cluster_data.get("roleArn"),
+                # Logging
+                enabled_log_types=enabled_log_types,
             )
             clusters.append(cluster)
 
@@ -95,6 +119,16 @@ def discover_eks_node_groups(
             ng_data = response.get("nodegroup", {})
             scaling = ng_data.get("scalingConfig", {})
 
+            # Extract remote access configuration
+            remote_access = ng_data.get("remoteAccess", {})
+            source_security_groups = remote_access.get("sourceSecurityGroups", [])
+            # Get first source security group if available
+            remote_access_sg = source_security_groups[0] if source_security_groups else None
+
+            # Extract launch template
+            launch_template = ng_data.get("launchTemplate", {})
+            launch_template_id = launch_template.get("id")
+
             node_group = EKSNodeGroup(
                 nodegroup_name=ng_data.get("nodegroupName", ng_name),
                 nodegroup_arn=ng_data.get("nodegroupArn", ""),
@@ -105,6 +139,14 @@ def discover_eks_node_groups(
                 min_size=scaling.get("minSize", 0),
                 max_size=scaling.get("maxSize", 0),
                 region=region_name,
+                # Network configuration
+                subnet_ids=ng_data.get("subnets", []),
+                # IAM
+                node_role_arn=ng_data.get("nodeRole"),
+                # Remote access
+                remote_access_security_group=remote_access_sg,
+                # Launch template
+                launch_template_id=launch_template_id,
             )
             node_groups.append(node_group)
 

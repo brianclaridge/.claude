@@ -75,11 +75,33 @@ def discover_route53_records(
             for record_data in page.get("ResourceRecordSets", []):
                 # Extract values from ResourceRecords or AliasTarget
                 values = []
+                is_alias = False
+                alias_target_dns_name = None
+                alias_target_hosted_zone_id = None
+                target_resource_type = None
+
                 if "ResourceRecords" in record_data:
                     values = [rr["Value"] for rr in record_data["ResourceRecords"]]
                 elif "AliasTarget" in record_data:
                     alias = record_data["AliasTarget"]
-                    values = [f"ALIAS {alias['DNSName']}"]
+                    is_alias = True
+                    alias_target_dns_name = alias.get("DNSName")
+                    alias_target_hosted_zone_id = alias.get("HostedZoneId")
+                    values = [f"ALIAS {alias_target_dns_name}"]
+
+                    # Infer target resource type from DNS name pattern
+                    if alias_target_dns_name:
+                        dns_lower = alias_target_dns_name.lower()
+                        if ".elb.amazonaws.com" in dns_lower:
+                            target_resource_type = "alb" if "app-" in dns_lower else "nlb"
+                        elif ".cloudfront.net" in dns_lower:
+                            target_resource_type = "cloudfront"
+                        elif ".s3.amazonaws.com" in dns_lower or ".s3-website" in dns_lower:
+                            target_resource_type = "s3"
+                        elif ".execute-api." in dns_lower:
+                            target_resource_type = "api_gateway"
+                        elif ".elasticbeanstalk.com" in dns_lower:
+                            target_resource_type = "elastic_beanstalk"
 
                 record = Route53Record(
                     zone_id=zone_id,
@@ -87,6 +109,13 @@ def discover_route53_records(
                     record_type=record_data["Type"],
                     ttl=record_data.get("TTL"),
                     values=values,
+                    # Alias configuration
+                    is_alias=is_alias,
+                    alias_target_dns_name=alias_target_dns_name,
+                    alias_target_hosted_zone_id=alias_target_hosted_zone_id,
+                    target_resource_type=target_resource_type,
+                    # Health check
+                    health_check_id=record_data.get("HealthCheckId"),
                 )
                 records.append(record)
 

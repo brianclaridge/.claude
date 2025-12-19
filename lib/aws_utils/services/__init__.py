@@ -8,8 +8,11 @@ from aws_utils.services.ec2 import (
     discover_ec2_instances,
     discover_elastic_ips,
     discover_internet_gateways,
+    discover_internet_gateways_all,
     discover_nat_gateways,
+    discover_nat_gateways_all,
     discover_subnets,
+    discover_subnets_all,
     discover_vpcs,
 )
 from aws_utils.services.elb import discover_classic_load_balancers
@@ -77,8 +80,11 @@ __all__ = [
     "discover_vpcs",
     "discover_elastic_ips",
     "discover_internet_gateways",
+    "discover_internet_gateways_all",
     "discover_nat_gateways",
+    "discover_nat_gateways_all",
     "discover_subnets",
+    "discover_subnets_all",
     "discover_ec2_instances",
     # IAM
     "discover_iam_roles",

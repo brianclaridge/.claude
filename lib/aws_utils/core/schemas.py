@@ -103,6 +103,24 @@ class LambdaFunction(BaseModel):
     arn: str = Field(description="Function ARN")
     region: str = Field(description="AWS region")
 
+    # VPC Configuration (for VPC-connected Lambda functions)
+    vpc_id: str | None = Field(default=None, description="VPC ID if VPC-configured")
+    subnet_ids: list[str] = Field(default_factory=list, description="Subnet IDs for VPC config")
+    security_group_ids: list[str] = Field(
+        default_factory=list, description="Security group IDs for VPC config"
+    )
+
+    # IAM Configuration
+    execution_role_arn: str | None = Field(default=None, description="Execution role ARN")
+
+    # Dead Letter Config
+    dead_letter_target_arn: str | None = Field(
+        default=None, description="DLQ target ARN (SQS queue or SNS topic)"
+    )
+
+    # Layers
+    layer_arns: list[str] = Field(default_factory=list, description="Lambda Layer ARNs")
+
 
 class RDSInstance(BaseModel):
     """RDS Database Instance."""
@@ -117,6 +135,27 @@ class RDSInstance(BaseModel):
     arn: str = Field(description="Instance ARN")
     region: str = Field(description="AWS region")
 
+    # VPC Configuration (for relationship mapping)
+    vpc_id: str | None = Field(default=None, description="VPC ID")
+    db_subnet_group_name: str | None = Field(default=None, description="DB subnet group name")
+    security_group_ids: list[str] = Field(
+        default_factory=list, description="VPC security group IDs"
+    )
+
+    # Encryption Configuration
+    kms_key_id: str | None = Field(default=None, description="KMS key ID for encryption")
+    storage_encrypted: bool = Field(default=False, description="Whether storage is encrypted")
+
+    # IAM Configuration
+    monitoring_role_arn: str | None = Field(
+        default=None, description="Enhanced monitoring IAM role ARN"
+    )
+
+    # Cluster Membership
+    db_cluster_identifier: str | None = Field(
+        default=None, description="Aurora cluster identifier if member"
+    )
+
 
 class RDSCluster(BaseModel):
     """RDS Aurora Cluster."""
@@ -130,6 +169,26 @@ class RDSCluster(BaseModel):
     port: int | None = Field(default=None, description="Endpoint port")
     arn: str = Field(description="Cluster ARN")
     region: str = Field(description="AWS region")
+
+    # VPC Configuration (for relationship mapping)
+    vpc_id: str | None = Field(default=None, description="VPC ID")
+    db_subnet_group_name: str | None = Field(default=None, description="DB subnet group name")
+    security_group_ids: list[str] = Field(
+        default_factory=list, description="VPC security group IDs"
+    )
+
+    # Encryption Configuration
+    kms_key_id: str | None = Field(default=None, description="KMS key ID for encryption")
+
+    # Cluster Members
+    db_cluster_members: list[str] = Field(
+        default_factory=list, description="DB instance identifiers in this cluster"
+    )
+
+    # Associated IAM Roles
+    associated_role_arns: list[str] = Field(
+        default_factory=list, description="IAM role ARNs associated with cluster"
+    )
 
 
 class Route53Zone(BaseModel):
@@ -149,6 +208,26 @@ class Route53Record(BaseModel):
     record_type: str = Field(description="Record type (A, AAAA, CNAME, etc.)")
     ttl: int | None = Field(default=None, description="TTL in seconds")
     values: list[str] = Field(default_factory=list, description="Record values")
+
+    # Alias Record Configuration (for relationship mapping)
+    is_alias: bool = Field(default=False, description="Whether this is an alias record")
+    alias_target_dns_name: str | None = Field(
+        default=None, description="Alias target DNS name (e.g., ALB DNS name)"
+    )
+    alias_target_hosted_zone_id: str | None = Field(
+        default=None, description="Alias target hosted zone ID"
+    )
+
+    # Inferred Target Resource (populated during relationship mapping)
+    target_resource_type: str | None = Field(
+        default=None, description="Inferred resource type (alb, cloudfront, s3, etc.)"
+    )
+    target_resource_arn: str | None = Field(
+        default=None, description="Inferred target resource ARN"
+    )
+
+    # Health Check
+    health_check_id: str | None = Field(default=None, description="Associated health check ID")
 
 
 class Route53Domain(BaseModel):
@@ -185,6 +264,17 @@ class StateMachine(BaseModel):
     machine_type: str = Field(description="Type (STANDARD or EXPRESS)")
     creation_date: str = Field(description="Creation timestamp")
     region: str = Field(description="AWS region")
+
+    # IAM Configuration (for relationship mapping)
+    role_arn: str | None = Field(default=None, description="Execution role ARN")
+
+    # Logging Configuration
+    log_group_arn: str | None = Field(
+        default=None, description="CloudWatch Logs log group ARN"
+    )
+    log_level: str | None = Field(
+        default=None, description="Log level (ALL, ERROR, FATAL, OFF)"
+    )
 
 
 class SFNActivity(BaseModel):
@@ -240,6 +330,25 @@ class ECSService(BaseModel):
     task_definition: str = Field(description="Task definition ARN")
     region: str = Field(description="AWS region")
 
+    # VPC Configuration (for Fargate services)
+    vpc_id: str | None = Field(default=None, description="VPC ID for awsvpc network mode")
+    subnet_ids: list[str] = Field(
+        default_factory=list, description="Subnet IDs for awsvpc network mode"
+    )
+    security_group_ids: list[str] = Field(
+        default_factory=list, description="Security group IDs for awsvpc network mode"
+    )
+
+    # Load Balancer Configuration (for relationship mapping)
+    load_balancer_target_groups: list[str] = Field(
+        default_factory=list, description="Target group ARNs"
+    )
+
+    # Service Discovery (Cloud Map)
+    service_registries: list[str] = Field(
+        default_factory=list, description="Service registry ARNs (Cloud Map)"
+    )
+
 
 class ECSTaskDefinition(BaseModel):
     """ECS Task Definition."""
@@ -269,6 +378,27 @@ class EKSCluster(BaseModel):
     created_at: datetime | None = Field(default=None, description="Creation timestamp")
     region: str = Field(description="AWS region")
 
+    # VPC Configuration (for relationship mapping)
+    vpc_id: str | None = Field(default=None, description="VPC ID")
+    subnet_ids: list[str] = Field(
+        default_factory=list, description="Subnet IDs for cluster ENIs"
+    )
+    security_group_ids: list[str] = Field(
+        default_factory=list, description="Additional security group IDs"
+    )
+    cluster_security_group_id: str | None = Field(
+        default=None, description="Cluster security group created by EKS"
+    )
+
+    # IAM Configuration
+    role_arn: str | None = Field(default=None, description="Cluster IAM role ARN")
+
+    # Logging Configuration
+    enabled_log_types: list[str] = Field(
+        default_factory=list,
+        description="Enabled log types (api, audit, authenticator, controllerManager, scheduler)",
+    )
+
 
 class EKSNodeGroup(BaseModel):
     """EKS Managed Node Group."""
@@ -282,6 +412,24 @@ class EKSNodeGroup(BaseModel):
     min_size: int = Field(default=0, description="Minimum node count")
     max_size: int = Field(default=0, description="Maximum node count")
     region: str = Field(description="AWS region")
+
+    # Network Configuration (for relationship mapping)
+    subnet_ids: list[str] = Field(
+        default_factory=list, description="Subnet IDs for node placement"
+    )
+
+    # IAM Configuration
+    node_role_arn: str | None = Field(default=None, description="Node IAM role ARN")
+
+    # Remote Access Configuration
+    remote_access_security_group: str | None = Field(
+        default=None, description="Security group for SSH access"
+    )
+
+    # Launch Template
+    launch_template_id: str | None = Field(
+        default=None, description="Custom launch template ID"
+    )
 
 
 class EKSFargateProfile(BaseModel):
@@ -382,6 +530,22 @@ class CognitoIdentityPool(BaseModel):
 
 
 # CloudFront Resources
+class CloudFrontOrigin(BaseModel):
+    """CloudFront origin configuration."""
+
+    id: str = Field(description="Origin ID")
+    domain_name: str = Field(description="Origin domain name")
+    origin_type: str | None = Field(
+        default=None, description="Origin type (s3, custom, elb, mediastore)"
+    )
+    s3_origin_config: dict | None = Field(
+        default=None, description="S3 origin configuration"
+    )
+    custom_origin_config: dict | None = Field(
+        default=None, description="Custom origin configuration"
+    )
+
+
 class CloudFrontDistribution(BaseModel):
     """AWS CloudFront Distribution."""
 
@@ -396,6 +560,19 @@ class CloudFrontDistribution(BaseModel):
     default_root_object: str | None = Field(default=None, description="Default root object")
     comment: str | None = Field(default=None, description="Distribution comment")
     last_modified_time: str | None = Field(default=None, description="Last modified time")
+
+    # ACM Certificate (for relationship mapping)
+    acm_certificate_arn: str | None = Field(
+        default=None, description="ACM certificate ARN for HTTPS"
+    )
+
+    # WAF Configuration
+    web_acl_id: str | None = Field(default=None, description="WAF Web ACL ID")
+
+    # Structured Origin Details (for relationship mapping)
+    origin_details: list[CloudFrontOrigin] = Field(
+        default_factory=list, description="Detailed origin configurations"
+    )
 
 
 # CodeBuild Resources
@@ -620,6 +797,125 @@ class AutoScalingGroup(BaseModel):
     region: str = Field(description="AWS region")
 
 
+# =============================================================================
+# Relationship Mapping Models
+# =============================================================================
+
+
+class ResourceReference(BaseModel):
+    """Reference to an AWS resource."""
+
+    resource_type: str = Field(description="Resource type (e.g., 'lambda', 'vpc', 'iam_role')")
+    resource_id: str = Field(description="Resource identifier (name, ID, or ARN)")
+    arn: str | None = Field(default=None, description="Full ARN if available")
+
+
+class RelationshipEdge(BaseModel):
+    """Directed edge representing a relationship between resources."""
+
+    relationship_type: str = Field(
+        description="Relationship type (deployed_in, uses_role, uses_security_group, etc.)"
+    )
+    target: ResourceReference = Field(description="Target resource of this relationship")
+
+
+class RelationshipGraph(BaseModel):
+    """Graph of relationships between AWS resources.
+
+    The graph stores directed edges from source resources to target resources.
+    Each source is identified by a key in format "type:id" (e.g., "lambda:my-func").
+
+    Relationship types:
+    - deployed_in: Resource runs in VPC (Lambda → VPC)
+    - uses_role: Uses IAM role (Lambda → IAM Role)
+    - uses_security_group: Attached to security group (EC2 → SG)
+    - uses_subnet: Deployed in subnet (Lambda → Subnet)
+    - encrypted_with: Uses KMS key for encryption (RDS → KMS)
+    - targets: Points to resource (Route53 → ALB)
+    - manages: Controls lifecycle (ASG → EC2)
+    - uses_certificate: Uses ACM certificate (CloudFront → ACM)
+    - member_of: Belongs to cluster (RDS Instance → RDS Cluster)
+    - uses_target_group: Routes to target group (ECS Service → Target Group)
+    - logs_to: Sends logs to (Step Functions → CloudWatch Logs)
+    """
+
+    edges: dict[str, list[RelationshipEdge]] = Field(
+        default_factory=dict, description="Source key -> list of relationship edges"
+    )
+    reverse_edges: dict[str, list[str]] = Field(
+        default_factory=dict, description="Target key -> list of source keys"
+    )
+
+    def _make_key(self, resource_type: str, resource_id: str) -> str:
+        """Create a canonical key for a resource."""
+        return f"{resource_type}:{resource_id}"
+
+    def add_relationship(
+        self,
+        source_type: str,
+        source_id: str,
+        relationship_type: str,
+        target_type: str,
+        target_id: str,
+        target_arn: str | None = None,
+    ) -> None:
+        """Add a relationship between two resources.
+
+        Args:
+            source_type: Type of source resource (e.g., 'lambda')
+            source_id: ID of source resource (e.g., 'my-function')
+            relationship_type: Type of relationship (e.g., 'deployed_in')
+            target_type: Type of target resource (e.g., 'vpc')
+            target_id: ID of target resource (e.g., 'vpc-123')
+            target_arn: Optional ARN of target resource
+        """
+        source_key = self._make_key(source_type, source_id)
+        target_key = self._make_key(target_type, target_id)
+
+        # Create edge
+        edge = RelationshipEdge(
+            relationship_type=relationship_type,
+            target=ResourceReference(
+                resource_type=target_type,
+                resource_id=target_id,
+                arn=target_arn,
+            ),
+        )
+
+        # Add forward edge
+        if source_key not in self.edges:
+            self.edges[source_key] = []
+        self.edges[source_key].append(edge)
+
+        # Add reverse edge
+        if target_key not in self.reverse_edges:
+            self.reverse_edges[target_key] = []
+        if source_key not in self.reverse_edges[target_key]:
+            self.reverse_edges[target_key].append(source_key)
+
+    def get_relationships(self, resource_type: str, resource_id: str) -> list[RelationshipEdge]:
+        """Get all relationships from a resource."""
+        key = self._make_key(resource_type, resource_id)
+        return self.edges.get(key, [])
+
+    def get_resources_targeting(self, resource_type: str, resource_id: str) -> list[str]:
+        """Get all resources that have a relationship to this resource."""
+        key = self._make_key(resource_type, resource_id)
+        return self.reverse_edges.get(key, [])
+
+    def get_resources_in_vpc(self, vpc_id: str) -> list[str]:
+        """Get all resources deployed in a specific VPC."""
+        return self.get_resources_targeting("vpc", vpc_id)
+
+    def get_resources_using_role(self, role_name: str) -> list[str]:
+        """Get all resources using a specific IAM role."""
+        return self.get_resources_targeting("iam_role", role_name)
+
+    def get_resources_in_security_group(self, sg_id: str) -> list[str]:
+        """Get all resources attached to a security group."""
+        return self.get_resources_targeting("security_group", sg_id)
+
+
 class AccountInventory(BaseModel):
     """Complete inventory for an AWS account."""
 
@@ -777,6 +1073,260 @@ class AccountInventory(BaseModel):
     auto_scaling_groups: list[AutoScalingGroup] = Field(
         default_factory=list, description="Auto Scaling Groups"
     )
+
+    # Standalone network resources (also nested in VPCs, but available top-level for flat queries)
+    internet_gateways: list[InternetGateway] = Field(
+        default_factory=list, description="Internet Gateways in the account"
+    )
+    nat_gateways: list[NATGateway] = Field(
+        default_factory=list, description="NAT Gateways in the account"
+    )
+    subnets: list[Subnet] = Field(
+        default_factory=list, description="Subnets in the account"
+    )
+
+    # Route53 Records (individual DNS records within zones)
+    route53_records: list[Route53Record] = Field(
+        default_factory=list, description="Route53 DNS records across all zones"
+    )
+
+    # SSO Resources
+    sso_instances: list[SSOInstance] = Field(
+        default_factory=list, description="AWS SSO instances (requires sso-admin permissions)"
+    )
+
+    # Relationship Graph (built after discovery)
+    relationships: RelationshipGraph = Field(
+        default_factory=RelationshipGraph,
+        description="Graph of relationships between resources",
+    )
+
+    def build_relationships(self) -> None:
+        """Build the relationship graph from discovered resources.
+
+        Call this method after discovery is complete to populate the relationships field.
+        The graph is built from resource fields like vpc_id, execution_role_arn, etc.
+        """
+        graph = RelationshipGraph()
+
+        # Lambda functions
+        for func in self.lambda_functions:
+            if func.vpc_id:
+                graph.add_relationship(
+                    "lambda", func.function_name, "deployed_in", "vpc", func.vpc_id
+                )
+            for subnet_id in func.subnet_ids:
+                graph.add_relationship(
+                    "lambda", func.function_name, "uses_subnet", "subnet", subnet_id
+                )
+            for sg_id in func.security_group_ids:
+                graph.add_relationship(
+                    "lambda", func.function_name, "uses_security_group", "security_group", sg_id
+                )
+            if func.execution_role_arn:
+                # Extract role name from ARN
+                role_name = func.execution_role_arn.split("/")[-1]
+                graph.add_relationship(
+                    "lambda",
+                    func.function_name,
+                    "uses_role",
+                    "iam_role",
+                    role_name,
+                    func.execution_role_arn,
+                )
+
+        # RDS Instances
+        for db in self.rds_instances:
+            if db.vpc_id:
+                graph.add_relationship(
+                    "rds_instance", db.db_instance_identifier, "deployed_in", "vpc", db.vpc_id
+                )
+            for sg_id in db.security_group_ids:
+                graph.add_relationship(
+                    "rds_instance",
+                    db.db_instance_identifier,
+                    "uses_security_group",
+                    "security_group",
+                    sg_id,
+                )
+            if db.kms_key_id:
+                graph.add_relationship(
+                    "rds_instance",
+                    db.db_instance_identifier,
+                    "encrypted_with",
+                    "kms_key",
+                    db.kms_key_id,
+                )
+            if db.db_cluster_identifier:
+                graph.add_relationship(
+                    "rds_instance",
+                    db.db_instance_identifier,
+                    "member_of",
+                    "rds_cluster",
+                    db.db_cluster_identifier,
+                )
+
+        # RDS Clusters
+        for cluster in self.rds_clusters:
+            if cluster.vpc_id:
+                graph.add_relationship(
+                    "rds_cluster", cluster.cluster_identifier, "deployed_in", "vpc", cluster.vpc_id
+                )
+            for sg_id in cluster.security_group_ids:
+                graph.add_relationship(
+                    "rds_cluster",
+                    cluster.cluster_identifier,
+                    "uses_security_group",
+                    "security_group",
+                    sg_id,
+                )
+            if cluster.kms_key_id:
+                graph.add_relationship(
+                    "rds_cluster",
+                    cluster.cluster_identifier,
+                    "encrypted_with",
+                    "kms_key",
+                    cluster.kms_key_id,
+                )
+
+        # EC2 Instances
+        for inst in self.ec2_instances:
+            if inst.vpc_id:
+                graph.add_relationship(
+                    "ec2", inst.instance_id, "deployed_in", "vpc", inst.vpc_id
+                )
+            if inst.subnet_id:
+                graph.add_relationship(
+                    "ec2", inst.instance_id, "uses_subnet", "subnet", inst.subnet_id
+                )
+            for sg_id in inst.security_groups:
+                graph.add_relationship(
+                    "ec2", inst.instance_id, "uses_security_group", "security_group", sg_id
+                )
+            if inst.iam_instance_profile:
+                graph.add_relationship(
+                    "ec2",
+                    inst.instance_id,
+                    "uses_role",
+                    "iam_instance_profile",
+                    inst.iam_instance_profile,
+                )
+
+        # ECS Services
+        for svc in self.ecs_services:
+            if svc.vpc_id:
+                graph.add_relationship(
+                    "ecs_service", svc.service_name, "deployed_in", "vpc", svc.vpc_id
+                )
+            for subnet_id in svc.subnet_ids:
+                graph.add_relationship(
+                    "ecs_service", svc.service_name, "uses_subnet", "subnet", subnet_id
+                )
+            for sg_id in svc.security_group_ids:
+                graph.add_relationship(
+                    "ecs_service",
+                    svc.service_name,
+                    "uses_security_group",
+                    "security_group",
+                    sg_id,
+                )
+            for tg_arn in svc.load_balancer_target_groups:
+                graph.add_relationship(
+                    "ecs_service",
+                    svc.service_name,
+                    "uses_target_group",
+                    "target_group",
+                    tg_arn,
+                )
+
+        # EKS Clusters
+        for cluster in self.eks_clusters:
+            if cluster.vpc_id:
+                graph.add_relationship(
+                    "eks_cluster", cluster.cluster_name, "deployed_in", "vpc", cluster.vpc_id
+                )
+            for subnet_id in cluster.subnet_ids:
+                graph.add_relationship(
+                    "eks_cluster", cluster.cluster_name, "uses_subnet", "subnet", subnet_id
+                )
+            for sg_id in cluster.security_group_ids:
+                graph.add_relationship(
+                    "eks_cluster",
+                    cluster.cluster_name,
+                    "uses_security_group",
+                    "security_group",
+                    sg_id,
+                )
+            if cluster.role_arn:
+                role_name = cluster.role_arn.split("/")[-1]
+                graph.add_relationship(
+                    "eks_cluster",
+                    cluster.cluster_name,
+                    "uses_role",
+                    "iam_role",
+                    role_name,
+                    cluster.role_arn,
+                )
+
+        # EKS Node Groups
+        for ng in self.eks_node_groups:
+            for subnet_id in ng.subnet_ids:
+                graph.add_relationship(
+                    "eks_nodegroup", ng.nodegroup_name, "uses_subnet", "subnet", subnet_id
+                )
+            if ng.node_role_arn:
+                role_name = ng.node_role_arn.split("/")[-1]
+                graph.add_relationship(
+                    "eks_nodegroup",
+                    ng.nodegroup_name,
+                    "uses_role",
+                    "iam_role",
+                    role_name,
+                    ng.node_role_arn,
+                )
+
+        # ALBs
+        for alb in self.application_load_balancers:
+            if alb.vpc_id:
+                graph.add_relationship("alb", alb.name, "deployed_in", "vpc", alb.vpc_id)
+            for sg_id in alb.security_groups:
+                graph.add_relationship(
+                    "alb", alb.name, "uses_security_group", "security_group", sg_id
+                )
+
+        # CloudFront Distributions
+        for dist in self.cloudfront_distributions:
+            if dist.acm_certificate_arn:
+                graph.add_relationship(
+                    "cloudfront",
+                    dist.id,
+                    "uses_certificate",
+                    "acm_certificate",
+                    dist.acm_certificate_arn,
+                )
+
+        # Step Functions State Machines
+        for sm in self.state_machines:
+            if sm.role_arn:
+                role_name = sm.role_arn.split("/")[-1]
+                graph.add_relationship(
+                    "state_machine", sm.name, "uses_role", "iam_role", role_name, sm.role_arn
+                )
+            if sm.log_group_arn:
+                graph.add_relationship(
+                    "state_machine", sm.name, "logs_to", "log_group", sm.log_group_arn
+                )
+
+        # Auto Scaling Groups
+        for asg in self.auto_scaling_groups:
+            for inst_id in asg.instances:
+                graph.add_relationship("asg", asg.name, "manages", "ec2", inst_id)
+            for tg_arn in asg.target_group_arns:
+                graph.add_relationship(
+                    "asg", asg.name, "uses_target_group", "target_group", tg_arn
+                )
+
+        self.relationships = graph
 
     def to_dict(self) -> dict:
         """Convert to dictionary for YAML serialization."""
