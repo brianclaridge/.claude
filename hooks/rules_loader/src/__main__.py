@@ -8,7 +8,8 @@ from .logger import log_directive_event, log_error, log_summary, setup_logger
 from .paths import get_rules_path, get_config
 
 
-def main():
+def main() -> int:
+    """Process hook event and inject rules into context."""
     # Capture event_name early for use in exception handling
     event_name = "SessionStart"  # Default fallback (most common event for rules)
     session_id = "unknown"

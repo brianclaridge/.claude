@@ -37,7 +37,8 @@ def _write_json_array_entry(file_path: Path, entry: Dict[str, Any]) -> None:
         f.write('\n')
 
 
-def setup_logger():
+def setup_logger() -> structlog.BoundLogger | None:
+    """Configure and return structlog logger instance."""
     global _logger
 
     if _logger is not None:

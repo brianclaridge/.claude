@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional
 import sys
 
 
@@ -49,7 +49,7 @@ def read_rule(file_path: Path) -> Optional[Dict[str, str]]:
 
 def filter_rules_for_reinforcement(
     rules: List[Dict[str, str]],
-    hook_config: Dict,
+    hook_config: Dict[str, Any],
     event_name: str
 ) -> List[Dict[str, str]]:
     """

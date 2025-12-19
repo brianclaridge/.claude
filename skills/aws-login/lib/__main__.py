@@ -33,7 +33,6 @@ from .profiles import clear_aws_config, ensure_profile, set_default_profile
 from .sso import check_credentials_valid, run_sso_login
 
 # SSO discovery now comes from aws_utils library
-import sys
 from pathlib import Path
 
 # Use CLAUDE_PATH env var for reliable path resolution (avoid fragile relative paths)

@@ -1,10 +1,10 @@
 import argparse
-import sys
-from .loader import load_directives
+
 from .formatter import format_to_hook_json
+from .loader import load_rules
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Load markdown directives and output as JSON hook format"
     )
