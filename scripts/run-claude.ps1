@@ -33,7 +33,7 @@ Set-Location "${env:WORKSPACE_PATH}"
 
 if ($debug_claude) {
   _warn "debug mode"
-  & claude --continue --debug --verbose 2> $null || claude --debug
+  & claude --continue --debug --verbose 2> $null || claude --debug --verbose
 }
 elseif ($stream) {
   _warn "strem mode"
@@ -50,7 +50,7 @@ elseif ($stream) {
   $msg | & claude --print --fork-session --input-format stream-json --output-format stream-json --verbose
 }
 else {
-  & claude --continue 2> $null || claude
+  & claude --verbose --continue 2> $null || claude --verbose
 }
 
 $exitCode = $LASTEXITCODE
