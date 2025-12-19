@@ -54,8 +54,12 @@ def load_from_env(env_path: Optional[Path]) -> tuple[Optional[str], Optional[str
     return name, email
 
 
-def detect_from_ssh() -> Optional[str]:
-    """Extract GitHub username from SSH authentication."""
+def detect_from_ssh() -> tuple[Optional[str], bool]:
+    """Extract GitHub username from SSH authentication.
+
+    Returns:
+        Tuple of (username or None, is_authenticated)
+    """
     try:
         result = subprocess.run(
             ["ssh", "-T", "git@github.com"],
@@ -65,12 +69,13 @@ def detect_from_ssh() -> Optional[str]:
         )
         # GitHub returns: "Hi username! You've successfully..."
         output = result.stderr
+        is_authenticated = "successfully authenticated" in output
         match = re.search(r"Hi ([^!]+)!", output)
-        if match:
-            return match.group(1)
+        username = match.group(1) if match else None
+        return username, is_authenticated
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         pass
-    return None
+    return None, False
 
 
 def detect_from_gh() -> tuple[Optional[str], Optional[str]]:
@@ -176,7 +181,7 @@ def detect_identity(
 
     # 3. Check SSH
     if check_ssh:
-        ssh_username = detect_from_ssh()
+        ssh_username, _ = detect_from_ssh()
         if ssh_username:
             logger.info("identity_from_ssh", username=ssh_username)
             result.name = ssh_username

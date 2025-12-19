@@ -33,7 +33,9 @@ from .sso import check_credentials_valid, run_sso_login
 import sys
 from pathlib import Path
 
-_lib_path = Path(__file__).parent.parent.parent.parent / "lib"
+# Use CLAUDE_PATH env var for reliable path resolution (avoid fragile relative paths)
+_claude_path = os.environ.get("CLAUDE_PATH", str(Path(__file__).parent.parent.parent.parent))
+_lib_path = Path(_claude_path) / "lib"
 if str(_lib_path) not in sys.path:
     sys.path.insert(0, str(_lib_path))
 

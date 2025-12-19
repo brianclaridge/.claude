@@ -13,8 +13,9 @@ from typing import Any
 import yaml
 from loguru import logger
 
-# Add aws_utils to path
-_lib_path = Path(__file__).parent.parent.parent.parent / "lib"
+# Add aws_utils to path using CLAUDE_PATH env var for reliable resolution
+_claude_path = os.environ.get("CLAUDE_PATH", str(Path(__file__).parent.parent.parent.parent))
+_lib_path = Path(_claude_path) / "lib"
 if str(_lib_path) not in sys.path:
     sys.path.insert(0, str(_lib_path))
 

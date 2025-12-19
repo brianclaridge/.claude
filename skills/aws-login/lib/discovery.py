@@ -16,9 +16,9 @@ from typing import Any, Callable
 
 from loguru import logger
 
-# Add aws_utils to path
-# Path: .claude/skills/aws-login/lib/discovery.py -> .claude/lib/aws_utils
-_lib_path = Path(__file__).parent.parent.parent.parent / "lib" / "aws_utils"
+# Add aws_utils to path using CLAUDE_PATH env var for reliable resolution
+_claude_path = os.environ.get("CLAUDE_PATH", str(Path(__file__).parent.parent.parent.parent))
+_lib_path = Path(_claude_path) / "lib" / "aws_utils"
 if str(_lib_path) not in sys.path:
     sys.path.insert(0, str(_lib_path))
 

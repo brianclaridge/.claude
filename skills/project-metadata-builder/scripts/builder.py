@@ -164,8 +164,8 @@ def detect_frameworks(project_path: Path) -> list[str]:
                 frameworks.add("express")
             if "playwright" in deps:
                 frameworks.add("playwright")
-        except Exception:
-            pass
+        except (json.JSONDecodeError, IOError, OSError) as e:
+            logger.debug(f"Could not parse package.json: {e}")
 
     return sorted(frameworks)
 
@@ -193,8 +193,8 @@ def build_project_metadata(
                 if line and not line.startswith("#") and not line.startswith(">"):
                     description = line[:200]  # Truncate
                     break
-        except Exception:
-            pass
+        except (IOError, OSError, UnicodeDecodeError) as e:
+            logger.debug(f"Could not read README: {e}")
 
     # Collect metadata from collectors
     git = collect_git_metadata(project_path)

@@ -9,6 +9,8 @@ from typing import Optional
 
 import structlog
 
+from .identity import detect_from_ssh
+
 logger = structlog.get_logger()
 
 # Container-specific auth command
@@ -83,18 +85,13 @@ def check_gh_auth() -> bool:
 
 
 def check_ssh_auth() -> bool:
-    """Check if SSH key auth works for GitHub."""
-    try:
-        result = subprocess.run(
-            ["ssh", "-T", "git@github.com"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        # GitHub returns exit code 1 but "successfully authenticated" in stderr
-        return "successfully authenticated" in result.stderr
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-        return False
+    """Check if SSH key auth works for GitHub.
+
+    Uses consolidated detect_from_ssh() from identity module to avoid
+    duplicate subprocess calls.
+    """
+    _, is_authenticated = detect_from_ssh()
+    return is_authenticated
 
 
 def check_auth(repo_path: Path) -> AuthResult:
