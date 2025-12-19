@@ -61,3 +61,26 @@ def get_cached_session(
 def clear_session_cache() -> None:
     """Clear the session cache."""
     get_cached_session.cache_clear()
+
+
+def get_account_id(
+    profile_name: str | None = None,
+    region: str | None = None,
+) -> str:
+    """Get the AWS account ID for the current session.
+
+    Args:
+        profile_name: AWS CLI profile name
+        region: AWS region (for session creation)
+
+    Returns:
+        AWS account ID string
+    """
+    session = create_session(profile_name, region)
+    sts = session.client("sts")
+    try:
+        identity = sts.get_caller_identity()
+        return identity["Account"]
+    except Exception as e:
+        logger.warning(f"Failed to get account ID: {e}")
+        return "unknown"

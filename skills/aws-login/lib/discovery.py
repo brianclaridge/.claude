@@ -27,6 +27,46 @@ from aws_utils.services.organizations import (
 )
 from aws_utils.inventory.writer import save_inventory, get_relative_inventory_path
 
+# Phase A: Additional service imports (16 services)
+from aws_utils.services.lambda_svc import discover_lambda_functions
+from aws_utils.services.rds import discover_rds_instances, discover_rds_clusters
+from aws_utils.services.dynamodb import discover_dynamodb_tables
+from aws_utils.services.route53 import discover_route53_zones, discover_route53_domains
+from aws_utils.services.ecs import (
+    discover_ecs_clusters,
+    discover_all_ecs_services,
+    discover_ecs_task_definitions,
+)
+from aws_utils.services.eks import (
+    discover_eks_clusters,
+    discover_all_eks_node_groups,
+    discover_all_eks_fargate_profiles,
+)
+from aws_utils.services.stepfunctions import discover_state_machines, discover_sfn_activities
+from aws_utils.services.acm import discover_acm_certificates
+from aws_utils.services.secrets_manager import discover_secrets
+from aws_utils.services.cognito import discover_user_pools, discover_identity_pools
+from aws_utils.services.api_gateway import discover_rest_apis, discover_v2_apis
+from aws_utils.services.cloudfront import discover_distributions
+from aws_utils.services.codebuild import discover_codebuild_projects
+from aws_utils.services.codepipeline import discover_pipelines
+
+# Phase B-D: EC2 Instances, IAM, CloudWatch, Load Balancers, Auto Scaling
+from aws_utils.services.ec2 import discover_ec2_instances
+from aws_utils.services.iam import (
+    discover_iam_roles,
+    discover_iam_policies,
+    discover_iam_users,
+    discover_iam_groups,
+)
+from aws_utils.services.cloudwatch import discover_log_groups, discover_alarms
+from aws_utils.services.elbv2 import (
+    discover_application_load_balancers,
+    discover_network_load_balancers,
+)
+from aws_utils.services.elb import discover_classic_load_balancers
+from aws_utils.services.autoscaling import discover_auto_scaling_groups
+
 from .config import get_default_region
 
 
@@ -55,7 +95,7 @@ def discover_account_inventory(
     Args:
         profile_name: AWS CLI profile name
         region: AWS region
-        skip_resources: If True, skip S3/SQS/SNS/SES discovery
+        skip_resources: If True, skip extended resource discovery (only VPCs/EIPs)
 
     Returns:
         AccountInventory with all discovered resources
@@ -66,17 +106,119 @@ def discover_account_inventory(
     vpcs = discover_vpcs(profile_name, region)
     eips = discover_elastic_ips(profile_name, region)
 
-    # Extended resources (optional)
+    # Initialize all resource lists
     s3_buckets = []
     sqs_queues = []
     sns_topics = []
     ses_identities = []
+    lambda_functions = []
+    rds_instances = []
+    rds_clusters = []
+    dynamodb_tables = []
+    route53_zones = []
+    route53_domains = []
+    state_machines = []
+    sfn_activities = []
+    ecs_clusters = []
+    ecs_services = []
+    ecs_task_definitions = []
+    eks_clusters = []
+    eks_node_groups = []
+    eks_fargate_profiles = []
+    acm_certificates = []
+    secrets = []
+    cognito_user_pools = []
+    cognito_identity_pools = []
+    api_gateway_rest_apis = []
+    api_gateway_v2_apis = []
+    cloudfront_distributions = []
+    codebuild_projects = []
+    codepipelines = []
+    # Phase B-D: New services
+    ec2_instances = []
+    iam_roles = []
+    iam_policies = []
+    iam_users = []
+    iam_groups = []
+    cloudwatch_log_groups = []
+    cloudwatch_alarms = []
+    application_load_balancers = []
+    network_load_balancers = []
+    classic_load_balancers = []
+    auto_scaling_groups = []
 
     if not skip_resources:
+        # Original services
         s3_buckets = discover_s3_buckets(profile_name, region)
         sqs_queues = discover_sqs_queues(profile_name, region)
         sns_topics = discover_sns_topics(profile_name, region)
         ses_identities = discover_ses_identities(profile_name, region)
+
+        # Compute
+        lambda_functions = discover_lambda_functions(profile_name, region)
+
+        # Database
+        rds_instances = discover_rds_instances(profile_name, region)
+        rds_clusters = discover_rds_clusters(profile_name, region)
+        dynamodb_tables = discover_dynamodb_tables(profile_name, region)
+
+        # DNS (Route53 is global but we pass region for session)
+        route53_zones = discover_route53_zones(profile_name, region)
+        route53_domains = discover_route53_domains(profile_name, region)
+
+        # Step Functions
+        state_machines = discover_state_machines(profile_name, region)
+        sfn_activities = discover_sfn_activities(profile_name, region)
+
+        # Container orchestration - ECS
+        ecs_clusters = discover_ecs_clusters(profile_name, region)
+        ecs_services = discover_all_ecs_services(profile_name, region)
+        ecs_task_definitions = discover_ecs_task_definitions(profile_name, region)
+
+        # Container orchestration - EKS
+        eks_clusters = discover_eks_clusters(profile_name, region)
+        eks_node_groups = discover_all_eks_node_groups(profile_name, region)
+        eks_fargate_profiles = discover_all_eks_fargate_profiles(profile_name, region)
+
+        # Security & Certificates
+        acm_certificates = discover_acm_certificates(profile_name, region)
+        secrets = discover_secrets(profile_name, region)
+
+        # Identity
+        cognito_user_pools = discover_user_pools(profile_name, region)
+        cognito_identity_pools = discover_identity_pools(profile_name, region)
+
+        # API Gateway
+        api_gateway_rest_apis = discover_rest_apis(profile_name, region)
+        api_gateway_v2_apis = discover_v2_apis(profile_name, region)
+
+        # CDN (CloudFront is global)
+        cloudfront_distributions = discover_distributions(profile_name, region)
+
+        # CI/CD
+        codebuild_projects = discover_codebuild_projects(profile_name, region)
+        codepipelines = discover_pipelines(profile_name, region)
+
+        # Phase B: EC2 Instances
+        ec2_instances = discover_ec2_instances(profile_name, region)
+
+        # Phase B: IAM (global service)
+        iam_roles = discover_iam_roles(profile_name, region)
+        iam_policies = discover_iam_policies(profile_name, region)
+        iam_users = discover_iam_users(profile_name, region)
+        iam_groups = discover_iam_groups(profile_name, region)
+
+        # Phase C: CloudWatch
+        cloudwatch_log_groups = discover_log_groups(profile_name, region)
+        cloudwatch_alarms = discover_alarms(profile_name, region)
+
+        # Phase D: Load Balancers
+        application_load_balancers = discover_application_load_balancers(profile_name, region)
+        network_load_balancers = discover_network_load_balancers(profile_name, region)
+        classic_load_balancers = discover_classic_load_balancers(profile_name, region)
+
+        # Phase D: Auto Scaling
+        auto_scaling_groups = discover_auto_scaling_groups(profile_name, region)
 
     return AccountInventory(
         account_id="",  # Set by caller
@@ -89,6 +231,41 @@ def discover_account_inventory(
         sqs_queues=sqs_queues,
         sns_topics=sns_topics,
         ses_identities=ses_identities,
+        lambda_functions=lambda_functions,
+        rds_instances=rds_instances,
+        rds_clusters=rds_clusters,
+        dynamodb_tables=dynamodb_tables,
+        route53_zones=route53_zones,
+        route53_domains=route53_domains,
+        state_machines=state_machines,
+        sfn_activities=sfn_activities,
+        ecs_clusters=ecs_clusters,
+        ecs_services=ecs_services,
+        ecs_task_definitions=ecs_task_definitions,
+        eks_clusters=eks_clusters,
+        eks_node_groups=eks_node_groups,
+        eks_fargate_profiles=eks_fargate_profiles,
+        acm_certificates=acm_certificates,
+        secrets=secrets,
+        cognito_user_pools=cognito_user_pools,
+        cognito_identity_pools=cognito_identity_pools,
+        api_gateway_rest_apis=api_gateway_rest_apis,
+        api_gateway_v2_apis=api_gateway_v2_apis,
+        cloudfront_distributions=cloudfront_distributions,
+        codebuild_projects=codebuild_projects,
+        codepipelines=codepipelines,
+        # Phase B-D: New services
+        ec2_instances=ec2_instances,
+        iam_roles=iam_roles,
+        iam_policies=iam_policies,
+        iam_users=iam_users,
+        iam_groups=iam_groups,
+        cloudwatch_log_groups=cloudwatch_log_groups,
+        cloudwatch_alarms=cloudwatch_alarms,
+        application_load_balancers=application_load_balancers,
+        network_load_balancers=network_load_balancers,
+        classic_load_balancers=classic_load_balancers,
+        auto_scaling_groups=auto_scaling_groups,
     )
 
 
@@ -175,11 +352,23 @@ def enrich_and_save_inventory(
                 if is_manager:
                     accounts_config[alias]["is_manager"] = True
 
-                # Log progress
+                # Log progress with expanded resource summary
                 vpc_count = len(inventory.vpcs)
                 resource_summary = f"{vpc_count} VPCs"
                 if not skip_resources:
-                    resource_summary += f", {len(inventory.s3_buckets)} S3, {len(inventory.sqs_queues)} SQS"
+                    # Count all resources for summary
+                    counts = {
+                        "S3": len(inventory.s3_buckets),
+                        "Lambda": len(inventory.lambda_functions),
+                        "RDS": len(inventory.rds_instances) + len(inventory.rds_clusters),
+                        "DynamoDB": len(inventory.dynamodb_tables),
+                        "ECS": len(inventory.ecs_clusters),
+                        "EKS": len(inventory.eks_clusters),
+                    }
+                    # Only show non-zero counts
+                    non_zero = [f"{v} {k}" for k, v in counts.items() if v > 0]
+                    if non_zero:
+                        resource_summary += ", " + ", ".join(non_zero)
 
                 logger.debug(f"  [{completed}/{total}] {alias}: {resource_summary}")
 

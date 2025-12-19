@@ -1,13 +1,27 @@
 """AWS service discovery modules."""
 
 from aws_utils.services.acm import discover_acm_certificates
+from aws_utils.services.autoscaling import discover_auto_scaling_groups
+from aws_utils.services.cloudwatch import discover_log_groups, discover_alarms
 from aws_utils.services.dynamodb import discover_dynamodb_tables
 from aws_utils.services.ec2 import (
+    discover_ec2_instances,
     discover_elastic_ips,
     discover_internet_gateways,
     discover_nat_gateways,
     discover_subnets,
     discover_vpcs,
+)
+from aws_utils.services.elb import discover_classic_load_balancers
+from aws_utils.services.elbv2 import (
+    discover_application_load_balancers,
+    discover_network_load_balancers,
+)
+from aws_utils.services.iam import (
+    discover_iam_groups,
+    discover_iam_policies,
+    discover_iam_roles,
+    discover_iam_users,
 )
 from aws_utils.services.ecs import (
     discover_all_ecs_services,
@@ -65,6 +79,21 @@ __all__ = [
     "discover_internet_gateways",
     "discover_nat_gateways",
     "discover_subnets",
+    "discover_ec2_instances",
+    # IAM
+    "discover_iam_roles",
+    "discover_iam_policies",
+    "discover_iam_users",
+    "discover_iam_groups",
+    # CloudWatch
+    "discover_log_groups",
+    "discover_alarms",
+    # Load Balancers
+    "discover_application_load_balancers",
+    "discover_network_load_balancers",
+    "discover_classic_load_balancers",
+    # Auto Scaling
+    "discover_auto_scaling_groups",
     # S3
     "discover_s3_buckets",
     # SQS

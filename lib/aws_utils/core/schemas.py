@@ -433,6 +433,193 @@ class CodePipeline(BaseModel):
     region: str = Field(description="AWS region")
 
 
+# EC2 Instance Resources
+class EC2Instance(BaseModel):
+    """EC2 Instance."""
+
+    instance_id: str = Field(description="Instance ID (i-xxx)")
+    instance_type: str = Field(description="Instance type (t3.micro, etc.)")
+    state: str = Field(description="Instance state (running, stopped, etc.)")
+    private_ip: str | None = Field(default=None, description="Private IP address")
+    public_ip: str | None = Field(default=None, description="Public IP address")
+    vpc_id: str | None = Field(default=None, description="VPC ID")
+    subnet_id: str | None = Field(default=None, description="Subnet ID")
+    launch_time: str | None = Field(default=None, description="Launch timestamp")
+    name: str | None = Field(default=None, description="Name tag value")
+    platform: str | None = Field(default=None, description="Platform (windows or None for Linux)")
+    image_id: str | None = Field(default=None, description="AMI ID")
+    key_name: str | None = Field(default=None, description="SSH key pair name")
+    security_groups: list[str] = Field(default_factory=list, description="Security group IDs")
+    iam_instance_profile: str | None = Field(default=None, description="IAM instance profile ARN")
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+    arn: str = Field(description="Instance ARN")
+    region: str = Field(description="AWS region")
+
+
+# IAM Resources
+class IAMRole(BaseModel):
+    """IAM Role."""
+
+    role_name: str = Field(description="Role name")
+    role_id: str = Field(description="Role ID")
+    arn: str = Field(description="Role ARN")
+    path: str = Field(default="/", description="Role path")
+    description: str | None = Field(default=None, description="Role description")
+    create_date: str | None = Field(default=None, description="Creation date")
+    max_session_duration: int = Field(default=3600, description="Max session duration in seconds")
+    assume_role_policy_document: str | None = Field(
+        default=None, description="Trust policy document (JSON)"
+    )
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+
+
+class IAMPolicy(BaseModel):
+    """IAM Policy (customer managed)."""
+
+    policy_name: str = Field(description="Policy name")
+    policy_id: str = Field(description="Policy ID")
+    arn: str = Field(description="Policy ARN")
+    path: str = Field(default="/", description="Policy path")
+    description: str | None = Field(default=None, description="Policy description")
+    create_date: str | None = Field(default=None, description="Creation date")
+    update_date: str | None = Field(default=None, description="Last update date")
+    attachment_count: int = Field(default=0, description="Number of entities attached")
+    is_attachable: bool = Field(default=True, description="Whether policy is attachable")
+    default_version_id: str | None = Field(default=None, description="Default version ID")
+
+
+class IAMUser(BaseModel):
+    """IAM User."""
+
+    user_name: str = Field(description="User name")
+    user_id: str = Field(description="User ID")
+    arn: str = Field(description="User ARN")
+    path: str = Field(default="/", description="User path")
+    create_date: str | None = Field(default=None, description="Creation date")
+    password_last_used: str | None = Field(default=None, description="Last password use timestamp")
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+
+
+class IAMGroup(BaseModel):
+    """IAM Group."""
+
+    group_name: str = Field(description="Group name")
+    group_id: str = Field(description="Group ID")
+    arn: str = Field(description="Group ARN")
+    path: str = Field(default="/", description="Group path")
+    create_date: str | None = Field(default=None, description="Creation date")
+
+
+# CloudWatch Resources
+class CloudWatchLogGroup(BaseModel):
+    """CloudWatch Logs Log Group."""
+
+    log_group_name: str = Field(description="Log group name")
+    arn: str = Field(description="Log group ARN")
+    creation_time: str | None = Field(default=None, description="Creation timestamp (ms)")
+    retention_days: int | None = Field(default=None, description="Retention in days (null = never)")
+    stored_bytes: int = Field(default=0, description="Stored data size in bytes")
+    metric_filter_count: int = Field(default=0, description="Number of metric filters")
+    kms_key_id: str | None = Field(default=None, description="KMS key for encryption")
+    region: str = Field(description="AWS region")
+
+
+class CloudWatchAlarm(BaseModel):
+    """CloudWatch Alarm."""
+
+    alarm_name: str = Field(description="Alarm name")
+    alarm_arn: str = Field(description="Alarm ARN")
+    alarm_description: str | None = Field(default=None, description="Alarm description")
+    state_value: str = Field(description="Current state (OK, ALARM, INSUFFICIENT_DATA)")
+    state_reason: str | None = Field(default=None, description="State reason")
+    metric_name: str | None = Field(default=None, description="Metric name")
+    namespace: str | None = Field(default=None, description="Metric namespace")
+    statistic: str | None = Field(default=None, description="Statistic (Average, Sum, etc.)")
+    period: int | None = Field(default=None, description="Period in seconds")
+    evaluation_periods: int | None = Field(default=None, description="Evaluation periods")
+    threshold: float | None = Field(default=None, description="Threshold value")
+    comparison_operator: str | None = Field(default=None, description="Comparison operator")
+    actions_enabled: bool = Field(default=True, description="Actions enabled")
+    alarm_actions: list[str] = Field(default_factory=list, description="Actions on ALARM state")
+    ok_actions: list[str] = Field(default_factory=list, description="Actions on OK state")
+    region: str = Field(description="AWS region")
+
+
+# Elastic Load Balancing Resources
+class ApplicationLoadBalancer(BaseModel):
+    """Application Load Balancer (ALB)."""
+
+    name: str = Field(description="Load balancer name")
+    arn: str = Field(description="Load balancer ARN")
+    dns_name: str = Field(description="DNS name")
+    scheme: str = Field(description="Scheme (internet-facing or internal)")
+    vpc_id: str = Field(description="VPC ID")
+    state: str = Field(description="State (active, provisioning, etc.)")
+    type: str = Field(default="application", description="Load balancer type")
+    created_time: str | None = Field(default=None, description="Creation timestamp")
+    availability_zones: list[str] = Field(default_factory=list, description="Availability zones")
+    security_groups: list[str] = Field(default_factory=list, description="Security group IDs")
+    ip_address_type: str | None = Field(default=None, description="IP address type (ipv4, dualstack)")
+    region: str = Field(description="AWS region")
+
+
+class NetworkLoadBalancer(BaseModel):
+    """Network Load Balancer (NLB)."""
+
+    name: str = Field(description="Load balancer name")
+    arn: str = Field(description="Load balancer ARN")
+    dns_name: str = Field(description="DNS name")
+    scheme: str = Field(description="Scheme (internet-facing or internal)")
+    vpc_id: str = Field(description="VPC ID")
+    state: str = Field(description="State (active, provisioning, etc.)")
+    type: str = Field(default="network", description="Load balancer type")
+    created_time: str | None = Field(default=None, description="Creation timestamp")
+    availability_zones: list[str] = Field(default_factory=list, description="Availability zones")
+    ip_address_type: str | None = Field(default=None, description="IP address type (ipv4, dualstack)")
+    region: str = Field(description="AWS region")
+
+
+class ClassicLoadBalancer(BaseModel):
+    """Classic Load Balancer (ELB)."""
+
+    name: str = Field(description="Load balancer name")
+    dns_name: str = Field(description="DNS name")
+    scheme: str = Field(description="Scheme (internet-facing or internal)")
+    vpc_id: str | None = Field(default=None, description="VPC ID (None for EC2-Classic)")
+    created_time: str | None = Field(default=None, description="Creation timestamp")
+    availability_zones: list[str] = Field(default_factory=list, description="Availability zones")
+    subnets: list[str] = Field(default_factory=list, description="Subnet IDs")
+    security_groups: list[str] = Field(default_factory=list, description="Security group IDs")
+    instances: list[str] = Field(default_factory=list, description="Registered instance IDs")
+    health_check_target: str | None = Field(default=None, description="Health check target")
+    region: str = Field(description="AWS region")
+
+
+# Auto Scaling Resources
+class AutoScalingGroup(BaseModel):
+    """Auto Scaling Group."""
+
+    name: str = Field(description="Auto Scaling group name")
+    arn: str = Field(description="Auto Scaling group ARN")
+    launch_template_id: str | None = Field(default=None, description="Launch template ID")
+    launch_template_name: str | None = Field(default=None, description="Launch template name")
+    launch_configuration_name: str | None = Field(default=None, description="Launch configuration name")
+    min_size: int = Field(description="Minimum size")
+    max_size: int = Field(description="Maximum size")
+    desired_capacity: int = Field(description="Desired capacity")
+    default_cooldown: int | None = Field(default=None, description="Default cooldown in seconds")
+    availability_zones: list[str] = Field(default_factory=list, description="Availability zones")
+    vpc_zone_identifier: str | None = Field(default=None, description="Subnet IDs (comma-separated)")
+    health_check_type: str = Field(description="Health check type (EC2 or ELB)")
+    health_check_grace_period: int | None = Field(default=None, description="Health check grace period")
+    target_group_arns: list[str] = Field(default_factory=list, description="Target group ARNs")
+    load_balancer_names: list[str] = Field(default_factory=list, description="Classic LB names")
+    instances: list[str] = Field(default_factory=list, description="Instance IDs")
+    created_time: str | None = Field(default=None, description="Creation timestamp")
+    tags: dict[str, str] = Field(default_factory=dict, description="Resource tags")
+    region: str = Field(description="AWS region")
+
+
 class AccountInventory(BaseModel):
     """Complete inventory for an AWS account."""
 
@@ -546,6 +733,49 @@ class AccountInventory(BaseModel):
     # CodePipeline Resources
     codepipelines: list[CodePipeline] = Field(
         default_factory=list, description="CodePipeline pipelines"
+    )
+
+    # EC2 Instances
+    ec2_instances: list[EC2Instance] = Field(
+        default_factory=list, description="EC2 instances in the account"
+    )
+
+    # IAM Resources
+    iam_roles: list[IAMRole] = Field(
+        default_factory=list, description="IAM roles in the account"
+    )
+    iam_policies: list[IAMPolicy] = Field(
+        default_factory=list, description="IAM customer managed policies"
+    )
+    iam_users: list[IAMUser] = Field(
+        default_factory=list, description="IAM users in the account"
+    )
+    iam_groups: list[IAMGroup] = Field(
+        default_factory=list, description="IAM groups in the account"
+    )
+
+    # CloudWatch Resources
+    cloudwatch_log_groups: list[CloudWatchLogGroup] = Field(
+        default_factory=list, description="CloudWatch log groups"
+    )
+    cloudwatch_alarms: list[CloudWatchAlarm] = Field(
+        default_factory=list, description="CloudWatch alarms"
+    )
+
+    # Load Balancers
+    application_load_balancers: list[ApplicationLoadBalancer] = Field(
+        default_factory=list, description="Application Load Balancers"
+    )
+    network_load_balancers: list[NetworkLoadBalancer] = Field(
+        default_factory=list, description="Network Load Balancers"
+    )
+    classic_load_balancers: list[ClassicLoadBalancer] = Field(
+        default_factory=list, description="Classic Load Balancers"
+    )
+
+    # Auto Scaling
+    auto_scaling_groups: list[AutoScalingGroup] = Field(
+        default_factory=list, description="Auto Scaling Groups"
     )
 
     def to_dict(self) -> dict:

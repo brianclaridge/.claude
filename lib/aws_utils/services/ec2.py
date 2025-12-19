@@ -11,8 +11,9 @@ from aws_utils.core.schemas import (
     InternetGateway,
     NATGateway,
     Subnet,
+    EC2Instance,
 )
-from aws_utils.core.session import create_session, get_default_region
+from aws_utils.core.session import create_session, get_default_region, get_account_id
 
 
 def discover_internet_gateways(ec2_client: Any, vpc_id: str) -> list[InternetGateway]:
@@ -246,4 +247,83 @@ def discover_elastic_ips(
         return eips
     except ClientError as e:
         logger.warning(f"Failed to discover Elastic IPs: {e}")
+        return []
+
+
+def discover_ec2_instances(
+    profile_name: str | None = None,
+    region: str | None = None,
+) -> list[EC2Instance]:
+    """Discover all EC2 instances in an account.
+
+    Args:
+        profile_name: AWS CLI profile name
+        region: AWS region
+
+    Returns:
+        List of EC2Instance objects
+    """
+    region = region or get_default_region()
+    session = create_session(profile_name, region)
+    ec2 = session.client("ec2")
+
+    try:
+        # Get account ID for ARN construction
+        account_id = get_account_id(profile_name)
+
+        instances = []
+        paginator = ec2.get_paginator("describe_instances")
+
+        for page in paginator.paginate():
+            for reservation in page.get("Reservations", []):
+                for inst in reservation.get("Instances", []):
+                    instance_id = inst["InstanceId"]
+
+                    # Extract Name tag
+                    name = None
+                    tags_dict = {}
+                    for tag in inst.get("Tags", []):
+                        tags_dict[tag["Key"]] = tag["Value"]
+                        if tag["Key"] == "Name":
+                            name = tag["Value"]
+
+                    # Extract security group IDs
+                    security_groups = [
+                        sg["GroupId"] for sg in inst.get("SecurityGroups", [])
+                    ]
+
+                    # Extract IAM instance profile ARN
+                    iam_profile = inst.get("IamInstanceProfile", {})
+                    iam_profile_arn = iam_profile.get("Arn")
+
+                    # Build ARN
+                    arn = f"arn:aws:ec2:{region}:{account_id}:instance/{instance_id}"
+
+                    instance = EC2Instance(
+                        instance_id=instance_id,
+                        instance_type=inst.get("InstanceType", "unknown"),
+                        state=inst.get("State", {}).get("Name", "unknown"),
+                        private_ip=inst.get("PrivateIpAddress"),
+                        public_ip=inst.get("PublicIpAddress"),
+                        vpc_id=inst.get("VpcId"),
+                        subnet_id=inst.get("SubnetId"),
+                        launch_time=inst.get("LaunchTime", "").isoformat()
+                        if inst.get("LaunchTime")
+                        else None,
+                        name=name,
+                        platform=inst.get("Platform"),  # 'windows' or None
+                        image_id=inst.get("ImageId"),
+                        key_name=inst.get("KeyName"),
+                        security_groups=security_groups,
+                        iam_instance_profile=iam_profile_arn,
+                        tags=tags_dict,
+                        arn=arn,
+                        region=region,
+                    )
+                    instances.append(instance)
+
+        logger.debug(f"Discovered {len(instances)} EC2 instances in {region}")
+        return instances
+    except ClientError as e:
+        logger.warning(f"Failed to discover EC2 instances: {e}")
         return []
