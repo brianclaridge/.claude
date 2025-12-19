@@ -1,6 +1,7 @@
 ---
 name: hello-world
-description: Use this agent when you need to output a simple 'Hello World' message. This agent should be invoked for testing purposes, as a basic demonstration, or when specifically requested to provide a hello world output. 
+description: Use this agent when you need to output a simple 'Hello World' message. This agent should be invoked for testing purposes, as a basic demonstration, or when specifically requested to provide a hello world output.
+tools: *
 model: opus
 color: cyan
 ---

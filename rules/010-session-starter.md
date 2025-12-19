@@ -28,7 +28,7 @@ Before invoking with a project group:
 
 1. Read `${CLAUDE_PROJECTS_YML_PATH}`
 2. Check if `[group]` exists as a key under `projects:`
-3. If not found: Respond with "Project group '[group]' not found. Available: camelot, gcp-ops"
+3. If not found: List actual available groups from the file and respond with "Project group '[group]' not found. Available: [comma-separated list of groups from projects.yml]"
 4. Do NOT invoke the agent for unknown groups
 
 ## Delegation Rules

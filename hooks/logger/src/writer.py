@@ -1,3 +1,4 @@
+import sys
 import json
 from pathlib import Path
 from typing import Dict, Any, List
@@ -6,8 +7,9 @@ from typing import Dict, Any, List
 def ensure_directory(file_path: Path) -> None:
     try:
         file_path.parent.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        pass
+    except Exception as e:
+        sys.stderr.write(f"[logger hook] Failed to create directory {file_path.parent}: {e}\n")
+        sys.stderr.flush()
 
 
 def read_existing_entries(file_path: Path) -> List[Dict[str, Any]]:
@@ -38,5 +40,6 @@ def write_log_entry(file_path: Path, hook_data: Dict[str, Any]) -> None:
             json.dump(entries, f, ensure_ascii=False, indent=2)
             f.write('\n')
 
-    except Exception:
-        pass
+    except Exception as e:
+        sys.stderr.write(f"[logger hook] Failed to write log entry to {file_path}: {e}\n")
+        sys.stderr.flush()

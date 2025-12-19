@@ -1,3 +1,4 @@
+import sys
 import json
 import structlog
 from pathlib import Path
@@ -92,8 +93,9 @@ def log_healing_event(
         log_path = get_log_path(session_id, event_type)
         _write_json_array_entry(log_path, log_entry)
 
-    except Exception:
-        pass
+    except Exception as e:
+        sys.stderr.write(f"[playwright_healer] Failed to log healing event: {e}\n")
+        sys.stderr.flush()
 
 
 def log_error(error_message: str, session_id: str = "unknown", **context) -> None:
@@ -112,5 +114,6 @@ def log_error(error_message: str, session_id: str = "unknown", **context) -> Non
         error_path = get_error_log_path(session_id)
         _write_json_array_entry(error_path, log_entry)
 
-    except Exception:
-        pass
+    except Exception as e:
+        sys.stderr.write(f"[playwright_healer] Failed to log error: {e}\n")
+        sys.stderr.flush()

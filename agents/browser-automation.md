@@ -1,6 +1,7 @@
 ---
 name: browser-automation
 description: Automate web browser tasks including navigation, screenshots, video recording, and data extraction. Use for "browse to", "screenshot of", "record video of", "scrape data from", "fill form on" requests.
+tools: *
 model: sonnet
 color: blue
 ---

@@ -1,5 +1,6 @@
 import sys
 import json
+import traceback
 from typing import Dict, Any
 
 from .cli import parse_args, show_help
@@ -19,8 +20,10 @@ def log_hook_event(hook_data: Dict[str, Any]) -> None:
         log_path = get_log_path(hook_event_name, session_id)
         write_log_entry(log_path, hook_data)
 
-    except Exception:
-        pass
+    except Exception as e:
+        # Log to stderr so failures are visible without breaking hook protocol
+        sys.stderr.write(f"[logger hook] Failed to log event: {e}\n")
+        sys.stderr.flush()
 
 
 def output_hook_response() -> None:
@@ -50,7 +53,9 @@ def main() -> int:
     except KeyboardInterrupt:
         return 0
 
-    except Exception:
+    except Exception as e:
+        sys.stderr.write(f"[logger hook] Unexpected error: {e}\n")
+        sys.stderr.flush()
         return 0
 
 

@@ -17,11 +17,17 @@ from loguru import logger
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
-VIDEO_DIR = "/workspace/.claude/.data/playwright/videos"
+# Use CLAUDE_PATH environment variable with fallback
+CLAUDE_PATH = os.environ.get("CLAUDE_PATH", "/workspace/.claude")
+VIDEO_DIR = os.path.join(CLAUDE_PATH, ".data/playwright/videos")
+LOG_DIR = os.path.join(CLAUDE_PATH, ".data/logs/playwright")
+
+# Ensure log directory exists before configuring logger
+os.makedirs(LOG_DIR, exist_ok=True)
 
 # Configure loguru
 logger.add(
-    "/workspace/.claude/.data/logs/playwright/video_recorder.log",
+    os.path.join(LOG_DIR, "video_recorder.log"),
     rotation="10 MB",
     retention="7 days",
     level="INFO",
@@ -35,30 +41,39 @@ def convert_to_mp4(webm_path: str) -> str:
         webm_path: Path to the WebM file
 
     Returns:
-        Path to the converted MP4 file
+        Path to the converted MP4 file, or empty string on failure
     """
     mp4_path = webm_path.replace(".webm", ".mp4")
     logger.info(f"Converting to MP4: {mp4_path}")
     print(f"Converting to MP4...")
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-i",
-            webm_path,
-            "-c:v",
-            "libx264",
-            "-c:a",
-            "aac",
-            "-y",
-            "-loglevel",
-            "error",
-            mp4_path,
-        ],
-        check=True,
-        capture_output=True,
-    )
-    logger.info(f"MP4 conversion complete: {mp4_path}")
-    return mp4_path
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-i",
+                webm_path,
+                "-c:v",
+                "libx264",
+                "-c:a",
+                "aac",
+                "-y",
+                "-loglevel",
+                "error",
+                mp4_path,
+            ],
+            check=True,
+            capture_output=True,
+        )
+        logger.info(f"MP4 conversion complete: {mp4_path}")
+        return mp4_path
+    except subprocess.CalledProcessError as e:
+        logger.error(f"FFmpeg conversion failed: {e.stderr.decode() if e.stderr else str(e)}")
+        print(f"Warning: MP4 conversion failed. WebM file is still available.")
+        return ""
+    except FileNotFoundError:
+        logger.error("FFmpeg not found. Install ffmpeg for MP4 conversion.")
+        print("Warning: ffmpeg not installed. WebM file is still available.")
+        return ""
 
 
 def record_video(
@@ -85,7 +100,7 @@ def record_video(
         Tuple of (webm_path, mp4_path)
     """
     os.makedirs(VIDEO_DIR, exist_ok=True)
-    os.makedirs("/workspace/.claude/.data/logs/playwright", exist_ok=True)
+    os.makedirs(LOG_DIR, exist_ok=True)
 
     logger.info(f"Recording video of {url} for {duration}s with wait_until={wait_until}")
 

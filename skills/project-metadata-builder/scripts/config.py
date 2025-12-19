@@ -63,4 +63,5 @@ def load_config() -> Config:
 
 def get_projects_file_path(config: Config) -> Path:
     """Get the projects.yml file path from config."""
-    return Path(os.path.expanduser(config.project_metadata.projects_file))
+    # expandvars first to handle ${CLAUDE_PROJECTS_YML_PATH}, then expanduser for ~
+    return Path(os.path.expanduser(os.path.expandvars(config.project_metadata.projects_file)))

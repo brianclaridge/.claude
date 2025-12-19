@@ -1,6 +1,6 @@
 ---
 name: project-metadata-builder
-description: Build and update project metadata registry in ${CLAUDE_PROJECTS_YML_PATH}. Use when starting a session, after project analysis, when user says "update project metadata", "refresh projects", "register project", or when project-discovery agent completes analysis.
+description: Build and update project metadata registry in ${CLAUDE_PROJECTS_YML_PATH}. Use when starting a session, after project analysis, when user says "update project metadata", "refresh projects", "register project", or when project-analysis agent completes analysis.
 allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
@@ -10,7 +10,7 @@ Build comprehensive project metadata and maintain a global registry at `${CLAUDE
 
 ## Activation Triggers
 
-- After `project-discovery` agent completes analysis
+- After `project-analysis` agent completes analysis
 - User says: "update project metadata", "refresh projects", "register project"
 - Session start with `auto_update_on_session: true` in config
 
@@ -120,7 +120,7 @@ projects:
         files_changed: 12
 ```
 
-## Integration with project-discovery-agent
+## Integration with project-analysis Agent
 
 After completing project analysis, invoke this skill:
 
