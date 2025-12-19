@@ -6,7 +6,9 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 # Add lib to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "lib"))

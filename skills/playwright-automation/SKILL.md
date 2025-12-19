@@ -72,16 +72,32 @@ Output: ${CLAUDE_PATH}/.data/playwright/[TYPE]/[FILENAME]
 """
 import os
 from datetime import datetime
-from loguru import logger
+
+import structlog
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
-SCREENCAP_DIR = "${CLAUDE_PATH}/.data/playwright/screencaps"
-VIDEO_DIR = "${CLAUDE_PATH}/.data/playwright/videos"
-DATA_DIR = "${CLAUDE_PATH}/.data/playwright/data"
+# Use CLAUDE_PATH environment variable with fallback
+CLAUDE_PATH = os.environ.get("CLAUDE_PATH", "/workspace/.claude")
+SCREENCAP_DIR = os.path.join(CLAUDE_PATH, ".data/playwright/screencaps")
+VIDEO_DIR = os.path.join(CLAUDE_PATH, ".data/playwright/videos")
+DATA_DIR = os.path.join(CLAUDE_PATH, ".data/playwright/data")
+LOG_DIR = os.path.join(CLAUDE_PATH, ".data/logs/playwright")
 
 os.makedirs(SCREENCAP_DIR, exist_ok=True)
 os.makedirs(VIDEO_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.dev.ConsoleRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(20),  # INFO+
+)
+logger = structlog.get_logger()
 
 def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

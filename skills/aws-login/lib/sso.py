@@ -4,7 +4,9 @@ import re
 import subprocess
 from dataclasses import dataclass
 
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 # Regex patterns for SSO URL and device code detection
 SSO_URL_PATTERN = re.compile(r"(https://[\w.-]+\.awsapps\.com/start[^\s]*)")

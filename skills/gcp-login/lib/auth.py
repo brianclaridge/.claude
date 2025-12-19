@@ -5,7 +5,9 @@ import re
 import subprocess
 from dataclasses import dataclass
 
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 # Regex patterns for GCP auth URL detection
 GCP_URL_PATTERN = re.compile(r"(https://accounts\.google\.com/o/oauth2/auth[^\s]*)")

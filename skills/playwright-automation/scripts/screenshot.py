@@ -10,19 +10,28 @@ import os
 from datetime import datetime
 from urllib.parse import urlparse
 
-from loguru import logger
+import structlog
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
-SCREENCAP_DIR = "/workspace/.claude/.data/playwright/screencaps"
+# Use CLAUDE_PATH environment variable with fallback
+CLAUDE_PATH = os.environ.get("CLAUDE_PATH", "/workspace/.claude")
+SCREENCAP_DIR = os.path.join(CLAUDE_PATH, ".data/playwright/screencaps")
+LOG_DIR = os.path.join(CLAUDE_PATH, ".data/logs/playwright")
 
-# Configure loguru
-logger.add(
-    "/workspace/.claude/.data/logs/playwright/screenshot.log",
-    rotation="10 MB",
-    retention="7 days",
-    level="INFO",
+# Ensure log directory exists
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.dev.ConsoleRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(20),  # INFO+
 )
+logger = structlog.get_logger()
 
 
 def take_screenshot(
@@ -45,7 +54,7 @@ def take_screenshot(
         Path to saved screenshot
     """
     os.makedirs(SCREENCAP_DIR, exist_ok=True)
-    os.makedirs("/workspace/.claude/.data/logs/playwright", exist_ok=True)
+    os.makedirs(LOG_DIR, exist_ok=True)
 
     if output is None:
         domain = urlparse(url).netloc.replace(".", "-").replace(":", "-")

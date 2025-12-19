@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 from urllib.parse import urlparse
 
-from loguru import logger
+import structlog
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
@@ -22,16 +22,19 @@ CLAUDE_PATH = os.environ.get("CLAUDE_PATH", "/workspace/.claude")
 VIDEO_DIR = os.path.join(CLAUDE_PATH, ".data/playwright/videos")
 LOG_DIR = os.path.join(CLAUDE_PATH, ".data/logs/playwright")
 
-# Ensure log directory exists before configuring logger
+# Ensure log directory exists
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# Configure loguru
-logger.add(
-    os.path.join(LOG_DIR, "video_recorder.log"),
-    rotation="10 MB",
-    retention="7 days",
-    level="INFO",
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.dev.ConsoleRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(20),  # INFO+
 )
+logger = structlog.get_logger()
 
 
 def convert_to_mp4(webm_path: str) -> str:

@@ -11,7 +11,18 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from loguru import logger
+import structlog
+
+# Configure structlog for consistent logging
+structlog.configure(
+    processors=[
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.dev.ConsoleRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(20),  # INFO+
+)
+logger = structlog.get_logger()
 
 from .collectors import (
     collect_dependencies,

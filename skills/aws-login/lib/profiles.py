@@ -4,7 +4,9 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 from .config import get_sso_start_url, get_default_region, get_sso_region, get_sso_role_name
 

@@ -5,7 +5,7 @@ description = "Playwright browser automation skill for Claude Code"
 requires-python = ">=3.11"
 dependencies = [
     "playwright>=1.40.0",
-    "loguru>=0.7.0",
+    "structlog>=24.0.0",
 ]
 
 [dependency-groups]

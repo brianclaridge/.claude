@@ -9,19 +9,29 @@ import json
 import os
 from datetime import datetime
 
-from loguru import logger
+import structlog
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
-SCREENCAP_DIR = "/workspace/.claude/.data/playwright/screencaps"
-DATA_DIR = "/workspace/.claude/.data/playwright/data"
+# Use CLAUDE_PATH environment variable with fallback
+CLAUDE_PATH = os.environ.get("CLAUDE_PATH", "/workspace/.claude")
+SCREENCAP_DIR = os.path.join(CLAUDE_PATH, ".data/playwright/screencaps")
+DATA_DIR = os.path.join(CLAUDE_PATH, ".data/playwright/data")
+LOG_DIR = os.path.join(CLAUDE_PATH, ".data/logs/playwright")
 
-logger.add(
-    "/workspace/.claude/.data/logs/playwright/twitch_navigation.log",
-    rotation="10 MB",
-    retention="7 days",
-    level="INFO",
+# Ensure log directory exists
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.dev.ConsoleRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(20),  # INFO+
 )
+logger = structlog.get_logger()
 
 
 def main() -> None:

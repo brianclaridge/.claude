@@ -11,7 +11,9 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 # Add aws_utils to path using CLAUDE_PATH env var for reliable resolution
 _claude_path = os.environ.get("CLAUDE_PATH", str(Path(__file__).parent.parent.parent.parent))

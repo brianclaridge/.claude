@@ -18,7 +18,9 @@ import argparse
 import os
 import sys
 
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 from .auth import (
     check_gcloud_installed,
@@ -31,14 +33,15 @@ from .auth import (
 
 
 def setup_logging(verbose: bool = False) -> None:
-    """Configure loguru logging."""
-    logger.remove()
-    level = "DEBUG" if verbose else "INFO"
-    logger.add(
-        sys.stderr,
-        format="<level>{message}</level>",
-        level=level,
-        colorize=True,
+    """Configure structlog logging."""
+    log_level = 10 if verbose else 20  # DEBUG=10, INFO=20
+    structlog.configure(
+        processors=[
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.dev.ConsoleRenderer(),
+        ],
+        wrapper_class=structlog.make_filtering_bound_logger(log_level),
     )
 
 
