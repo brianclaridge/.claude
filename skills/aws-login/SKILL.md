@@ -43,17 +43,20 @@ AWS_DEFAULT_REGION="us-east-1"  # Optional, defaults to us-east-1
 # Force re-login
 ./scripts/aws-auth.ps1 sandbox -Force
 
-# First-time setup (full discovery)
-./scripts/aws-auth.ps1 -Setup
+# Force SSO device auth flow (full discovery)
+./scripts/aws-auth.ps1 -Login
 
-# Setup with auth only (no resource discovery)
-./scripts/aws-auth.ps1 -Setup -SkipVpc
+# Login with auth only (no resource discovery)
+./scripts/aws-auth.ps1 -Login -SkipVpc
 
-# Setup with VPCs only (skip S3/SQS/SNS/SES)
-./scripts/aws-auth.ps1 -Setup -SkipResources
+# Login with VPCs only (skip S3/SQS/SNS/SES)
+./scripts/aws-auth.ps1 -Login -SkipResources
 
-# Rebuild config (re-auth only if needed)
-./scripts/aws-auth.ps1 -Rebuild
+# Inspect: clear cache, re-auth, rebuild config
+./scripts/aws-auth.ps1 -Inspect
+
+# Inspect with auth only (no resource discovery)
+./scripts/aws-auth.ps1 -Inspect -SkipVpc
 ```
 
 ### Claude Agent
@@ -63,7 +66,8 @@ AWS_DEFAULT_REGION="us-east-1"  # Optional, defaults to us-east-1
 uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python -m lib [account] [--force]
 
 # With flags
-uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python -m lib --setup --skip-resources
+uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python -m lib --login --skip-resources
+uv run --directory ${CLAUDE_SKILLS_PATH}/aws-login python -m lib --inspect
 ```
 
 ## First-Run Setup (v1.1 Auto-Discovery)
@@ -255,8 +259,18 @@ lib/aws_utils/            # Shared library
 
 If you have existing configuration from v1.0:
 
-1. Run `--rebuild` to regenerate config with the new schema
+1. Run `-Inspect` to clear cache and regenerate config with the new schema
 2. The management account will be auto-detected and flagged with `is_manager: true`
 3. The old "root" profile will be replaced with the account's alias
 
 You can remove `AWS_ROOT_ACCOUNT_ID` and `AWS_ROOT_ACCOUNT_NAME` from your `.env` file.
+
+## Parameter Reference
+
+| Parameter | Python Flag | Description |
+|-----------|-------------|-------------|
+| `-Login` | `--login` | Force SSO device auth flow (full discovery) |
+| `-Inspect` | `--inspect` | Clear cache, re-auth, rebuild config |
+| `-Force` | `--force` | Force re-login even if credentials valid |
+| `-SkipVpc` | `--skip-vpc` | Skip all resource discovery (auth only) |
+| `-SkipResources` | `--skip-resources` | Skip S3/SQS/SNS/SES (VPCs still discovered) |

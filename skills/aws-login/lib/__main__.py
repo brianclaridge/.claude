@@ -17,6 +17,7 @@ import sys
 from loguru import logger
 
 from .config import (
+    clear_aws_data,
     config_exists,
     get_account,
     get_manager_account,
@@ -371,121 +372,36 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
         return False
 
 
-def rebuild_config(skip_vpc: bool = False, skip_resources: bool = False) -> bool:
-    """Rebuild config without forcing re-auth.
+def inspect_config(skip_vpc: bool = False, skip_resources: bool = False) -> bool:
+    """Inspect and rebuild config with fresh data.
 
-    Uses the manager account (is_manager=True) for organization discovery.
+    Workflow:
+    1. Delete .data/aws folder (clear all cached data)
+    2. Run first_run_setup() which handles auth automatically
 
     Args:
         skip_vpc: If True, skip all resource discovery
         skip_resources: If True, skip S3/SQS/SNS/SES
 
     Returns:
-        True if rebuild succeeded
+        True if inspect succeeded
     """
-    logger.info("=== AWS Config Rebuild ===")
+    logger.info("=== AWS Config Inspect ===")
     logger.info("")
 
-    # Find manager account to use for org discovery
-    manager = get_manager_account()
-    if not manager:
-        # Fallback: try first account
-        accounts = list_accounts()
-        if not accounts:
-            logger.error("No accounts configured. Run --setup first.")
-            return False
-        manager = accounts[0]
-        logger.warning(f"No manager account flagged, using: {manager['alias']}")
-
-    manager_alias = manager["alias"]
-    manager_id = manager.get("id", "")
-    manager_name = manager.get("name", manager_alias)
-
-    # Ensure profile exists
-    ensure_profile(
-        profile_name=manager_alias,
-        account_id=manager_id,
-        account_name=manager_name,
-        sso_role=manager.get("sso_role"),
-    )
-
-    # Check if credentials still valid
-    if check_credentials_valid(manager_alias):
-        logger.info(f"Credentials valid for {manager_alias}, skipping SSO login")
+    # Step 1: Clear cached data
+    if clear_aws_data():
+        logger.info("Cleared cached AWS data")
     else:
-        logger.info(f"Credentials expired for {manager_alias}, running SSO login...")
-        result = run_sso_login(manager_alias)
-        if not result.success:
-            logger.error("SSO login failed")
-            return False
-        logger.success(f"{manager_alias} authenticated")
+        logger.info("No cached AWS data to clear")
 
     logger.info("")
-    clear_aws_config()
 
-    # Recreate manager profile
-    ensure_profile(
-        profile_name=manager_alias,
-        account_id=manager_id,
-        account_name=manager_name,
-        sso_role=manager.get("sso_role"),
-    )
-    set_default_profile(manager_alias)
-
-    # Discover and save
-    try:
-        org_id, tree = discover_organization(profile_name=manager_alias)
-        management_account_id = tree.get("management_account_id", "")
-
-        if skip_vpc:
-            from aws_utils.services.organizations import collect_all_accounts
-
-            accounts = list(collect_all_accounts(tree))
-            accounts_config = {}
-
-            for alias, account in accounts:
-                ensure_profile(
-                    profile_name=alias,
-                    account_id=account["id"],
-                    account_name=account.get("name"),
-                )
-
-                is_manager = account["id"] == management_account_id
-
-                accounts_config[alias] = {
-                    "id": account["id"],
-                    "name": account.get("name", ""),
-                    "ou_path": account.get("ou_path", "root"),
-                    "sso_role": account.get("sso_role", "AdministratorAccess"),
-                    "inventory_path": None,
-                }
-
-                if is_manager:
-                    accounts_config[alias]["is_manager"] = True
-
-            save_config(accounts_config, org_id, management_account_id)
-            logger.success(f"Rebuilt {len(accounts_config)} accounts (auth only)")
-        else:
-            accounts_config = enrich_and_save_inventory(
-                org_id=org_id,
-                tree=tree,
-                profile_creator=ensure_profile,
-                skip_resources=skip_resources,
-            )
-
-            # Add is_manager flag
-            for alias, data in accounts_config.items():
-                if data.get("id") == management_account_id:
-                    data["is_manager"] = True
-
-            save_config(accounts_config, org_id, management_account_id)
-            logger.success(f"Rebuilt {len(accounts_config)} accounts with inventory")
-
-        return True
-
-    except Exception as e:
-        logger.error(f"Rebuild failed: {e}")
-        return False
+    # Step 2: Run first_run_setup which handles:
+    # - SSO device auth flow
+    # - Organization discovery
+    # - Account/inventory creation
+    return first_run_setup(skip_vpc, skip_resources)
 
 
 def build_searchable_choice(acc: dict) -> dict:
@@ -601,26 +517,26 @@ def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
         description="AWS SSO authentication (v1.1 auto-discovery)",
-        epilog="Examples:\n  aws-auth sandbox\n  aws-auth --rebuild\n  aws-auth",
+        epilog="Examples:\n  aws-auth sandbox\n  aws-auth --inspect\n  aws-auth",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("account", nargs="?", help="Account alias")
     parser.add_argument("--force", "-f", action="store_true", help="Force re-login")
     parser.add_argument("--verbose", "-v", action="store_true", help="Debug logging")
-    parser.add_argument("--setup", action="store_true", help="Run first-time setup")
+    parser.add_argument("--login", action="store_true", help="Force SSO device auth flow")
     parser.add_argument("--skip-vpc", action="store_true", help="Skip all resource discovery")
     parser.add_argument("--skip-resources", action="store_true", help="Skip S3/SQS/SNS/SES (VPCs still discovered)")
-    parser.add_argument("--rebuild", action="store_true", help="Rebuild config (re-auth if needed)")
+    parser.add_argument("--inspect", action="store_true", help="Clear cache, re-auth, rebuild config")
 
     args = parser.parse_args()
     setup_logging(args.verbose)
 
-    # Rebuild mode
-    if args.rebuild:
-        return 0 if rebuild_config(args.skip_vpc, args.skip_resources) else 1
+    # Inspect mode: clear data + run first_run_setup
+    if args.inspect:
+        return 0 if inspect_config(args.skip_vpc, args.skip_resources) else 1
 
-    # First-run or setup
-    if args.setup or not config_exists():
+    # Login mode or first-run (no config exists)
+    if args.login or not config_exists():
         if not config_exists():
             logger.info("No configuration found. Starting first-run setup...")
         return 0 if first_run_setup(args.skip_vpc, args.skip_resources) else 1

@@ -226,3 +226,21 @@ def get_manager_account() -> dict[str, Any] | None:
                 return {**data, "alias": alias}
 
     return None
+
+
+def clear_aws_data() -> bool:
+    """Delete the .data/aws directory.
+
+    Used by -Inspect to clear all cached data before rebuilding.
+
+    Returns:
+        True if deleted, False if didn't exist
+    """
+    import shutil
+
+    data_path = get_aws_data_path()
+    if data_path.exists():
+        shutil.rmtree(data_path)
+        logger.info(f"Deleted: {data_path}")
+        return True
+    return False

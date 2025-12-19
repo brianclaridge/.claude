@@ -7,8 +7,8 @@
     Authenticates to AWS using SSO. Wraps the aws-login skill's Python library.
 
     On first run (no .aws.yml config), performs setup:
-    - Uses AWS_SSO_START_URL, AWS_ROOT_ACCOUNT_ID, AWS_ROOT_ACCOUNT_NAME from .env
-    - Authenticates to root account
+    - Uses AWS_SSO_START_URL from .env
+    - Authenticates via SSO device flow
     - Discovers accounts from AWS Organizations
     - Saves discovered accounts to .aws.yml
 
@@ -19,11 +19,12 @@
 .PARAMETER Force
     Force re-login even if credentials are still valid.
 
-.PARAMETER Setup
-    Force first-run setup (rediscover accounts).
+.PARAMETER Login
+    Force SSO device auth flow (rediscover accounts).
 
-.PARAMETER Rebuild
-    Rebuild .aws.yml and profiles (re-auth only if needed).
+.PARAMETER Inspect
+    Clear cached AWS data, re-authenticate, and rebuild configuration.
+    Deletes .data/aws folder, then runs full SSO device auth flow.
 
 .PARAMETER SkipVpc
     Skip ALL resource discovery (auth only, no inventory files).
@@ -44,16 +45,20 @@
     # Force re-login to sandbox
 
 .EXAMPLE
-    ./aws-auth.ps1 -Rebuild
-    # Rebuild config (skip SSO if credentials valid)
+    ./aws-auth.ps1 -Login
+    # Force SSO device auth flow
 
 .EXAMPLE
-    ./aws-auth.ps1 -Rebuild -SkipVpc
-    # Fast rebuild (auth only, no inventory)
+    ./aws-auth.ps1 -Inspect
+    # Clear cache, re-auth, rebuild config
 
 .EXAMPLE
-    ./aws-auth.ps1 -Rebuild -SkipResources
-    # Rebuild with VPCs only (skip S3/SQS/SNS/SES)
+    ./aws-auth.ps1 -Inspect -SkipVpc
+    # Fast inspect (auth only, no inventory)
+
+.EXAMPLE
+    ./aws-auth.ps1 -Inspect -SkipResources
+    # Inspect with VPCs only (skip S3/SQS/SNS/SES)
 #>
 
 param(
@@ -62,9 +67,9 @@ param(
 
     [switch]$Force,
 
-    [switch]$Setup,
+    [switch]$Login,
 
-    [switch]$Rebuild,
+    [switch]$Inspect,
 
     [switch]$SkipVpc,
 
@@ -91,12 +96,12 @@ if ($Force) {
     $args += "--force"
 }
 
-if ($Setup) {
-    $args += "--setup"
+if ($Login) {
+    $args += "--login"
 }
 
-if ($Rebuild) {
-    $args += "--rebuild"
+if ($Inspect) {
+    $args += "--inspect"
 }
 
 if ($SkipVpc) {
