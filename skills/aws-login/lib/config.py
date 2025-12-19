@@ -106,22 +106,12 @@ def get_sso_region() -> str:
     """Get AWS SSO/Identity Center region.
 
     AWS Identity Center must be queried in the region where it's configured.
-    Checks AWS_SSO_REGION env var first, then config.yml, then defaults.
+    Set AWS_SSO_REGION in .env to configure.
 
     Returns:
         SSO region (defaults to us-east-1 if not configured)
     """
-    # Check environment variable first
-    if region := os.environ.get("AWS_SSO_REGION"):
-        return region
-
-    # Check config.yml
-    config = get_global_config()
-    if region := config.get("cloud_providers", {}).get("aws", {}).get("sso_region"):
-        return region
-
-    # Default to us-east-1
-    return "us-east-1"
+    return os.environ.get("AWS_SSO_REGION", "us-east-1")
 
 
 def get_sso_role_name() -> str:

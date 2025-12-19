@@ -9,7 +9,7 @@ cloud_providers:
     display_name: "AWS"
     description: "Amazon Web Services SSO"
     data_path: .data/aws  # Relative to CLAUDE_PATH
-    sso_region: us-west-2  # Region where AWS Identity Center is configured
+    # SSO region is now configured via AWS_SSO_REGION in .env
 
   gcp:
     enabled: true
