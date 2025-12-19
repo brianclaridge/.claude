@@ -1,0 +1,24 @@
+# Claude API Pricing Configuration
+# Last updated: 2025-01
+# Source: https://www.anthropic.com/pricing
+
+claude_api:
+  # Rates per million tokens (USD)
+  models:
+    opus:
+      input_rate: 15.0
+      output_rate: 75.0
+    sonnet:
+      input_rate: 3.0
+      output_rate: 15.0
+    haiku:
+      input_rate: 0.80
+      output_rate: 4.0
+
+  # Cache multipliers (applied to input rate)
+  cache:
+    read_discount: 0.10    # Pay 10% of input rate (90% discount)
+    write_premium: 1.25    # Pay 125% of input rate (25% premium)
+
+  # Default model for unknown model strings
+  default_model: sonnet

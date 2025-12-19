@@ -10,6 +10,8 @@ from typing import Optional
 
 import structlog
 
+from .pricing import get_cache_multipliers, get_model_rates
+
 logger = structlog.get_logger()
 
 
@@ -189,35 +191,16 @@ def parse_transcript(transcript_path: Path) -> SessionStats:
 def estimate_cost(stats: SessionStats) -> float:
     """Estimate session cost based on token usage and model.
 
-    Pricing (as of 2025-01):
-    - Opus 4.5: $15/M input, $75/M output
-    - Sonnet 4: $3/M input, $15/M output
-    - Haiku 3.5: $0.80/M input, $4/M output
-    - Cache read: 90% discount
-    - Cache write: 25% premium
+    Pricing loaded from config/pricing.yml with fallback to defaults.
     """
-    model = stats.model.lower()
-
-    # Determine pricing tier
-    if "opus" in model:
-        input_rate = 15.0 / 1_000_000
-        output_rate = 75.0 / 1_000_000
-    elif "sonnet" in model:
-        input_rate = 3.0 / 1_000_000
-        output_rate = 15.0 / 1_000_000
-    elif "haiku" in model:
-        input_rate = 0.80 / 1_000_000
-        output_rate = 4.0 / 1_000_000
-    else:
-        # Default to Sonnet pricing
-        input_rate = 3.0 / 1_000_000
-        output_rate = 15.0 / 1_000_000
+    input_rate, output_rate = get_model_rates(stats.model)
+    cache_read_mult, cache_write_mult = get_cache_multipliers()
 
     # Calculate costs
     input_cost = stats.input_tokens * input_rate
     output_cost = stats.output_tokens * output_rate
-    cache_read_cost = stats.cache_read_tokens * input_rate * 0.1  # 90% discount
-    cache_write_cost = stats.cache_creation_tokens * input_rate * 1.25  # 25% premium
+    cache_read_cost = stats.cache_read_tokens * input_rate * cache_read_mult
+    cache_write_cost = stats.cache_creation_tokens * input_rate * cache_write_mult
 
     return round(input_cost + output_cost + cache_read_cost + cache_write_cost, 4)
 
