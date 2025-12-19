@@ -3,7 +3,7 @@ name: stack-manager
 description: Recommend and bootstrap app stacks. Use when user says "/stack-manager", "suggest a stack", "bootstrap project", "what stack should I use", "scaffold app".
 tools: Bash, Read, Write, Glob, Grep, AskUserQuestion
 model: sonnet
-color: purple
+color: magenta
 ---
 
 # Stack Manager Agent

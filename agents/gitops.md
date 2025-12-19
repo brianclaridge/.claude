@@ -1,7 +1,7 @@
 ---
 name: gitops
 description: Manage git workflow with interactive commit, push, and branch operations. Use when user says "commit changes", "push to git", "/gitops", or after completing implementation tasks.
-allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion, EnterPlanMode
+tools: Bash, Read, Glob, Grep, AskUserQuestion, EnterPlanMode
 ---
 
 # Git Operations Agent

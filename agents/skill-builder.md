@@ -3,7 +3,7 @@ name: skill-builder
 description: Create new Claude Code skills with complementary agents and slash commands. Use when the user wants to build a skill, add model-triggered automation, or create file-type specific capabilities. Triggers on "I want to create a new skill that does...", "build a skill for...", or "create a skill".
 tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 model: opus
-color: cyan
+color: teal
 ---
 
 # Claude Skill Creator

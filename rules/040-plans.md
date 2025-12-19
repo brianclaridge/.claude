@@ -1,5 +1,17 @@
 # RULE: 040 plans
 
+## Quick Reference
+
+| Question | Answer |
+|----------|--------|
+| When to plan? | Any task with 3+ steps, features, debugging, refactoring |
+| Where to save? | `{CWD}/plans/` (or `.claude/plans/` if editing submodule) |
+| Filename format? | `YYYYMMDD_HHMMSS_plan-topic.md` |
+| After completion? | Invoke `git-manager` skill |
+| Skip planning? | Session-starter (Rule 010), single-step tasks |
+
+---
+
 **CRITICAL** For ANY non-trivial task, multi-step operation, or complex request, ALWAYS create and save a plan to `{CWD}/plans/` BEFORE starting work.
 
 **IMPORTANT:** `{CWD}` refers to Claude Code's current working directory (the directory where the session was started), NOT the directory of the project being edited.

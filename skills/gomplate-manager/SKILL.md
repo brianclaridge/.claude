@@ -1,7 +1,7 @@
 ---
 name: gomplate-manager
 description: Validate gomplate templates against best practices (Rule 095). Use when user says "/gomplate", "validate templates", "check gomplate", "template best practices".
-tools: Read, Glob, Grep, Bash
+tools: Read, Glob, Grep, Bash, AskUserQuestion
 ---
 
 # Gomplate Manager Skill

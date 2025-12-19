@@ -1,7 +1,7 @@
 ---
 name: taskfile-manager
 description: Validate Taskfile.yml against best practices (Rule 090). Use when user says "/taskfile", "validate taskfile", "check tasks", "taskfile best practices".
-tools: Read, Glob, Grep
+tools: Read, Glob, Grep, AskUserQuestion
 ---
 
 # Taskfile Manager Skill

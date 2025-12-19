@@ -1,3 +1,9 @@
+---
+name: session-context
+description: Gathers session context for project-analysis agent including git history, recent plans, and pending work detection.
+tools: Read, Glob, Grep, Bash
+---
+
 # Skill: session-context
 
 Gathers session context for project-analysis agent: git history, recent plans, and pending work detection.
