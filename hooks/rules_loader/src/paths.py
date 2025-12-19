@@ -9,22 +9,14 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "lib"))
 from config_helper import get_hook_config, get_claude_root, resolve_log_path
 
-
-DEFAULT_CONFIG = {
-    "log_base_path": ".data/logs/rules_loader",
-    "rules_path": "rules/",
-    "log_enabled": True,
-    "log_level": "INFO",
-    "reinforcement_enabled": False,
-    "rules": {},
-}
+from .schemas import RulesLoaderConfig
 
 
 def get_config() -> dict[str, Any]:
-    """Load hook configuration from global config.yml."""
-    config = DEFAULT_CONFIG.copy()
-    config.update(get_hook_config("rules_loader"))
-    return config
+    """Load and validate hook configuration from global config.yml."""
+    loaded = get_hook_config("rules_loader")
+    validated = RulesLoaderConfig(**loaded)
+    return validated.model_dump()
 
 
 def get_log_path(session_id: str, event_name: str) -> Path:

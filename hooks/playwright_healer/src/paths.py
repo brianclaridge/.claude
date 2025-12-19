@@ -9,28 +9,14 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "lib"))
 from config_helper import get_hook_config, resolve_log_path
 
-
-DEFAULT_CONFIG = {
-    "log_base_path": ".data/logs/playwright_healer",
-    "log_enabled": True,
-    "log_level": "INFO",
-    "max_recovery_attempts": 3,
-    "recovery_cooldown_seconds": 5,
-    "error_patterns": [
-        "Browser is already in use",
-        "browser context is closed",
-        "Target page, context or browser has been closed",
-    ],
-    "recoverable_tools": [],
-}
+from .schemas import PlaywrightHealerConfig
 
 
 def get_config() -> dict[str, Any]:
-    """Load hook configuration from global config.yml."""
-    config = DEFAULT_CONFIG.copy()
+    """Load and validate hook configuration from global config.yml."""
     loaded = get_hook_config("playwright_healer")
-    config.update(loaded)
-    return config
+    validated = PlaywrightHealerConfig(**loaded)
+    return validated.model_dump()
 
 
 def get_log_base() -> Path:

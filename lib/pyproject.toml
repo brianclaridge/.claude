@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.34.0",
     "pydantic>=2.0.0",
-    "loguru>=0.7.0",
+    "structlog>=24.0.0",
     "pyyaml>=6.0",
 ]
 
@@ -23,7 +23,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["aws_utils", "config_helper"]
+packages = ["aws_utils", "config_helper", "subprocess_helper"]
 
 [tool.ruff]
 line-length = 100
