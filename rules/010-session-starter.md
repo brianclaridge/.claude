@@ -42,7 +42,9 @@ Before invoking with a project group:
    - Project group: Invoke with "Analyze project group: [group]"
 
 3. **Output Handling**:
-   - Present ONLY the agent's factual project details to the user
+   - Present ONLY the agent's **factual** project details to the user
+   - **Factual** means: file counts, directory structure, git status, detected frameworks, dependencies - objective data that can be verified
+   - **Non-factual** (exclude): suggestions like "you should...", "consider...", "I recommend...", or any subjective assessment
    - DO NOT add recommendations, action items, or commentary beyond the agent's factual report
    - If the agent fails, immediately stop and notify the user
 

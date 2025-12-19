@@ -167,6 +167,100 @@ claude --debug
 # - Path issues: Use forward slashes (scripts/helper.py)
 ```
 
+## Python Script Development
+
+Skills with Python automation should follow these patterns.
+
+### Project Structure
+
+```text
+my-skill/
+├── SKILL.md           # Required - skill definition
+├── pyproject.toml     # Python dependencies
+├── uv.lock            # Locked dependencies
+└── scripts/           # Python implementation
+    ├── __init__.py
+    ├── __main__.py    # Entry point
+    ├── schemas.py     # Pydantic config validation
+    └── *.py           # Implementation modules
+```
+
+### pyproject.toml Template
+
+```toml
+[project]
+name = "my-skill"
+version = "0.1.0"
+description = "My skill description"
+requires-python = ">=3.12"
+dependencies = [
+    "structlog>=24.0.0",
+]
+
+[tool.uv.sources]
+claude-lib = { path = "../../lib", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["scripts"]
+```
+
+### Execution Pattern
+
+```bash
+# Basic execution
+uv run --directory ${CLAUDE_SKILLS_PATH}/my-skill python -m scripts
+
+# With JSON output
+uv run --directory ${CLAUDE_SKILLS_PATH}/my-skill python -m scripts --format json
+
+# With subcommands
+uv run --directory ${CLAUDE_SKILLS_PATH}/my-skill python -m scripts subcommand --arg value
+```
+
+### Exit Code Convention
+
+| Code | Meaning | When to Use |
+|------|---------|-------------|
+| `0` | Success | Operation completed successfully |
+| `1` | Error | General failure, check error message |
+| `2` | Needs Input | User action required (e.g., auth) |
+
+### Logging Standard
+
+Use structlog for consistent logging:
+
+```python
+import structlog
+
+structlog.configure(
+    processors=[
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.dev.ConsoleRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(20),
+)
+logger = structlog.get_logger()
+```
+
+### Config Validation
+
+Use pydantic for type-safe configuration:
+
+```python
+from pydantic import BaseModel, Field
+
+class MyConfig(BaseModel):
+    setting: str = Field(default="value", description="Description")
+
+    class Config:
+        extra = "ignore"  # Ignore unknown fields
+```
+
 ## Skills vs Agents
 
 | Aspect | Skills | Agents |

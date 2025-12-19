@@ -14,111 +14,106 @@
 
 ## Medium Priority Issues (15)
 
-### 21. Regex Compilation in Loops
+### 21. Regex Compilation in Loops ✅
 **File:** `/workspace/.claude/skills/git-manager/scripts/message.py:111-122`
-**Issue:** Regex patterns compiled inside loop instead of module level.
-**Fix:** Pre-compile patterns at module level for performance.
+**Status:** FIXED - Pre-compiled SCOPE_PATTERNS at module level.
 
-### 22. Inconsistent Rule Formatting
+### 22. Inconsistent Rule Formatting ✅
 **Pattern:** Rules 000-040 use plain text; 050, 090, 095 use code blocks.
-**Fix:** Establish standard rule format documentation.
+**Status:** DOCUMENTED - Accepted as intentional (plain for short rules, code blocks for complex).
 
-### 23. Vague "Factual" Definition
+### 23. Vague "Factual" Definition ✅
 **File:** `/workspace/.claude/rules/010-session-starter.md:45-46`
-**Fix:** Define what constitutes "factual" vs "opinion" output.
+**Status:** FIXED - Added explicit definition of factual vs non-factual content.
 
-### 24. Missing Config Module
+### 24. Missing Config Module ✅
 **File:** `/workspace/.claude/hooks/session_context_injector/src/__main__.py:8`
-**Issue:** Imports `.config` - verify module exists.
-**Fix:** Verified and working.
+**Status:** VERIFIED - Module exists and works correctly.
 
-### 25. Inconsistent Error Return Codes
+### 25. Inconsistent Error Return Codes ✅
 **Pattern:** Different skills return different codes for similar errors.
-**Fix:** Document standard exit code semantics.
+**Status:** DOCUMENTED - Exit code convention in skills/README.md.
 
 ### 26. Missing Docstrings
 **Pattern:** Some complex functions lack documentation.
-**Fix:** Add docstrings to public functions.
+**Status:** DEFERRED - Low impact, address incrementally.
 
-### 27. Unused Imports in discovery.py
+### 27. Missing Import in discovery.py ✅
 **File:** `/workspace/.claude/skills/aws-login/lib/discovery.py`
-**Fix:** Remove unused imports.
+**Status:** FIXED - Added missing `import os`.
 
 ### 28. Hardcoded Pricing Data
 **Pattern:** Version-specific AWS pricing data in code.
-**Fix:** Externalize to config or fetch dynamically.
+**Status:** DEFERRED - Requires external data source design.
 
-### 29. Missing Config Validation (gomplate-manager)
+### 29. Missing Config Validation (gomplate-manager) ✅
 **File:** `/workspace/.claude/skills/gomplate-manager/`
-**Fix:** Add pydantic schema for config validation.
+**Status:** FIXED - Added pydantic schema in scripts/schemas.py.
 
-### 30. Model Inefficiency
+### 30. Model Inefficiency ✅
 **File:** `/workspace/.claude/agents/hello-world.md`
-**Issue:** Uses opus model for simple hello world.
-**Fix:** Change to haiku for efficiency.
+**Status:** FIXED - Changed from opus to haiku.
 
 ### 31. Potential Unused AWS Util Imports
 **File:** `/workspace/.claude/lib/aws_utils/`
-**Fix:** Audit and remove unused service imports.
+**Status:** DEFERRED - Requires comprehensive import analysis.
 
 ### 32. Double-Failure Error Logging
 **Pattern:** Some error handlers log then re-raise, causing duplicate logs.
-**Fix:** Consolidate error logging patterns.
+**Status:** DEFERRED - Needs case-by-case review.
 
 ### 33. Missing Type Hints
 **Pattern:** Some utility functions lack type annotations.
-**Fix:** Add type hints for public APIs.
+**Status:** DEFERRED - Low priority, address incrementally.
 
 ### 34. Inconsistent Naming Conventions
 **Pattern:** Mixed snake_case/camelCase in some modules.
-**Fix:** Standardize to snake_case per Python conventions.
+**Status:** DEFERRED - Would require extensive refactoring.
 
 ### 35. Additional Medium Issues
 - Missing __all__ exports in __init__.py files
 - Inconsistent log message formatting
+**Status:** DEFERRED - Minor cosmetic issues.
 
 ---
 
 ## Low Priority Issues (12)
 
-### 36. Add Pre-commit Hooks
-**Fix:** Create `.pre-commit-config.yaml` with ruff, mypy checks.
+### 36. Add Pre-commit Hooks ✅
+**Status:** DONE - Created `.pre-commit-config.yaml` with ruff, markdownlint, shellcheck.
 
-### 37. Create Shared Utilities Library
-**Status:** ✅ Partially done (lib/subprocess_helper created).
-**Remaining:** Document usage patterns.
+### 37. Create Shared Utilities Library ✅
+**Status:** DONE - lib/subprocess_helper created and documented.
 
-### 38. Document Agent Color Scheme
-**Fix:** Add color assignment guidelines to agent template.
+### 38. Document Agent Color Scheme ✅
+**Status:** DONE - Added to agents/_template.md with color table.
 
 ### 39. Add Tests for Hook Scripts
-**Fix:** Create pytest fixtures for hook testing.
+**Status:** DEFERRED - Requires test infrastructure setup.
 
-### 40. Create Config Schema Files
-**Status:** ✅ Done for 3 hooks.
-**Remaining:** Document schema patterns.
+### 40. Create Config Schema Files ✅
+**Status:** DONE - Pydantic schemas for 4 hooks (3 prior + gomplate-manager).
 
-### 41. Standardize Exit Code Semantics
-**Fix:** Document: 0=success, 1=error, 2=needs-input convention.
+### 41. Standardize Exit Code Semantics ✅
+**Status:** DONE - Documented in skills/README.md.
 
 ### 42. Update Pricing Data Mechanism
-**Fix:** Create pricing fetcher utility or externalize to config.
+**Status:** DEFERRED - Requires external data source design.
 
 ### 43. Add Type Stubs for External Deps
-**Fix:** Create py.typed markers and stubs as needed.
+**Status:** DEFERRED - Low priority.
 
 ### 44. Improve Error Messages
-**Pattern:** Some errors lack context or actionable guidance.
-**Fix:** Review and enhance error messages.
+**Status:** DEFERRED - Address case-by-case.
 
 ### 45. Add Validation for Rule File Format
-**Fix:** Create rule file linter/validator.
+**Status:** DEFERRED - Would require new tooling.
 
-### 46. Create Agent Template
-**Fix:** Add `.claude/agents/_template.md` with required fields.
+### 46. Create Agent Template ✅
+**Status:** DONE - Created `agents/_template.md` with all fields documented.
 
-### 47. Document Skill Development Guide
-**Fix:** Create `skills/README.md` with development guidelines.
+### 47. Document Skill Development Guide ✅
+**Status:** DONE - Enhanced `skills/README.md` with Python patterns.
 
 ---
 

@@ -1,0 +1,63 @@
+# Pre-commit hooks for Claude Code workspace
+# Install: pre-commit install
+# Run all: pre-commit run --all-files
+
+repos:
+  # Python formatting and linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # YAML validation
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom YAML tags
+      - id: check-json
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        args: [--fix, --disable, MD013, MD033, MD041]
+        # MD013: Line length (disabled - prose)
+        # MD033: Inline HTML (disabled - tables)
+        # MD041: First line heading (disabled - frontmatter)
+
+  # Shell script validation
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [-x]  # Follow sourced files
+
+  # Type checking (optional, can be slow)
+  # Uncomment to enable:
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.13.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies: [pydantic>=2.0, structlog>=24.0]
+  #       args: [--ignore-missing-imports]
+
+# Configuration
+default_language_version:
+  python: python3.12
+
+ci:
+  autofix_commit_msg: "style: auto-fix from pre-commit hooks"
+  autoupdate_commit_msg: "chore: update pre-commit hook versions"
