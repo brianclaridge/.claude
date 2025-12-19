@@ -22,8 +22,7 @@
 
 ## Quick Links
 
-- [Main README](../README.md) - Quick start and overview
-- [CLAUDE.md](../CLAUDE.md) - Claude Code workflow guide
+- [Main README](../README.md) - Quick start, workflow, overview
 - [config.yml](../config.yml) - Global configuration
 - [Taskfile.yml](../Taskfile.yml) - Available tasks
 

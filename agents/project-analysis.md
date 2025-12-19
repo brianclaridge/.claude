@@ -65,7 +65,6 @@ Focus exclusively on documenting what exists, not what should be done.
 
 2. **Documentation Review**
    - Read and analyze README.md if present
-   - Read and analyze CLAUDE.md if present
    - Review any docs/ directory
    - Extract functional requirements and features
 

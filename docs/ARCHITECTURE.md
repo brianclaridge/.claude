@@ -15,12 +15,10 @@ The `.claude` environment is a Docker-ized development environment for Claude Co
 ```text
 /workspace
 ├── README.md               # Parent project README
-├── CLAUDE.md               # Claude Code workflow guide
 ├── Taskfile.yml            # Task definitions
 ├── plans/                  # Implementation plans (created by Rule 040)
 └── .claude/                # Development environment (submodule)
-    ├── README.md           # Environment overview
-    ├── CLAUDE.md           # Submodule workflow guide
+    ├── README.md           # Environment overview + workflow guide
     ├── config.yml          # Global configuration
     ├── settings.json       # Claude Code settings
     ├── .env                # Environment variables (gitignored)

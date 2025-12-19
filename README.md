@@ -18,24 +18,21 @@ git submodule add -b main https://github.com/brianclaridge/.claude.git
 git submodule update --init --recursive --remote
 ```
 
-## Documentation
+## Workflow
 
-| Guide | Description |
-|-------|-------------|
-| [Setup](docs/SETUP.md) | Prerequisites, installation, configuration |
-| [Architecture](docs/ARCHITECTURE.md) | System design, directory structure |
-| [Claude Guide](CLAUDE.md) | Workflow and rules reference |
-| [Development](docs/DEVELOPMENT.md) | Extending with agents, skills, hooks |
-| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and solutions |
+```
+1. Session Start → project-analysis agent runs
+2. User Request  → Create plan in plans/, ask approval
+3. Implementation → Track with TodoWrite, use Context7
+4. Completion    → git-manager commits, enter plan mode
+```
 
-## Reference
-
-| Section | Description |
-|---------|-------------|
-| [Agents](docs/agents/README.md) | Specialized sub-agents (11) |
-| [Skills](docs/skills/README.md) | Model-invoked capabilities (11) |
-| [Rules](docs/rules/README.md) | Behavioral directives (000-095) |
-| [Stacks](docs/stacks/README.md) | Application templates (6) |
+**Key Patterns:**
+- Plans in `plans/` before implementation
+- Use AskUserQuestion tool for clarification
+- Use Context7 MCP for library docs
+- Python: `uv run` syntax
+- Consider agents for every request
 
 ## Slash Commands
 
@@ -49,6 +46,24 @@ git submodule update --init --recursive --remote
 | `/stack-manager` | Bootstrap stacks |
 | `/taskfile` | Validate Taskfile |
 | `/health` | Environment check |
+
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [Setup](docs/SETUP.md) | Prerequisites, installation, configuration |
+| [Architecture](docs/ARCHITECTURE.md) | System design, directory structure |
+| [Development](docs/DEVELOPMENT.md) | Extending with agents, skills, hooks |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and solutions |
+
+## Reference
+
+| Section | Description |
+|---------|-------------|
+| [Agents](docs/agents/README.md) | Specialized sub-agents (11) |
+| [Skills](docs/skills/README.md) | Model-invoked capabilities (11) |
+| [Rules](docs/rules/README.md) | Behavioral directives (000-095) |
+| [Stacks](docs/stacks/README.md) | Application templates (6) |
 
 ## Structure
 
@@ -64,7 +79,6 @@ git submodule update --init --recursive --remote
 ├── skills/          # Skill implementations
 ├── stacks/          # Stack templates
 ├── config.yml       # Global config
-├── CLAUDE.md        # Workflow guide
 └── Taskfile.yml     # Task runner
 ```
 
