@@ -5,6 +5,7 @@ Implements parallel service discovery for improved performance:
 - Phase 2: Dependent services (ECS/EKS per-cluster) run after Phase 1
 """
 
+import os
 import sys
 import threading
 import time

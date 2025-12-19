@@ -15,19 +15,24 @@ from .stats import get_session_stats, format_stats_section
 
 logger = structlog.get_logger()
 
-# Scope inference patterns
-SCOPE_PATTERNS = {
-    "auth": [r"auth", r"login", r"session", r"oauth"],
-    "api": [r"api/", r"endpoint", r"route"],
-    "ui": [r"component", r"page", r"view", r"\.tsx?$", r"\.vue$"],
-    "db": [r"model", r"migration", r"schema", r"database"],
-    "config": [r"config", r"settings", r"\.env", r"\.yaml$", r"\.toml$"],
-    "skill": [r"skills/", r"skill\.md", r"SKILL\.md"],
-    "agent": [r"agents/", r"agent\.md"],
-    "hook": [r"hooks/"],
-    "test": [r"test", r"spec", r"_test\."],
-    "docs": [r"docs/", r"README", r"\.md$"],
+# Pre-compiled scope inference patterns (compiled once at module load)
+SCOPE_PATTERNS: dict[str, list[re.Pattern]] = {
+    "auth": [re.compile(p, re.IGNORECASE) for p in [r"auth", r"login", r"session", r"oauth"]],
+    "api": [re.compile(p, re.IGNORECASE) for p in [r"api/", r"endpoint", r"route"]],
+    "ui": [re.compile(p, re.IGNORECASE) for p in [r"component", r"page", r"view", r"\.tsx?$", r"\.vue$"]],
+    "db": [re.compile(p, re.IGNORECASE) for p in [r"model", r"migration", r"schema", r"database"]],
+    "config": [re.compile(p, re.IGNORECASE) for p in [r"config", r"settings", r"\.env", r"\.yaml$", r"\.toml$"]],
+    "skill": [re.compile(p, re.IGNORECASE) for p in [r"skills/", r"skill\.md", r"SKILL\.md"]],
+    "agent": [re.compile(p, re.IGNORECASE) for p in [r"agents/", r"agent\.md"]],
+    "hook": [re.compile(p, re.IGNORECASE) for p in [r"hooks/"]],
+    "test": [re.compile(p, re.IGNORECASE) for p in [r"test", r"spec", r"_test\."]],
+    "docs": [re.compile(p, re.IGNORECASE) for p in [r"docs/", r"README", r"\.md$"]],
 }
+
+# Pre-compiled patterns for type inference
+_TEST_PATTERN = re.compile(r"test|spec", re.IGNORECASE)
+_DOCS_PATTERN = re.compile(r"\.md$|docs/", re.IGNORECASE)
+_SUBJECT_PREFIX_PATTERN = re.compile(r"^(implement|add|create|fix|update|refactor)\s+", re.IGNORECASE)
 
 
 @dataclass
@@ -115,7 +120,7 @@ def infer_scope(files: list[str]) -> Optional[str]:
     for file in files:
         for scope, patterns in SCOPE_PATTERNS.items():
             for pattern in patterns:
-                if re.search(pattern, file, re.IGNORECASE):
+                if pattern.search(file):
                     scope_scores[scope] = scope_scores.get(scope, 0) + 1
 
     if scope_scores:
@@ -139,9 +144,9 @@ def infer_type(plan_info: Optional[PlanInfo], files: list[str]) -> str:
             return "test"
 
     # Infer from files
-    if files and all(re.search(r"test|spec", f, re.IGNORECASE) for f in files):
+    if files and all(_TEST_PATTERN.search(f) for f in files):
         return "test"
-    if files and all(re.search(r"\.md$|docs/", f, re.IGNORECASE) for f in files):
+    if files and all(_DOCS_PATTERN.search(f) for f in files):
         return "docs"
 
     return "chore"
@@ -182,7 +187,7 @@ def generate_message(
     if plan_info and plan_info.objective:
         # Clean objective for subject line
         subject = plan_info.objective.lower()
-        subject = re.sub(r"^(implement|add|create|fix|update|refactor)\s+", "", subject)
+        subject = _SUBJECT_PREFIX_PATTERN.sub("", subject)
         result.subject = subject[:50]
     else:
         result.subject = f"update {count} files"
