@@ -1,10 +1,14 @@
-"""Distribute plan files to the canonical plans directory."""
+"""Distribute plan files to the canonical plans directory.
 
+All plans are copied to ${CLAUDE_PLANS_PATH} regardless of content.
+"""
+
+import os
 import shutil
 from pathlib import Path
 from typing import NamedTuple
 
-from .parser import extract_file_paths, detect_project_roots, generate_plan_filename
+from .parser import generate_plan_filename
 
 
 class DistributionResult(NamedTuple):
@@ -16,15 +20,33 @@ class DistributionResult(NamedTuple):
     message: str
 
 
+def get_plans_directory() -> Path:
+    """Get the canonical plans directory from CLAUDE_PLANS_PATH env var.
+
+    Returns:
+        Path to the plans directory
+
+    Raises:
+        ValueError: If CLAUDE_PLANS_PATH is not set
+    """
+    plans_path = os.environ.get("CLAUDE_PLANS_PATH")
+    if not plans_path:
+        raise ValueError("CLAUDE_PLANS_PATH environment variable is not set")
+    return Path(plans_path)
+
+
 def distribute_plan(
     plan_path: str,
     workspace_root: str = "/workspace"
 ) -> DistributionResult:
-    """Distribute a plan file to appropriate project directories.
+    """Distribute a plan file to ${CLAUDE_PLANS_PATH}.
+
+    All plans are copied regardless of their content. The destination
+    directory is created if it doesn't exist.
 
     Args:
         plan_path: Path to the source plan file
-        workspace_root: Root workspace directory
+        workspace_root: Unused, kept for API compatibility
 
     Returns:
         DistributionResult with details of the distribution
@@ -39,65 +61,45 @@ def distribute_plan(
             message=f"Source plan file not found: {plan_path}"
         )
 
-    # Read plan content
+    # Get destination directory from environment
+    try:
+        dest_dir = get_plans_directory()
+    except ValueError as e:
+        return DistributionResult(
+            source_path=plan_path,
+            destinations=[],
+            success=False,
+            message=str(e)
+        )
+
+    # Read plan content for filename generation
     content = source.read_text()
-
-    # Extract file paths from plan
-    file_paths = extract_file_paths(content)
-
-    if not file_paths:
-        return DistributionResult(
-            source_path=plan_path,
-            destinations=[],
-            success=True,
-            message="No file paths found in plan; no distribution needed"
-        )
-
-    # Detect project roots from paths
-    project_plans = detect_project_roots(file_paths, workspace_root)
-
-    if not project_plans:
-        return DistributionResult(
-            source_path=plan_path,
-            destinations=[],
-            success=True,
-            message="No project directories identified; no distribution needed"
-        )
-
-    destinations: list[str] = []
-    errors: list[str] = []
 
     # Generate proper filename from plan content
     new_filename = generate_plan_filename(content)
 
-    for plan_dir, _paths in project_plans.items():
-        try:
-            # Create plans directory if it doesn't exist
-            dest_dir = Path(plan_dir)
-            dest_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        # Create plans directory if it doesn't exist
+        dest_dir.mkdir(parents=True, exist_ok=True)
 
-            # Copy plan file to destination with proper naming
-            dest_path = dest_dir / new_filename
-            shutil.copy2(source, dest_path)
-            destinations.append(str(dest_path))
+        # Copy plan file to destination with proper naming
+        dest_path = dest_dir / new_filename
+        shutil.copy2(source, dest_path)
 
-        except OSError as e:
-            errors.append(f"Failed to copy to {plan_dir}: {e}")
-
-    if errors:
         return DistributionResult(
             source_path=plan_path,
-            destinations=destinations,
-            success=False,
-            message=f"Partial distribution. Errors: {'; '.join(errors)}"
+            destinations=[str(dest_path)],
+            success=True,
+            message=f"Plan distributed to {dest_path}"
         )
 
-    return DistributionResult(
-        source_path=plan_path,
-        destinations=destinations,
-        success=True,
-        message=f"Plan distributed to {len(destinations)} project(s)"
-    )
+    except OSError as e:
+        return DistributionResult(
+            source_path=plan_path,
+            destinations=[],
+            success=False,
+            message=f"Failed to copy plan: {e}"
+        )
 
 
 def get_distribution_summary(result: DistributionResult) -> str:
