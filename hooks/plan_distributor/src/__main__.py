@@ -114,6 +114,8 @@ def process_stdin() -> list[dict[str, Any]]:
 
 def main() -> int:
     """Main entry point for the hook."""
+    import traceback
+
     try:
         for hook_data in process_stdin():
             response = process_hook_event(hook_data)
@@ -126,14 +128,20 @@ def main() -> int:
         return 0
 
     except Exception as e:
-        # Log error but don't fail the hook
+        # Log error with full traceback for debugging
+        error_details = traceback.format_exc()
         print(json.dumps({
             "continue": True,
             "suppressOutput": False,
             "hookSpecificOutput": {
                 "hookEventName": "PostToolUse",
-                "additionalContext": f"[PLAN DISTRIBUTOR] Error: {e}"
+                "additionalContext": f"[PLAN DISTRIBUTOR] Error: {e}\n{error_details}"
             }
+        }), file=sys.stderr)
+        # Also output success response so hook doesn't block
+        print(json.dumps({
+            "continue": True,
+            "suppressOutput": False
         }))
         return 0
 

@@ -1,6 +1,7 @@
-"""Parse plan markdown files to extract file paths."""
+"""Parse plan markdown files to extract file paths and metadata."""
 
 import re
+from datetime import datetime
 from pathlib import Path
 
 
@@ -86,54 +87,107 @@ def normalize_path(path: str, workspace_root: str = "/workspace") -> str:
     return f"{workspace_root}/{path}"
 
 
-def detect_project_roots(paths: list[str], workspace_root: str = "/workspace") -> dict[str, list[str]]:
-    """Group file paths by their project root.
+def extract_plan_topic(content: str) -> str:
+    """Extract the topic from plan content for filename generation.
 
-    Distribution rules:
-    - /workspace/.claude/** -> /workspace/.claude/plans/
-    - /workspace/projects/<name>/** -> /workspace/projects/<name>/plans/
-    - /workspace/** (root files) -> /workspace/plans/
+    Looks for:
+    1. # Plan: <topic> header
+    2. # <topic> (any H1 header)
+    3. First sentence as fallback
 
     Args:
-        paths: List of absolute file paths
-        workspace_root: Root workspace directory
+        content: Plan markdown content
 
     Returns:
-        Dict mapping project plan directories to their relevant file paths
+        Kebab-case topic string (e.g., "user-authentication")
     """
-    projects: dict[str, list[str]] = {}
+    # Pattern 1: # Plan: <topic>
+    plan_header = re.search(r'^#\s+Plan:\s*(.+)$', content, re.MULTILINE)
+    if plan_header:
+        topic = plan_header.group(1).strip()
+        return _to_kebab_case(topic)
 
-    claude_path = f"{workspace_root}/.claude"
-    projects_path = f"{workspace_root}/projects"
+    # Pattern 2: Any H1 header
+    h1_header = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+    if h1_header:
+        topic = h1_header.group(1).strip()
+        return _to_kebab_case(topic)
 
-    for path in paths:
-        normalized = normalize_path(path, workspace_root)
+    # Fallback: first 50 chars
+    first_line = content.split('\n')[0][:50] if content else "untitled"
+    return _to_kebab_case(first_line) or "untitled"
 
-        # Rule 1: .claude files always go to .claude/plans
-        if normalized.startswith(f"{claude_path}/"):
-            plan_dir = f"{claude_path}/plans"
-            if plan_dir not in projects:
-                projects[plan_dir] = []
-            projects[plan_dir].append(normalized)
-            continue
 
-        # Rule 2: /workspace/projects/<name>/** files
-        if normalized.startswith(f"{projects_path}/"):
-            # Extract project name: /workspace/projects/foo/bar.py -> foo
-            remainder = normalized[len(f"{projects_path}/"):]
-            if '/' in remainder:
-                project_name = remainder.split('/')[0]
-                plan_dir = f"{projects_path}/{project_name}/plans"
-                if plan_dir not in projects:
-                    projects[plan_dir] = []
-                projects[plan_dir].append(normalized)
-                continue
+def _to_kebab_case(text: str) -> str:
+    """Convert text to kebab-case for filenames.
 
-        # Rule 3: Root workspace files
-        if normalized.startswith(f"{workspace_root}/"):
-            plan_dir = f"{workspace_root}/plans"
-            if plan_dir not in projects:
-                projects[plan_dir] = []
-            projects[plan_dir].append(normalized)
+    Args:
+        text: Input text
 
-    return projects
+    Returns:
+        Kebab-case string (lowercase, hyphens, no special chars)
+    """
+    # Remove markdown formatting
+    text = re.sub(r'[`*_\[\]()]', '', text)
+    # Convert to lowercase
+    text = text.lower()
+    # Replace spaces and underscores with hyphens
+    text = re.sub(r'[\s_]+', '-', text)
+    # Remove non-alphanumeric except hyphens
+    text = re.sub(r'[^a-z0-9-]', '', text)
+    # Collapse multiple hyphens
+    text = re.sub(r'-+', '-', text)
+    # Trim leading/trailing hyphens
+    text = text.strip('-')
+    # Limit length
+    return text[:50] if text else "untitled"
+
+
+def generate_plan_filename(content: str) -> str:
+    """Generate a properly formatted plan filename.
+
+    Format: YYYYMMDD_HHMMSS_<topic>.md
+
+    Args:
+        content: Plan markdown content
+
+    Returns:
+        Formatted filename string
+    """
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    topic = extract_plan_topic(content)
+    return f"{timestamp}_{topic}.md"
+
+
+def get_plans_directory() -> str:
+    """Get the canonical plans directory from environment.
+
+    Returns:
+        Path to the plans directory (defaults to /workspace/.claude/plans)
+    """
+    import os
+    return os.environ.get("CLAUDE_PLANS_PATH", "/workspace/.claude/plans")
+
+
+def detect_project_roots(paths: list[str], workspace_root: str = "/workspace") -> dict[str, list[str]]:
+    """Return the single canonical plans directory.
+
+    All plans go to ${CLAUDE_PLANS_PATH} regardless of what files they affect.
+    This provides a single source of truth for all plans.
+
+    Args:
+        paths: List of file paths from the plan (used for reference only)
+        workspace_root: Root workspace directory (unused, kept for compatibility)
+
+    Returns:
+        Dict with single entry: plans_dir -> list of paths
+    """
+    if not paths:
+        return {}
+
+    plan_dir = get_plans_directory()
+
+    # Normalize all paths for reference
+    normalized_paths = [normalize_path(p, workspace_root) for p in paths]
+
+    return {plan_dir: normalized_paths}

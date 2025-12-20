@@ -1,10 +1,10 @@
-"""Distribute plan files to appropriate project directories."""
+"""Distribute plan files to the canonical plans directory."""
 
 import shutil
 from pathlib import Path
 from typing import NamedTuple
 
-from .parser import extract_file_paths, detect_project_roots
+from .parser import extract_file_paths, detect_project_roots, generate_plan_filename
 
 
 class DistributionResult(NamedTuple):
@@ -67,14 +67,17 @@ def distribute_plan(
     destinations: list[str] = []
     errors: list[str] = []
 
+    # Generate proper filename from plan content
+    new_filename = generate_plan_filename(content)
+
     for plan_dir, _paths in project_plans.items():
         try:
             # Create plans directory if it doesn't exist
             dest_dir = Path(plan_dir)
             dest_dir.mkdir(parents=True, exist_ok=True)
 
-            # Copy plan file to destination
-            dest_path = dest_dir / source.name
+            # Copy plan file to destination with proper naming
+            dest_path = dest_dir / new_filename
             shutil.copy2(source, dest_path)
             destinations.append(str(dest_path))
 

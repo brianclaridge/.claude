@@ -5,40 +5,69 @@
 | Question | Answer |
 |----------|--------|
 | When to plan? | Any task with 3+ steps, features, debugging, refactoring |
-| Where to save? | `{CWD}/plans/` (or `.claude/plans/` if editing submodule) |
+| Where to save? | `${CLAUDE_PLANS_PATH}` (always) |
 | Filename format? | `YYYYMMDD_HHMMSS_plan-topic.md` |
 | After completion? | Invoke `git-manager` skill |
 | Skip planning? | Session-starter (Rule 010), single-step tasks |
 
 ---
 
-**CRITICAL** For ANY non-trivial task, multi-step operation, or complex request, ALWAYS create and save a plan to `{CWD}/plans/` BEFORE starting work.
+**CRITICAL** For ANY non-trivial task, multi-step operation, or complex request, ALWAYS create and save a plan to `${CLAUDE_PLANS_PATH}` BEFORE starting work.
 
-**IMPORTANT:** `{CWD}` refers to Claude Code's current working directory (the directory where the session was started), NOT the directory of the project being edited.
+## Plan Location
 
-**SUBMODULE EXCEPTION:** When working on features, bugs, or improvements within the `.claude/` submodule itself:
+**ALL plans go to `${CLAUDE_PLANS_PATH}`** regardless of what code is being modified. This provides:
+- Single source of truth for all plans
+- Consistent commit workflow via the `.claude` submodule
+- Simplified plan discovery and management
 
-For example, if Claude Code was started in `/workspace` but you are editing files in `${CLAUDE_PATH}/**`, plans go in `${CLAUDE_PATH}/plans/`.
+The `plan_distributor` hook automatically copies plans from Claude Code's internal location to `${CLAUDE_PLANS_PATH}` with proper naming.
 
-1. Plans go to `.claude/plans/` (within the submodule), NOT `{CWD}/plans/`
-2. Plans MUST be committed and pushed to the `.claude` repo
-3. This ensures plan history is preserved with the submodule's version control
+## Plan Header Format
 
-Detection: If the primary files being modified are within `.claude/` (agents, skills, hooks, directives, etc.), use `.claude/plans/` as the target directory.
+Every plan MUST begin with an "Affects" header listing absolute paths:
 
-**CRITICAL**: This applies whether or not the user explicitly asks for a plan. The plan should be created BEFORE the work. Once the plan is written, ask the user permission to proceed. The plan should include the contents of your TODO list. Ensure the user knows you're doing this.
+```markdown
+# Plan: <Title>
 
-**PLAN MODE INTEGRATION:** When ExitPlanMode is invoked during plan mode:
+**Affects:** `<absolute-path-1>`, `<absolute-path-2>`
 
-1. IMMEDIATELY after ExitPlanMode approval, create the physical plan file in `{CWD}/plans/`
-2. Use the same plan content that was presented via ExitPlanMode
-3. Inform the user that the plan has been saved to the file
-4. Then proceed with implementation
-5. The plan file MUST be created even if ExitPlanMode was used
+---
+```
 
-**EXCEPTION:** Do not create a plan when executing DIRECTIVE 010 (session-starter agent initialization), as this is an analysis task that doesn't require planning.
+Example:
+```markdown
+# Plan: Add User Authentication
 
-Triggers for automatic planning include:
+**Affects:** `/workspace/src/auth/`, `/workspace/api/routes/`
+
+---
+```
+
+This header enables:
+- Quick identification of impacted code areas
+- Better plan organization and searchability
+- Automated tooling to correlate plans with code changes
+
+## Plan Mode Integration
+
+When ExitPlanMode is invoked:
+
+1. Claude Code saves the plan to its internal location with a random name
+2. The `plan_distributor` hook copies it to `${CLAUDE_PLANS_PATH}` with proper naming
+3. You should verify the plan was distributed correctly
+4. If distribution fails, manually create the plan file
+
+**Filename format**: `YYYYMMDD_HHMMSS_plan-topic.md`
+- Use `date '+%Y%m%d_%H%M%S'` to generate timestamp
+- topic is kebab-case (e.g., `user-authentication`, `api-refactor`)
+- Example: `20250829_151052_vm-restart-on-start.md`
+
+**CRITICAL**: This applies whether or not the user explicitly asks for a plan. The plan should be created BEFORE the work. Once the plan is written, ask the user permission to proceed.
+
+**EXCEPTION:** Do not create a plan when executing Rule 010 (session-starter agent initialization).
+
+## Triggers for Planning
 
 - Any task requiring 3+ steps
 - Feature implementations
@@ -47,18 +76,6 @@ Triggers for automatic planning include:
 - System configurations
 - Research and analysis tasks
 - Any task where a TODO list would be beneficial
-
-The filename format MUST be: YYYYMMDD_HHMMSS_plan-topic.md where:
-
-- Create the plan BEFORE executing the plan (or immediately after ExitPlanMode approval)
-- Ask the user for permission to proceed with the plan
-- `{CWD}/plans/` is the directory for all plans (see note above about CWD)
-- ALWAYS use the Linux `date` command to generate the timestamp: `date '+%Y%m%d_%H%M%S'`
-- YYYYMMDD is the date (e.g., 20250829)
-- HHMMSS is the time in 24-hour format (e.g., 151052)
-- plan-topic is a kebab-case description (e.g., vm-restart-on-start)
-- Example: 20250829_151052_vm-restart-on-start.md
-- DO NOT include square brackets [] in the actual filename
 
 ## Post-Implementation Workflow
 
@@ -76,10 +93,6 @@ Post-implementation prompts (plan update, git-manager invocation) are **MANDATOR
 - Session is being resumed from context loss
 - User says "just do it" or similar
 - Time pressure is implied
-
-These prompts are distinct from **clarifying questions** (which gather missing information). Workflow prompts enforce process integrity and user control over commits.
-
-**If in doubt:** A prompt required by a rule is mandatory. Only skip if the rule's own skip conditions are met.
 
 ### Skip Conditions
 
