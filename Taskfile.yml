@@ -23,6 +23,10 @@ includes:
     taskfile: "tasks/rules-tasks"
     internal: false
     flatten: true
+  tests:
+    taskfile: "tasks/test-tasks"
+    internal: false
+    flatten: true
 
 vars:
   # // HOST PATHS \\
@@ -407,50 +411,3 @@ tasks:
         platforms: [windows]
       - cmd: echo "deleted {{.TARGET_PATH}} folder..."
     silent: true
-
-  # // LIB TASKS \\
-
-  lib:test:
-    desc: Run lib/ tests
-    aliases:
-      - lib-test
-    dir: "{{.CLAUDE_DIR}}/lib"
-    cmds:
-      - uv run pytest tests/ -v
-    silent: false
-
-  lib:test-cov:
-    desc: Run lib/ tests with coverage
-    aliases:
-      - lib-test-cov
-    dir: "{{.CLAUDE_DIR}}/lib"
-    cmds:
-      - uv run pytest tests/ -v --cov=aws_utils --cov=config_helper --cov-report=term-missing
-    silent: false
-
-  lib:lint:
-    desc: Lint lib/ code
-    aliases:
-      - lib-lint
-    dir: "{{.CLAUDE_DIR}}/lib"
-    cmds:
-      - uv run ruff check .
-    silent: false
-
-  lib:lint-fix:
-    desc: Lint and fix lib/ code
-    aliases:
-      - lib-lint-fix
-    dir: "{{.CLAUDE_DIR}}/lib"
-    cmds:
-      - uv run ruff check --fix .
-    silent: false
-
-  lib:sync:
-    desc: Sync lib/ dependencies
-    aliases:
-      - lib-sync
-    dir: "{{.CLAUDE_DIR}}/lib"
-    cmds:
-      - uv sync
-    silent: false

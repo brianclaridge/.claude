@@ -1,0 +1,76 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  claude:apps:test:
+    desc: Run apps/ tests
+    aliases:
+      - apps-test
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - uv run pytest
+    silent: false
+
+  claude:apps:test-fast:
+    desc: Run apps/ tests, stop on first failure
+    aliases:
+      - apps-test-fast
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - uv run pytest -x --tb=short
+    silent: false
+
+  claude:apps:test-parallel:
+    desc: Run apps/ tests in parallel
+    aliases:
+      - apps-test-parallel
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - uv run pytest -n auto
+    silent: false
+
+  claude:apps:test-cov:
+    desc: Run apps/ tests with coverage report
+    aliases:
+      - apps-test-cov
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - uv run pytest --cov --cov-report=term-missing
+    silent: false
+
+  claude:apps:test-verbose:
+    desc: Run apps/ tests with verbose output
+    aliases:
+      - apps-test-verbose
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - uv run pytest -vvs
+    silent: false
+
+  claude:apps:lint:
+    desc: Lint apps/ code
+    aliases:
+      - apps-lint
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - uv run ruff check apps/
+    silent: false
+
+  claude:apps:lint-fix:
+    desc: Lint and fix apps/ code
+    aliases:
+      - apps-lint-fix
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - uv run ruff check --fix apps/
+    silent: false
+
+  claude:apps:sync:
+    desc: Sync apps/ dependencies
+    aliases:
+      - apps-sync
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - uv sync --all-groups
+    silent: false

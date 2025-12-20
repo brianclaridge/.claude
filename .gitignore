@@ -7,3 +7,9 @@ __pycache__
 .pytest_cache
 .ruff_cache
 .venv
+
+# Coverage output
+.coverage
+coverage.xml
+apps/coverage_html/
+htmlcov/

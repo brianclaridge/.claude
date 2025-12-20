@@ -21,6 +21,9 @@ dev = [
     "moto>=5.0.0",
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
+    "pytest-mock>=3.12.0",
+    "pytest-xdist>=3.5.0",
+    "responses>=0.25.0",
     "ruff>=0.4.0",
 ]
 
@@ -48,7 +51,19 @@ pythonpath = ["apps/src"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests requiring external services",
+]
 
 [tool.coverage.run]
 source = ["apps/src/claude_apps"]
 omit = ["apps/tests/*"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = "apps/coverage_html"
