@@ -1,6 +1,6 @@
 services:
   claude:
-    image: brianclaridge/claudebox:latest
+    pull_policy: build
     build:
       context: ./docker
       dockerfile: Dockerfile
@@ -19,7 +19,8 @@ services:
         glabVersion: 1.78.3
         pythonVersion: 3.12
         buildDate: 20251218.1
-        claudeCodeDate: 20251218.1
+        claudeCodeDate: 20251219.1
+    image: brianclaridge/claudebox:latest
     init: true
     privileged: true
     ulimits:
