@@ -263,18 +263,6 @@ tasks:
       - docker compose build
     silent: true
 
-  claude:pull:
-    desc: Pulls the image from dockerhub
-    aliases:
-      - pull
-    deps:
-      - ensure-host
-      - ensure-env
-    dir: "{{.TASKFILE_DIR}}"
-    cmds:
-      - docker compose pull
-    silent: true
-
   claude:push:
     desc: Pushes the image to dockerhub
     aliases:
@@ -298,7 +286,7 @@ tasks:
       - ensure-host
       - ensure-env
       - ensure-stack-network
-      - pull
+      - build
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose run --remove-orphans claude run-claude '{{.CLI_ARGS}}'
@@ -311,7 +299,7 @@ tasks:
       - stream
     deps:
       - ensure-stack-network
-      - pull
+      - build
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose run --remove-orphans claude run-claude '-stream_claude {{.CLI_ARGS}}'
@@ -323,7 +311,7 @@ tasks:
       - debug
     deps:
       - ensure-stack-network
-      - pull
+      - build
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose run --remove-orphans claude run-claude '-debug_claude'
@@ -335,7 +323,7 @@ tasks:
       - shell
     deps:
       - ensure-stack-network
-      - pull
+      - build
     dir: "{{.TASKFILE_DIR}}"
     cmds:
       - docker compose run --remove-orphans claude shell

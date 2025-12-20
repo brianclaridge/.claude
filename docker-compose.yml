@@ -1,5 +1,6 @@
 services:
   claude:
+    image: docker.localhost/claudebox:latest
     pull_policy: build
     build:
       context: ./docker
@@ -20,7 +21,6 @@ services:
         pythonVersion: 3.12
         buildDate: 20251218.1
         claudeCodeDate: 20251219.1
-    image: brianclaridge/claudebox:latest
     init: true
     privileged: true
     ulimits:
