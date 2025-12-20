@@ -59,8 +59,7 @@ services:
       CLAUDE_LOGS_PATH: /workspace/.claude/.data/logs
       CLAUDE_AGENTS_PATH: /workspace/.claude/agents
       CLAUDE_COMMANDS_PATH: /workspace/.claude/commands
-      CLAUDE_HOOKS_PATH: /workspace/.claude/hooks
-      CLAUDE_PLANS_PATH: /workspace/.claude/plans
+      CLAUDE_PLANS_PATH: /workspace/plans
       CLAUDE_PROMPTS_PATH: /workspace/.claude/prompts
       CLAUDE_RULES_PATH: /workspace/.claude/rules
       CLAUDE_SCRIPTS_PATH: /workspace/.claude/scripts
