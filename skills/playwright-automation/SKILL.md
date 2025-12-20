@@ -42,8 +42,8 @@ ${CLAUDE_PATH}/.data/playwright/
 
 ### Screenshot Utility
 ```bash
-cd ${CLAUDE_SKILLS_PATH}/playwright-automation && \
-uv run python scripts/screenshot.py <url> \
+uv run --directory ${CLAUDE_PATH} python \
+  apps/src/claude_apps/skills/playwright_automation/screenshot.py <url> \
   [--full-page] \
   [--wait-until domcontentloaded|load|networkidle] \
   [--timeout 30000] \
@@ -52,8 +52,8 @@ uv run python scripts/screenshot.py <url> \
 
 ### Video Recorder
 ```bash
-cd ${CLAUDE_SKILLS_PATH}/playwright-automation && \
-uv run python scripts/video_recorder.py <url> \
+uv run --directory ${CLAUDE_PATH} python \
+  apps/src/claude_apps/skills/playwright_automation/video_recorder.py <url> \
   [--duration 10] \
   [--wait-until domcontentloaded|load|networkidle] \
   [--timeout 30000] \
@@ -244,14 +244,14 @@ context.tracing.stop(path=f"{DATA_DIR}/trace.zip")
 
 ## Execution
 
-Run scripts using uv from the skill directory:
+Run scripts using uv from the Claude root:
 ```bash
-cd ${CLAUDE_SKILLS_PATH}/playwright-automation && uv run python scripts/<script>.py
+uv run --directory ${CLAUDE_PATH} python apps/src/claude_apps/skills/playwright_automation/<script>.py
 ```
 
 Or for custom scripts in other locations:
 ```bash
-cd ${CLAUDE_SKILLS_PATH}/playwright-automation && uv run python /path/to/custom_script.py
+uv run --directory ${CLAUDE_PATH} python /path/to/custom_script.py
 ```
 
 ## Troubleshooting

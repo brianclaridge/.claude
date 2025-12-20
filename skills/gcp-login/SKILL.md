@@ -55,14 +55,11 @@ The skill captures and displays the authentication URL:
 4. Display auth URL for user to open in browser
 5. Verify authentication success
 
-## Directory Structure
+## Code Structure
 
 ```
-skills/gcp-login/
-├── lib/
-│   ├── __init__.py
-│   ├── __main__.py    # Entry point
-│   └── auth.py        # GCloud auth with URL detection
-├── pyproject.toml
-└── SKILL.md
+apps/src/claude_apps/skills/gcp_login/
+├── __init__.py
+├── __main__.py    # Entry point
+└── auth.py        # GCloud auth with URL detection
 ```

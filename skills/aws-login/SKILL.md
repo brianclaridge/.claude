@@ -223,36 +223,27 @@ ses_identities:
     region: "us-east-1"
 ```
 
-## Skill Directory Structure
+## Code Structure
 
 ```
-skills/aws-login/
-├── lib/
+apps/src/claude_apps/
+├── skills/aws_login/
 │   ├── __init__.py
-│   ├── __main__.py       # Entry point with CLI (v1.1)
+│   ├── __main__.py       # Entry point with CLI
 │   ├── config.py         # Auth config (accounts.yml)
 │   ├── sso.py            # SSO login with URL detection
-│   ├── sso_discovery.py  # SSO device auth flow (NEW in v1.1)
 │   ├── discovery.py      # Resource discovery (uses aws_utils)
 │   └── profiles.py       # AWS CLI profile management
-├── pyproject.toml
-└── SKILL.md
-
-lib/aws_utils/            # Shared library
-├── __init__.py
-├── core/
-│   ├── session.py        # Boto3 session factory
-│   └── schemas.py        # Pydantic models
-├── services/
-│   ├── ec2.py            # VPC, subnet, IGW, NAT, EIP
-│   ├── s3.py             # S3 bucket discovery
-│   ├── sqs.py            # SQS queue discovery
-│   ├── sns.py            # SNS topic discovery
-│   ├── ses.py            # SES identity discovery
-│   └── organizations.py  # Org/account discovery (MasterAccountId)
-└── inventory/
-    ├── reader.py         # Load inventory files
-    └── writer.py         # Save inventory files
+└── shared/aws_utils/     # Shared library
+    ├── core/
+    │   ├── session.py    # Boto3 session factory
+    │   └── schemas.py    # Pydantic models
+    ├── services/
+    │   ├── ec2.py, s3.py, sqs.py, sns.py, ses.py
+    │   └── organizations.py  # Org/account discovery
+    └── inventory/
+        ├── reader.py     # Load inventory files
+        └── writer.py     # Save inventory files
 ```
 
 ## Migration from v1.0

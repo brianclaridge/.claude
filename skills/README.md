@@ -59,7 +59,7 @@ Concrete usage examples.
 
 ## References
 - See `reference.md` for API details
-- Run `scripts/helper.py` for X
+- Run `uv run --directory ${CLAUDE_PATH} python -m claude_apps.skills.skill_name` for X
 ```
 
 ### Field Requirements
@@ -164,7 +164,7 @@ claude --debug
 # Common issues:
 # - Skill not activating: Description too vague
 # - YAML errors: Check --- markers and indentation (no tabs)
-# - Path issues: Use forward slashes (scripts/helper.py)
+# - Path issues: Use forward slashes (apps/src/claude_apps/skills/)
 ```
 
 ## Python Script Development
