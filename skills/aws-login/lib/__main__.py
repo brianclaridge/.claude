@@ -97,7 +97,7 @@ def _bootstrap_initial_profile(sso_url: str) -> str | None:
         logger.error(f"SSO authentication failed: {result.error}")
         return None
 
-    logger.success("SSO authentication successful")
+    logger.info("SSO authentication successful")
     return result.access_token
 
 
@@ -340,7 +340,7 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
                     accounts_config[alias]["is_manager"] = True
 
             save_config(accounts_config, org_id, management_account_id)
-            logger.success(f"Saved {len(accounts_config)} accounts (auth only)")
+            logger.info(f"Saved {len(accounts_config)} accounts (auth only)")
 
             # Set default profile to manager account
             manager_alias = _find_manager_account_alias(accounts_config, management_account_id)
@@ -362,7 +362,7 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
                     data["is_manager"] = True
 
             save_config(accounts_config, org_id, management_account_id)
-            logger.success(f"Saved {len(accounts_config)} accounts with inventory")
+            logger.info(f"Saved {len(accounts_config)} accounts with inventory")
 
             # Set default profile to manager account
             manager_alias = _find_manager_account_alias(accounts_config, management_account_id)
@@ -504,14 +504,14 @@ def login_to_account(alias: str, force: bool = False) -> bool:
     set_default_profile(alias)
 
     if not force and check_credentials_valid(alias):
-        logger.success(f"Credentials valid for: {alias}")
+        logger.info(f"Credentials valid for: {alias}")
         return True
 
     logger.info("Initiating SSO login...")
     result = run_sso_login(alias)
 
     if result.success:
-        logger.success("Login successful")
+        logger.info("Login successful")
     else:
         logger.error("Login failed")
 

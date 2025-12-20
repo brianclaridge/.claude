@@ -722,6 +722,25 @@ class CloudWatchAlarm(BaseModel):
     region: str = Field(description="AWS region")
 
 
+# ECR Resources
+class ECRRepository(BaseModel):
+    """ECR Repository."""
+
+    repository_name: str = Field(description="Repository name")
+    arn: str = Field(description="Repository ARN")
+    uri: str = Field(description="Repository URI for docker push/pull")
+    registry_id: str = Field(description="AWS account ID of the registry")
+    created_at: datetime | None = Field(default=None, description="Creation timestamp")
+    image_count: int = Field(default=0, description="Number of images in repository")
+    image_tag_mutability: str = Field(
+        default="MUTABLE", description="Image tag mutability (MUTABLE or IMMUTABLE)"
+    )
+    scan_on_push: bool = Field(
+        default=False, description="Whether images are scanned on push"
+    )
+    region: str = Field(description="AWS region")
+
+
 # Elastic Load Balancing Resources
 class ApplicationLoadBalancer(BaseModel):
     """Application Load Balancer (ALB)."""
@@ -977,6 +996,11 @@ class AccountInventory(BaseModel):
     )
     ecs_task_definitions: list[ECSTaskDefinition] = Field(
         default_factory=list, description="ECS task definitions in the account"
+    )
+
+    # ECR Resources
+    ecr_repositories: list[ECRRepository] = Field(
+        default_factory=list, description="ECR repositories in the account"
     )
 
     # EKS Resources

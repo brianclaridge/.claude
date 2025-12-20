@@ -86,6 +86,7 @@ from aws_utils.services.elbv2 import (
 from aws_utils.services.elb import discover_classic_load_balancers
 from aws_utils.services.autoscaling import discover_auto_scaling_groups
 from aws_utils.services.sso import discover_sso_instances
+from aws_utils.services.ecr import discover_ecr_repositories
 
 from .config import get_default_region
 
@@ -174,6 +175,7 @@ INDEPENDENT_TASKS = [
     ServiceTask("sfn_activities", discover_sfn_activities, "sfn_activities"),
     ServiceTask("ecs_clusters", discover_ecs_clusters, "ecs_clusters"),
     ServiceTask("ecs_task_definitions", discover_ecs_task_definitions, "ecs_task_definitions"),
+    ServiceTask("ecr_repositories", discover_ecr_repositories, "ecr_repositories"),
     ServiceTask("eks_clusters", discover_eks_clusters, "eks_clusters"),
     # Monitoring
     ServiceTask("cloudwatch_log_groups", discover_log_groups, "cloudwatch_log_groups"),
@@ -460,6 +462,7 @@ def discover_account_inventory(
         ecs_clusters=ctx.results.get("ecs_clusters", []),
         ecs_services=ctx.results.get("ecs_services", []),
         ecs_task_definitions=ctx.results.get("ecs_task_definitions", []),
+        ecr_repositories=ctx.results.get("ecr_repositories", []),
         eks_clusters=ctx.results.get("eks_clusters", []),
         eks_node_groups=ctx.results.get("eks_node_groups", []),
         eks_fargate_profiles=ctx.results.get("eks_fargate_profiles", []),
