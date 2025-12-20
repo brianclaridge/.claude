@@ -1,7 +1,8 @@
+settings.json
 settings.local.json
 .data
-.mcp.json
 .env
+.mcp.json
 
 __pycache__
 .pytest_cache

@@ -61,9 +61,9 @@ services:
       CLAUDE_AGENTS_PATH: /workspace/.claude/agents
       CLAUDE_COMMANDS_PATH: /workspace/.claude/commands
       CLAUDE_PLANS_PATH: /workspace/plans
-      CLAUDE_PROMPTS_PATH: /workspace/.claude/prompts
       CLAUDE_RULES_PATH: /workspace/.claude/rules
       CLAUDE_SCRIPTS_PATH: /workspace/.claude/scripts
+      CLAUDE_STACKS_PATH: /workspace/.claude/stacks
       CLAUDE_SKILLS_PATH: /workspace/.claude/skills
       CLAUDE_CONFIG_YML_PATH: /workspace/.claude/config.yml
       CLAUDE_PROJECT_SLUG: ${CLAUDE_PROJECT_SLUG}

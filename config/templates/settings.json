@@ -1,5 +1,14 @@
 {
+  "model": "Opus",
+  "alwaysThinkingEnabled": true,
   "includeCoAuthoredBy": false,
+  "env": {
+    "MAX_THINKING_TOKENS": "29999",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
   "permissions": {
     "allow": [
       "Bash",
@@ -15,6 +24,8 @@
       "Skill(project-metadata-builder)",
       "Skill(aws-login)",
       "Skill(gcp-login)",
+      "Skill(metadata)",
+      "Skill(session-context)",
       "mcp__context7__*",
       "mcp__playwright__*",
       "WebFetch(domain:docs.anthropic.com)",
@@ -234,7 +245,5 @@
     "type": "command",
     "command": "bunx -y ccstatusline@latest",
     "padding": 0
-  },
-  "forceLoginMethod": "claudeai",
-  "outputStyle": "Default"
+  }
 }
