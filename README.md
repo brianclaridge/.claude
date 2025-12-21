@@ -120,31 +120,169 @@ GIT_USER_EMAIL="your.email@example.com"
 
 | Command | Description |
 |---------|-------------|
+| `/analyze` | Comprehensive codebase analysis |
+| `/auth-aws` | AWS SSO authentication |
+| `/auth-gcp` | GCP authentication |
+| `/build-agent` | Create new agent definitions |
+| `/build-rule` | Create behavioral rules |
+| `/build-skill` | Create skill implementations |
+| `/context` | Session context gathering |
+| `/gitops` | Interactive git commit workflow |
+| `/gomplate` | Validate gomplate templates |
+| `/health` | Environment integrity check |
 | `/hello` | Test output |
-| `/analyze` | Codebase analysis |
-| `/cloud-auth` | AWS/GCP authentication |
-| `/playwright` | Browser automation |
-| `/gitops` | Git commit workflow |
-| `/stack-manager` | Bootstrap stacks |
-| `/taskfile` | Validate Taskfile |
-| `/health` | Environment check |
+| `/metadata` | Build project metadata registry |
+| `/playwright` | Browser automation scripts |
+| `/stack-manager` | Bootstrap application stacks |
+| `/taskfile` | Validate Taskfile.yml |
+
+## Core Systems
+
+### Agents
+
+Autonomous task handlers that Claude can delegate to. Located in `agents/`.
+
+| Agent | Purpose |
+|-------|---------|
+| `project-analysis` | Session startup codebase exploration |
+| `Explore` | Quick file/code searching |
+| `Plan` | Implementation design and planning |
+| `gitops` | Git workflow management |
+| `browser-automation` | Playwright browser tasks |
+| `agent-builder` | Create new agents |
+| `skill-builder` | Create new skills |
+| `rule-builder` | Create behavioral rules |
+| `stack-manager` | Application stack bootstrapping |
+| `health-check` | Environment validation |
+| `taskfile-manager` | Taskfile best practices |
+| `gomplate-manager` | Template validation |
+
+### Rules
+
+Behavioral directives that enforce patterns. Located in `rules/`.
+
+| Rule | Purpose |
+|------|---------|
+| `000-rule-follower` | Core directive enforcement |
+| `010-session-starter` | Project analysis triggers |
+| `020-persona` | Response persona (Spock) |
+| `030-agents` | Agent consideration pattern |
+| `040-plans` | Planning before implementation |
+| `050-python` | Python standards (uv, logging) |
+| `060-context7` | Library documentation lookup |
+| `070-backward-compat` | No backward compatibility by default |
+| `080-ask-user-questions` | Interactive UX tool usage |
+| `090-taskfile-usage` | Taskfile best practices |
+| `095-gomplate-usage` | Gomplate template standards |
+
+### Skills
+
+Python implementations invoked by agents. See `skills/README.md` for details.
+
+| Skill | Purpose |
+|-------|---------|
+| `aws-login` | AWS SSO authentication flow |
+| `gcp-login` | GCP ADC authentication |
+| `git-manager` | Commit workflow orchestration |
+| `session-context` | Session context gathering |
+| `project-metadata-builder` | Project registry updates |
+| `playwright-automation` | Browser automation scripts |
+| `gomplate-manager` | Template validation |
+| `taskfile-manager` | Taskfile validation |
+| `health-check` | Environment integrity |
+| `stack-manager` | Stack bootstrapping |
+| `rule-builder` | Rule creation |
+
+### Hooks
+
+Event-driven automation. Configured in `config/config.yml`.
+
+| Hook | Trigger | Purpose |
+|------|---------|---------|
+| `logger` | Tool calls | Log all tool invocations |
+| `rules_loader` | Session start | Inject behavioral rules |
+| `session_context_injector` | Session start | Add project context |
+| `plan_distributor` | Plan save | Copy plans to `${CLAUDE_PLANS_PATH}` |
+| `changelog_monitor` | Notification | Parse Claude Code changelogs |
+| `playwright_healer` | Browser error | Auto-recovery for Playwright |
+| `cloud_auth_prompt` | Session start | Prompt for cloud auth |
+| `submodule_auto_updater` | Session start | Update .claude submodule |
 
 ## Structure
 
 ```text
 .claude/
-├── agents/          # Agent definitions
-├── commands/        # Slash commands
-├── config/          # Templates
+├── agents/          # Agent definitions (12 agents)
+├── apps/            # Python implementations
+│   ├── src/claude_apps/
+│   │   ├── hooks/   # Hook implementations
+│   │   ├── skills/  # Skill implementations
+│   │   └── shared/  # Shared utilities (aws_utils, config_helper)
+│   └── tests/       # pytest test suite (1079 tests)
+├── commands/        # Slash command definitions
+├── config/          # Configuration
+│   ├── templates/   # Gomplate templates
+│   └── config.yml   # Global settings
+├── docker/          # Container setup
+│   ├── Dockerfile
+│   └── docker-entrypoint.sh
 ├── docs/            # Documentation
-├── hooks/           # Event handlers
-├── lib/             # Python libraries
-├── rules/           # Behavioral rules
-├── skills/          # Skill implementations
-├── stacks/          # Stack templates
-├── config.yml       # Global config
-└── Taskfile.yml     # Task runner
+├── hooks/           # Hook entry points
+├── plans/           # Implementation plans
+├── rules/           # Behavioral rules (11 rules)
+├── skills/          # Skill definitions and SKILL.md
+├── stacks/          # Application stack templates
+├── tasks/           # Taskfile includes
+│   ├── docker/      # Container tasks
+│   ├── git/         # Git workflow tasks
+│   ├── playwright/  # Browser automation tasks
+│   ├── rules/       # Rule management tasks
+│   └── tests/       # Test runner tasks
+├── .data/           # Runtime data (logs, cache)
+└── Taskfile.yml     # Main task runner
 ```
+
+## Configuration
+
+The `config/config.yml` file controls system behavior:
+
+```yaml
+cloud_providers:
+  aws:
+    enabled: true
+    sso_start_url: "${AWS_SSO_START_URL}"
+  gcp:
+    enabled: true
+
+project_metadata:
+  auto_update: true
+  stale_threshold_hours: 24
+
+hooks:
+  logger:
+    enabled: true
+    output_dir: ".data/logs"
+  playwright_healer:
+    enabled: true
+    max_retries: 3
+  rules_loader:
+    enabled: true
+  # ... additional hook settings
+```
+
+## Stacks
+
+Application templates for rapid project scaffolding. Use `/stack-manager` to bootstrap.
+
+| Stack | Frontend | Backend | Database |
+|-------|----------|---------|----------|
+| `django-htmx` | HTMX | Django | SQLite/Postgres |
+| `electron-react` | React | Electron | Local |
+| `go-templ-htmx` | HTMX/Templ | Go | SQLite |
+| `htmx-fastapi` | HTMX | FastAPI | SQLite |
+| `nextjs-prisma` | Next.js | Next.js API | Prisma/Postgres |
+| `sveltekit-supabase` | SvelteKit | SvelteKit | Supabase |
+| `vue-vite-fastapi` | Vue 3/Vite | FastAPI | SQLite |
 
 ## Updating the Submodule
 
@@ -185,6 +323,10 @@ git commit -m "Remove .claude submodule"
 - **Cloud**: AWS CLI, GCP CLI, Pulumi, OpenTofu
 - **Browser**: Playwright, Chrome
 - **MCP**: Context7, Playwright
+- **Templating**: gomplate (Go templates)
+- **Logging**: structlog, loguru
+- **Testing**: pytest, pytest-cov, moto (1079 tests)
+- **Tasks**: Taskfile (go-task)
 
 ## Resources
 
