@@ -112,21 +112,14 @@ if ($SkipResources) {
     $args += "--skip-resources"
 }
 
-# Run via uv
-try {
-    Push-Location $skillPath
-
-    if ($args.Count -gt 0) {
-        uv run python -m lib @args
-    }
-    else {
-        uv run python -m lib
-    }
-
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
+# Run via uv from project root
+if ($args.Count -gt 0) {
+    uv run --directory "${env:CLAUDE_PATH}" python -m claude_apps.skills.aws_login @args
 }
-finally {
-    Pop-Location
+else {
+    uv run --directory "${env:CLAUDE_PATH}" python -m claude_apps.skills.aws_login
+}
+
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
 }

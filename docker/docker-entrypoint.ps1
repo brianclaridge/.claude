@@ -160,6 +160,10 @@ _run ".ps1 scripts linked" { link_scripts }
 _run "gomplate templates rendered" { run-gomplate }
 _run "~/.ssh environment copied & configured" { run-ssh-setup }
 _run "playwright cleanup" { run-cleanup-playwright } -CountSuffix "removed"
+_run "python venv rebuild" {
+  _rmrf "${env:CLAUDE_PATH}/.venv"
+  uv sync --directory "${env:CLAUDE_PATH}"
+}
 
 # --- Environment ---
 _header "workspace"

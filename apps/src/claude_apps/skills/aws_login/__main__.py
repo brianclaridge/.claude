@@ -2,7 +2,7 @@
 """AWS SSO authentication entry point (v1.1 auto-discovery).
 
 Usage:
-    python -m lib [account_alias] [--force]
+    python -m claude_apps.skills.aws_login [account_alias] [--force]
     ./scripts/aws-auth.ps1 [account_alias] [-Force]
 
 Changes from v1.0:
