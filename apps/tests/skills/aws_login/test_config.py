@@ -23,6 +23,7 @@ from claude_apps.skills.aws_login.config import (
     get_sso_region,
     get_sso_role_name,
     get_sso_start_url,
+    inventory_exists,
     list_accounts,
     load_accounts,
     load_config,
@@ -406,3 +407,57 @@ class TestClearAwsData:
         result = clear_aws_data()
 
         assert result is False
+
+
+class TestInventoryExists:
+    """Tests for inventory_exists function."""
+
+    def test_returns_false_when_no_data_dir(self, monkeypatch, tmp_path):
+        """Test returns False when .data/aws doesn't exist."""
+        monkeypatch.setenv("CLAUDE_PATH", str(tmp_path))
+
+        result = inventory_exists()
+
+        assert result is False
+
+    def test_returns_false_when_only_accounts_yml(self, monkeypatch, tmp_path):
+        """Test returns False when only accounts.yml exists (no inventory)."""
+        monkeypatch.setenv("CLAUDE_PATH", str(tmp_path))
+        data_dir = tmp_path / ".data" / "aws"
+        data_dir.mkdir(parents=True)
+        (data_dir / "accounts.yml").write_text("schema_version: '1.0'")
+
+        result = inventory_exists()
+
+        assert result is False
+
+    def test_returns_true_when_inventory_files_exist(self, monkeypatch, tmp_path):
+        """Test returns True when inventory .yml files exist in org subdirs."""
+        monkeypatch.setenv("CLAUDE_PATH", str(tmp_path))
+        data_dir = tmp_path / ".data" / "aws"
+        data_dir.mkdir(parents=True)
+        (data_dir / "accounts.yml").write_text("schema_version: '1.0'")
+
+        # Create org structure with inventory file
+        org_dir = data_dir / "o-abc123" / "root"
+        org_dir.mkdir(parents=True)
+        (org_dir / "sandbox.yml").write_text("vpcs: []")
+
+        result = inventory_exists()
+
+        assert result is True
+
+    def test_detects_deeply_nested_inventory(self, monkeypatch, tmp_path):
+        """Test detects inventory in nested OU paths."""
+        monkeypatch.setenv("CLAUDE_PATH", str(tmp_path))
+        data_dir = tmp_path / ".data" / "aws"
+        data_dir.mkdir(parents=True)
+
+        # Create deeply nested inventory
+        nested_dir = data_dir / "o-abc123" / "production" / "workloads" / "team-a"
+        nested_dir.mkdir(parents=True)
+        (nested_dir / "app-account.yml").write_text("vpcs: []")
+
+        result = inventory_exists()
+
+        assert result is True

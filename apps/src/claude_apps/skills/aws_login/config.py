@@ -54,6 +54,28 @@ def config_exists() -> bool:
     return get_accounts_path().exists()
 
 
+def inventory_exists() -> bool:
+    """Check if any inventory files exist in .data/aws/.
+
+    Inventory files are stored as {org-id}/{ou-path}/{alias}.yml.
+    If any .yml files exist beyond accounts.yml, inventory has been created.
+
+    Returns:
+        True if inventory files exist
+    """
+    aws_data = get_aws_data_path()
+    if not aws_data.exists():
+        return False
+
+    # Look for any .yml files in subdirectories (org-id folders)
+    for item in aws_data.iterdir():
+        if item.is_dir():
+            # Found an org-id directory, check for inventory files
+            for yml_file in item.rglob("*.yml"):
+                return True
+    return False
+
+
 # =============================================================================
 # Environment Variables
 # =============================================================================
@@ -116,6 +138,40 @@ def get_sso_region() -> str:
 def get_sso_role_name() -> str:
     """Get default SSO role name."""
     return os.environ.get("AWS_SSO_ROLE_NAME", "AdministratorAccess")
+
+
+def get_mgmt_account_id() -> str | None:
+    """Get management account ID from environment.
+
+    Required for --inspect to discover org-level resources (Route 53 Domains).
+    Set AWS_MGMT_ACCOUNT_ID in .env to configure.
+
+    Returns:
+        Management account ID if set, None otherwise
+    """
+    return os.environ.get("AWS_MGMT_ACCOUNT_ID") or None
+
+
+def get_mgmt_account_alias() -> str | None:
+    """Get the alias for the management account.
+
+    Looks up the alias from accounts.yml based on AWS_MGMT_ACCOUNT_ID.
+
+    Returns:
+        Account alias if found, None otherwise
+    """
+    mgmt_id = get_mgmt_account_id()
+    if not mgmt_id:
+        return None
+
+    if not config_exists():
+        return None
+
+    accounts = load_accounts()
+    for alias, data in accounts.items():
+        if data.get("id") == mgmt_id:
+            return alias
+    return None
 
 
 # =============================================================================

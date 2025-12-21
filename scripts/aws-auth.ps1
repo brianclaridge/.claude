@@ -30,7 +30,7 @@
     Skip ALL resource discovery (auth only, no inventory files).
 
 .PARAMETER SkipResources
-    Skip S3/SQS/SNS/SES discovery (VPCs still discovered).
+    Skip S3/SQS/SNS/SES discovery (VPCs still discovered). Only with -Inspect.
 
 .EXAMPLE
     ./aws-auth.ps1
@@ -59,6 +59,14 @@
 .EXAMPLE
     ./aws-auth.ps1 -Inspect -SkipResources
     # Inspect with VPCs only (skip S3/SQS/SNS/SES)
+
+.EXAMPLE
+    ./aws-auth.ps1 sandbox -Inspect
+    # Quick auth to sandbox + run full discovery
+
+.EXAMPLE
+    ./aws-auth.ps1 -Login
+    # Re-auth current default profile
 #>
 
 param(
@@ -73,7 +81,9 @@ param(
 
     [switch]$SkipVpc,
 
-    [switch]$SkipResources
+    [switch]$SkipResources,
+
+    [switch]$Background
 )
 
 $ErrorActionPreference = "Stop"
@@ -110,6 +120,10 @@ if ($SkipVpc) {
 
 if ($SkipResources) {
     $args += "--skip-resources"
+}
+
+if ($Background) {
+    $args += "--background"
 }
 
 # Run via uv from project root

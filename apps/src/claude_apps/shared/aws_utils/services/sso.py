@@ -336,3 +336,71 @@ def discover_account_roles(
     except ClientError as e:
         logger.warning(f"Failed to list roles for {account_id}: {e}")
         return []
+
+
+@dataclass
+class RoleCredentials:
+    """Temporary credentials from SSO GetRoleCredentials."""
+
+    access_key_id: str
+    secret_access_key: str
+    session_token: str
+    expiration: int  # Unix timestamp in milliseconds
+
+
+def get_role_credentials(
+    access_token: str,
+    account_id: str,
+    role_name: str,
+    region: str | None = None,
+) -> RoleCredentials | None:
+    """Get temporary credentials using existing SSO access token.
+
+    This avoids requiring a second SSO device authorization flow by reusing
+    the access token obtained during initial authentication.
+
+    Args:
+        access_token: SSO access token from poll_for_token()
+        account_id: AWS account ID to assume role in
+        role_name: Name of the SSO role to assume
+        region: AWS region for SSO
+
+    Returns:
+        RoleCredentials if successful, None on failure
+    """
+    if region is None:
+        region = get_sso_region()
+
+    try:
+        sso = boto3.client("sso", region_name=region)
+
+        response = sso.get_role_credentials(
+            accessToken=access_token,
+            accountId=account_id,
+            roleName=role_name,
+        )
+
+        creds = response.get("roleCredentials", {})
+        if not creds:
+            logger.warning(f"Empty credentials returned for {account_id}/{role_name}")
+            return None
+
+        return RoleCredentials(
+            access_key_id=creds["accessKeyId"],
+            secret_access_key=creds["secretAccessKey"],
+            session_token=creds["sessionToken"],
+            expiration=creds["expiration"],
+        )
+
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code", "")
+        if error_code == "UnauthorizedException":
+            logger.warning(f"Access token expired or invalid for {account_id}/{role_name}")
+        elif error_code == "ForbiddenException":
+            logger.warning(f"No permission for role {role_name} in {account_id}")
+        else:
+            logger.warning(f"Failed to get credentials for {account_id}/{role_name}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error getting credentials: {e}")
+        return None

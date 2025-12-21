@@ -226,10 +226,16 @@ def _execute_task(
         )
 
 
+# Tasks that only make sense from the management account
+# These resources are org-level and won't be visible from child accounts
+ORG_LEVEL_TASKS = {"route53_domains"}
+
+
 def _discover_phase1_parallel(
     profile_name: str,
     region: str,
     max_workers: int = 10,
+    is_mgmt_account: bool = False,
 ) -> DiscoveryContext:
     """Execute Phase 1: All independent services in parallel.
 
@@ -237,16 +243,23 @@ def _discover_phase1_parallel(
         profile_name: AWS CLI profile name
         region: AWS region
         max_workers: Maximum parallel workers
+        is_mgmt_account: If True, include org-level tasks (Route 53 Domains)
 
     Returns:
         DiscoveryContext with all results
     """
     ctx = DiscoveryContext(profile_name=profile_name, region=region)
 
+    # Filter tasks based on account type
+    tasks_to_run = [
+        task for task in INDEPENDENT_TASKS
+        if is_mgmt_account or task.name not in ORG_LEVEL_TASKS
+    ]
+
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
             executor.submit(_execute_task, task, ctx): task
-            for task in INDEPENDENT_TASKS
+            for task in tasks_to_run
         }
 
         for future in as_completed(futures):
@@ -365,6 +378,7 @@ def discover_account_inventory(
     skip_resources: bool = False,
     max_workers_phase1: int = 10,
     max_workers_phase2: int = 5,
+    is_mgmt_account: bool = False,
 ) -> AccountInventory:
     """Discover full inventory for an account with parallel execution.
 
@@ -378,6 +392,7 @@ def discover_account_inventory(
         skip_resources: If True, skip extended resource discovery (only VPCs/EIPs)
         max_workers_phase1: Max threads for independent service discovery
         max_workers_phase2: Max threads for dependent service discovery
+        is_mgmt_account: If True, include org-level resources (Route 53 Domains)
 
     Returns:
         AccountInventory with all discovered resources
@@ -399,7 +414,7 @@ def discover_account_inventory(
 
     # Phase 1: Parallel discovery of independent services
     logger.debug(f"Phase 1: Discovering independent services ({max_workers_phase1} workers)")
-    ctx = _discover_phase1_parallel(profile_name, region, max_workers_phase1)
+    ctx = _discover_phase1_parallel(profile_name, region, max_workers_phase1, is_mgmt_account)
 
     # Phase 2: Parallel discovery of dependent services
     logger.debug(f"Phase 2: Discovering dependent services ({max_workers_phase2} workers)")
@@ -526,6 +541,9 @@ def enrich_and_save_inventory(
                 alias,
                 None,  # Use default region
                 skip_resources,
+                10,  # max_workers_phase1
+                5,   # max_workers_phase2
+                account["id"] == management_account_id,  # is_mgmt_account
             ): (alias, account)
             for alias, account in accounts
         }

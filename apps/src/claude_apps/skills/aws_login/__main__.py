@@ -1,9 +1,24 @@
 #!/usr/bin/env python3
-"""AWS SSO authentication entry point (v1.1 auto-discovery).
+"""AWS SSO authentication entry point (v1.3 single-account discovery).
 
 Usage:
-    python -m claude_apps.skills.aws_login [account_alias] [--force]
-    ./scripts/aws-auth.ps1 [account_alias] [-Force]
+    aws-auth {alias}                        Quick auth only (no discovery)
+    aws-auth {alias} --inspect              Quick auth + discovery for that account
+    aws-auth {alias} --inspect --background Quick auth + background discovery
+    aws-auth --login                        Re-auth current default profile
+    aws-auth --inspect                      Full org discovery (foreground)
+    aws-auth --inspect --background         Full org discovery (background)
+    aws-auth                                Interactive account selection
+
+Changes from v1.2:
+- Single-account discovery: `aws-auth {alias} --inspect` discovers only that account
+- Background flag restored: `--background` runs discovery in detached subprocess
+- Internal `--discover-account` argument for background subprocess
+
+Changes from v1.1:
+- Quick auth: `aws-auth {alias}` authenticates immediately (single SSO flow)
+- Discovery only on --inspect: no automatic background discovery
+- Token reuse: GetRoleCredentials API avoids second device code flow
 
 Changes from v1.0:
 - Management account auto-detected from Organizations API (MasterAccountId)
@@ -25,6 +40,7 @@ from .config import (
     get_account,
     get_manager_account,
     get_sso_start_url,
+    inventory_exists,
     list_accounts,
     save_config,
 )
@@ -37,7 +53,12 @@ from pathlib import Path
 
 # Use CLAUDE_PATH env var for reliable path resolution (avoid fragile relative paths)
 
-from claude_apps.shared.aws_utils.services.sso import poll_for_token, discover_sso_accounts
+from claude_apps.shared.aws_utils.services.sso import (
+    poll_for_token,
+    discover_sso_accounts,
+    discover_account_roles,
+    get_role_credentials,
+)
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -129,12 +150,17 @@ def _generate_alias(account_name: str) -> str:
     return alias
 
 
-def _try_organizations_query(account, sso_url: str) -> tuple[bool, dict | None, str | None, str | None]:
+def _try_organizations_query(
+    account,
+    sso_url: str,
+    access_token: str | None = None,
+) -> tuple[bool, dict | None, str | None, str | None]:
     """Try to query Organizations API using the given account.
 
     Args:
         account: DiscoveredAccount object
         sso_url: SSO start URL
+        access_token: Existing SSO access token to reuse (avoids second device flow)
 
     Returns:
         Tuple of (success, tree_or_none, org_id_or_none, error_type_or_none)
@@ -150,10 +176,36 @@ def _try_organizations_query(account, sso_url: str) -> tuple[bool, dict | None, 
         account_name=account.account_name,
     )
 
-    result = run_sso_login(alias)
-    if not result.success:
-        logger.warning(f"SSO login failed for {alias}")
-        return False, None, None, "sso_login_failed"
+    # If we have an access token, use GetRoleCredentials to avoid second device flow
+    if access_token:
+        roles = discover_account_roles(
+            access_token=access_token,
+            account_id=account.account_id,
+        )
+
+        if not roles:
+            logger.warning(f"No roles available for {alias}")
+            return False, None, None, "sso_login_failed"
+
+        role_name = "AdministratorAccess" if "AdministratorAccess" in roles else roles[0]
+        creds = get_role_credentials(
+            access_token=access_token,
+            account_id=account.account_id,
+            role_name=role_name,
+        )
+
+        if not creds:
+            logger.warning(f"Failed to get credentials for {alias}")
+            return False, None, None, "sso_login_failed"
+
+        # Cache credentials so discover_organization can use them
+        _cache_credentials_for_cli(alias, creds)
+    else:
+        # Fallback: use run_sso_login (spawns new device flow)
+        result = run_sso_login(alias)
+        if not result.success:
+            logger.warning(f"SSO login failed for {alias}")
+            return False, None, None, "sso_login_failed"
 
     try:
         org_id, tree = discover_organization(profile_name=alias)
@@ -203,6 +255,309 @@ def _ask_user_to_select_management_account(accounts: list):
         ).execute()
     except KeyboardInterrupt:
         return None
+
+
+def spawn_background_discovery(args_list: list[str]) -> None:
+    """Spawn detached subprocess for full discovery.
+
+    Args:
+        args_list: Arguments to pass to aws-login module (e.g., ["--login"])
+    """
+    import subprocess
+
+    claude_path = os.environ.get("CLAUDE_PATH", "")
+    data_path = os.environ.get("CLAUDE_DATA_PATH", "")
+
+    if not claude_path:
+        logger.error("CLAUDE_PATH not set, cannot spawn background discovery")
+        return
+
+    # Ensure log directory exists
+    log_dir = Path(data_path) / "logs" if data_path else Path.home() / ".claude" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    log_file = log_dir / "aws-discovery.log"
+    pid_file = log_dir / "aws-discovery.pid"
+
+    # Build command
+    cmd = [
+        "uv", "run", "--directory", claude_path,
+        "python", "-m", "claude_apps.skills.aws_login",
+        *args_list,
+    ]
+
+    logger.info(f"Spawning background discovery: {' '.join(cmd)}")
+    logger.info(f"Log file: {log_file}")
+
+    try:
+        with open(log_file, "w") as log_fh:
+            # Spawn detached process
+            proc = subprocess.Popen(
+                cmd,
+                stdout=log_fh,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+
+            # Write PID for tracking
+            pid_file.write_text(str(proc.pid))
+            logger.info(f"Background process started (PID: {proc.pid})")
+
+    except Exception as e:
+        logger.error(f"Failed to spawn background discovery: {e}")
+
+
+def quick_auth_for_account(account_alias: str, force: bool = False) -> bool:
+    """Minimal auth to enable immediate use of specified account.
+
+    This performs only what's needed to start using AWS:
+    1. Check if credentials are still valid (skip auth if so)
+    2. SSO device auth to get access token
+    3. Discover accounts from SSO
+    4. Find matching account by alias
+    5. Get credentials via GetRoleCredentials (reusing token)
+    6. Create single profile and set as default
+
+    Args:
+        account_alias: Account alias to authenticate
+        force: If True, force re-auth even if credentials valid
+
+    Returns:
+        True if quick auth succeeded
+    """
+    # Check if credentials are already valid (unless force is set)
+    if not force and check_credentials_valid(account_alias):
+        logger.info(f"Credentials valid for: {account_alias}")
+        set_default_profile(account_alias)
+        return True
+
+    try:
+        sso_url = get_sso_start_url()
+    except ValueError as e:
+        logger.error(str(e))
+        return False
+
+    logger.info("=== Quick AWS Auth ===")
+    logger.info(f"Target account: {account_alias}")
+    logger.info("")
+
+    # Step 1: SSO device auth
+    access_token = _bootstrap_initial_profile(sso_url)
+    if not access_token:
+        return False
+
+    # Step 2: Discover accounts
+    logger.info("Discovering accounts...")
+    sso_accounts = discover_sso_accounts(access_token)
+
+    if not sso_accounts:
+        logger.error("No accounts available via SSO")
+        return False
+
+    # Step 3: Find matching account
+    target_account = None
+    for acc in sso_accounts:
+        alias = _generate_alias(acc.account_name)
+        if alias == account_alias:
+            target_account = acc
+            break
+
+    if not target_account:
+        logger.error(f"Account '{account_alias}' not found. Available accounts:")
+        for acc in sso_accounts:
+            logger.error(f"  - {_generate_alias(acc.account_name)} ({acc.account_name})")
+        return False
+
+    logger.info(f"Found: {target_account.account_name} ({target_account.account_id})")
+
+    # Step 4: Discover roles and get credentials using existing token
+    roles = discover_account_roles(
+        access_token=access_token,
+        account_id=target_account.account_id,
+    )
+
+    if not roles:
+        logger.error(f"No roles available for {account_alias}")
+        return False
+
+    # Prefer AdministratorAccess, fallback to first available
+    role_name = "AdministratorAccess" if "AdministratorAccess" in roles else roles[0]
+    logger.info(f"Using role: {role_name}")
+
+    creds = get_role_credentials(
+        access_token=access_token,
+        account_id=target_account.account_id,
+        role_name=role_name,
+    )
+
+    if not creds:
+        logger.error("Failed to get credentials via token")
+        return False
+
+    # Step 5: Create profile and set as default
+    ensure_profile(
+        profile_name=account_alias,
+        account_id=target_account.account_id,
+        account_name=target_account.account_name,
+        sso_role=role_name,
+    )
+    set_default_profile(account_alias)
+
+    # Cache credentials for AWS CLI use
+    _cache_credentials_for_cli(account_alias, creds)
+
+    logger.info("")
+    logger.info(f"Profile '{account_alias}' ready")
+    logger.info("You can now use: aws sts get-caller-identity")
+
+    return True
+
+
+def _cache_credentials_for_cli(profile_name: str, creds) -> None:
+    """Cache credentials in AWS CLI format for immediate use.
+
+    AWS CLI caches SSO credentials in ~/.aws/cli/cache/ as JSON files.
+    We write compatible format so `aws` commands work immediately.
+
+    Args:
+        profile_name: AWS profile name
+        creds: RoleCredentials from get_role_credentials()
+    """
+    import json
+    from datetime import datetime, timezone
+
+    cache_dir = Path.home() / ".aws" / "cli" / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate cache key (AWS uses hash, we use profile name for simplicity)
+    cache_file = cache_dir / f"{profile_name}.json"
+
+    # Convert millisecond timestamp to ISO format
+    expiration = datetime.fromtimestamp(creds.expiration / 1000, tz=timezone.utc)
+
+    cache_data = {
+        "Credentials": {
+            "AccessKeyId": creds.access_key_id,
+            "SecretAccessKey": creds.secret_access_key,
+            "SessionToken": creds.session_token,
+            "Expiration": expiration.isoformat(),
+        }
+    }
+
+    cache_file.write_text(json.dumps(cache_data, indent=2))
+    logger.debug(f"Cached credentials to {cache_file}")
+
+
+def discover_single_account(
+    account_alias: str,
+    skip_vpc: bool = False,
+    skip_resources: bool = False,
+) -> bool:
+    """Discover inventory for a single account.
+
+    Used when user runs `aws-auth {alias} --inspect` to discover
+    resources for just that account, not the entire organization.
+
+    Args:
+        account_alias: Account alias to discover
+        skip_vpc: If True, skip all resource discovery
+        skip_resources: If True, skip S3/SQS/SNS/SES
+
+    Returns:
+        True if discovery succeeded
+    """
+    from .config import get_account, load_config, save_config, get_mgmt_account_id
+    from .discovery import discover_account_inventory
+    from claude_apps.shared.aws_utils.inventory.writer import (
+        save_inventory,
+        get_relative_inventory_path,
+    )
+
+    try:
+        account = get_account(account_alias)
+    except ValueError as e:
+        logger.error(str(e))
+        return False
+
+    account_id = account.get("id", "")
+    account_name = account.get("name", account_alias)
+    ou_path = account.get("ou_path", "root")
+
+    # Check if this is the management account (for org-level resource discovery)
+    mgmt_account_id = get_mgmt_account_id()
+    is_mgmt_account = mgmt_account_id and account_id == mgmt_account_id
+
+    logger.info(f"=== Discovering: {account_name} ===")
+    logger.info(f"Account ID: {account_id}")
+    logger.info(f"OU Path: {ou_path}")
+    if is_mgmt_account:
+        logger.info("Role: Management Account (includes org-level resources)")
+    logger.info("")
+
+    if skip_vpc:
+        logger.info("Skip mode: auth only (no resource discovery)")
+        return True
+
+    try:
+        # Load org_id from existing config
+        config = load_config()
+        org_id = config.get("organization_id", "unknown")
+
+        # Discover inventory for this account
+        resource_mode = "VPCs only" if skip_resources else "full inventory"
+        logger.info(f"Discovering {resource_mode}...")
+
+        inventory = discover_account_inventory(
+            profile_name=account_alias,
+            region=None,  # Use default
+            skip_resources=skip_resources,
+            is_mgmt_account=is_mgmt_account,
+        )
+        inventory.account_id = account_id
+        inventory.account_alias = account_alias
+
+        # Normalize OU path for directory structure
+        clean_ou_path = ou_path.replace("Root/", "").replace("Root", "")
+        if not clean_ou_path:
+            clean_ou_path = "root"
+
+        # Save inventory file
+        save_inventory(org_id, clean_ou_path, account_alias, inventory)
+        inventory_path = get_relative_inventory_path(clean_ou_path, account_alias)
+
+        # Update accounts.yml with new inventory path
+        accounts = config.get("accounts", {})
+        if account_alias in accounts:
+            accounts[account_alias]["inventory_path"] = inventory_path
+            save_config(
+                accounts,
+                org_id,
+                config.get("management_account_id", ""),
+            )
+
+        # Log summary
+        vpc_count = len(inventory.vpcs)
+        logger.info(f"Discovered {vpc_count} VPCs")
+        if not skip_resources:
+            counts = {
+                "S3": len(inventory.s3_buckets),
+                "Lambda": len(inventory.lambda_functions),
+                "RDS": len(inventory.rds_instances) + len(inventory.rds_clusters),
+                "DynamoDB": len(inventory.dynamodb_tables),
+                "ECS": len(inventory.ecs_clusters),
+                "EKS": len(inventory.eks_clusters),
+            }
+            non_zero = [f"{v} {k}" for k, v in counts.items() if v > 0]
+            if non_zero:
+                logger.info(f"Resources: {', '.join(non_zero)}")
+
+        logger.info("")
+        logger.info(f"Inventory saved: {inventory_path}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Discovery failed: {e}")
+        return False
 
 
 def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> bool:
@@ -268,7 +623,9 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
             break  # No more heuristic matches, move to user selection
 
         tried_accounts.add(account.account_id)
-        success, tree, org_id, last_error = _try_organizations_query(account, sso_url)
+        success, tree, org_id, last_error = _try_organizations_query(
+            account, sso_url, access_token
+        )
         if success:
             break
 
@@ -281,13 +638,17 @@ def first_run_setup(skip_vpc: bool = False, skip_resources: bool = False) -> boo
             if len(remaining) == 1 and len(sso_accounts) == 1:
                 logger.info("")
                 logger.info("Single-account organization detected. Using it as management account.")
-                success, tree, org_id, last_error = _try_organizations_query(remaining[0], sso_url)
+                success, tree, org_id, last_error = _try_organizations_query(
+                    remaining[0], sso_url, access_token
+                )
             else:
                 logger.info("")
                 logger.info("Heuristic selection failed. Please select the management account.")
                 selected = _ask_user_to_select_management_account(remaining)
                 if selected:
-                    success, tree, org_id, last_error = _try_organizations_query(selected, sso_url)
+                    success, tree, org_id, last_error = _try_organizations_query(
+                        selected, sso_url, access_token
+                    )
 
     if not tree:
         # Provide specific error based on failure type
@@ -524,25 +885,93 @@ def main() -> int:
     parser.add_argument("account", nargs="?", help="Account alias")
     parser.add_argument("--force", "-f", action="store_true", help="Force re-login")
     parser.add_argument("--verbose", "-v", action="store_true", help="Debug logging")
-    parser.add_argument("--login", action="store_true", help="Force SSO device auth flow")
-    parser.add_argument("--skip-vpc", action="store_true", help="Skip all resource discovery")
-    parser.add_argument("--skip-resources", action="store_true", help="Skip S3/SQS/SNS/SES (VPCs still discovered)")
-    parser.add_argument("--inspect", action="store_true", help="Clear cache, re-auth, rebuild config")
+    parser.add_argument("--login", action="store_true", help="Re-auth current default profile")
+    parser.add_argument("--skip-vpc", action="store_true", help="Skip all resource discovery (--inspect only)")
+    parser.add_argument("--skip-resources", action="store_true", help="Skip S3/SQS/SNS/SES (--inspect only)")
+    parser.add_argument("--inspect", action="store_true", help="Run full discovery")
+    parser.add_argument("--background", "-b", action="store_true", help="Run discovery in background (with --inspect)")
+    parser.add_argument("--discover-account", help="Internal: discover single account (used by background)")
 
     args = parser.parse_args()
     setup_logging(args.verbose)
 
-    # Inspect mode: clear data + run first_run_setup
+    # Internal: background process for single-account discovery
+    # Called by spawn_background_discovery() after quick_auth_for_account()
+    if args.discover_account:
+        logger.info(f"Background discovery for: {args.discover_account}")
+        return 0 if discover_single_account(
+            args.discover_account,
+            args.skip_vpc,
+            args.skip_resources,
+        ) else 1
+
+    # Account + inspect: quick auth + discovery for that account only
+    if args.inspect and args.account:
+        # --login forces re-auth even if creds valid
+        if args.login:
+            logger.info(f"Force re-auth: {args.account}")
+
+        if quick_auth_for_account(args.account, force=args.login):
+            if args.background:
+                logger.info("")
+                logger.info(f"Discovery for {args.account} running in background...")
+                bg_args = ["--discover-account", args.account]
+                if args.skip_vpc:
+                    bg_args.append("--skip-vpc")
+                if args.skip_resources:
+                    bg_args.append("--skip-resources")
+                spawn_background_discovery(bg_args)
+                return 0
+            else:
+                logger.info("")
+                logger.info(f"Running discovery for {args.account} (foreground)...")
+                return 0 if discover_single_account(args.account, args.skip_vpc, args.skip_resources) else 1
+        return 1
+
+    # Inspect without account: full org discovery
     if args.inspect:
+        if args.background:
+            logger.info("Full org discovery running in background...")
+            bg_args = ["--login"]
+            if args.skip_vpc:
+                bg_args.append("--skip-vpc")
+            if args.skip_resources:
+                bg_args.append("--skip-resources")
+            spawn_background_discovery(bg_args)
+            return 0
         return 0 if inspect_config(args.skip_vpc, args.skip_resources) else 1
 
-    # Login mode or first-run (no config exists)
-    if args.login or not config_exists():
-        if not config_exists():
+    # Login with account: force re-auth that account
+    if args.login and args.account:
+        logger.info(f"Force re-auth: {args.account}")
+        return 0 if quick_auth_for_account(args.account, force=True) else 1
+
+    # Login without account: re-auth current default profile (or menu if no default)
+    if args.login:
+        if config_exists():
+            # Try to get manager account as default
+            try:
+                manager = get_manager_account()
+                if manager:
+                    logger.info(f"Re-authenticating default profile: {manager['alias']}")
+                    return 0 if quick_auth_for_account(manager["alias"], force=True) else 1
+            except Exception:
+                pass
+            # No default, show menu
+            account = select_account_interactive()
+            if account:
+                return 0 if quick_auth_for_account(account, force=True) else 1
+            return 0
+        else:
             logger.info("No configuration found. Starting first-run setup...")
+            return 0 if first_run_setup(args.skip_vpc, args.skip_resources) else 1
+
+    # First-run: no config exists yet
+    if not config_exists():
+        logger.info("No configuration found. Starting first-run setup...")
         return 0 if first_run_setup(args.skip_vpc, args.skip_resources) else 1
 
-    # Account selection
+    # Account selection (interactive if not specified)
     account = args.account
     if not account:
         account = select_account_interactive()
@@ -550,7 +979,10 @@ def main() -> int:
             logger.info("No account selected")
             return 0
 
-    return 0 if login_to_account(account, args.force) else 1
+    # Quick auth for specified account (no discovery)
+    if quick_auth_for_account(account, force=args.force):
+        return 0
+    return 1
 
 
 if __name__ == "__main__":
